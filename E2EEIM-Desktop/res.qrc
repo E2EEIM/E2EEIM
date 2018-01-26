@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/img">
+        <file>person.png</file>
+        <file>conversation.png</file>
+        <file>user2.svg</file>
+        <file>user.svg</file>
+        <file>clicked.png</file>
+    </qresource>
+</RCC>
