@@ -11,7 +11,7 @@ The executable file will be in <b> release </b> folder.
 On macOS
   1. install Qt5.10 with Clang 7.0.
   2. Open your terminal command prompt and change current directory to E2EEIM/E2EEIM-Desktop, the Qt project folder that contains [PROJECT_NAME].pro.
-  3. run <b>qmake</b> command. <b>qmake</b> will generate Makefile (You need to set <b>qmake</b> PATH to <b>[QT_INSTALLED_DIRECTORY]/[COMPILER]/bin/qmake</b>). If <b>qmake</b> show any occur error, please check your <b>Qt version</b> first (qmake --version).
+  3. run <b>qmake</b> command. <b>qmake</b> will generate Makefile (You need to set <b>qmake</b> PATH to <b>[QT_INSTALLED_DIRECTORY]/[COMPILER]/bin/qmake</b>). If <b>qmake</b> show any error occur, please check your <b>Qt version</b> first (qmake --version).
   4. run <b>make</b> command.
   
 The executable file will be in <b> [PROJECT_NAME].app/Contents/MacOS </b> folder.
@@ -20,7 +20,7 @@ The executable file will be in <b> [PROJECT_NAME].app/Contents/MacOS </b> folder
 On LINUX
   1. install Qt5.10.
   2. Open your terminal command prompt and change current directory to E2EEIM/E2EEIM-Desktop, the Qt project folder that contains [PROJECT_NAME].pro.
-  3. run <b>qmake</b> command. <b>qmake</b> will generate Makefile (You need to set PATH to <b>qmake</b> from <b>[QT_INSTALLED_DIRECTORY]/[COMPILER]/bin/qmake</b>). If <b>qmake</b> show any occur error, please check your <b>Qt version</b>  first (qmake --version).
+  3. run <b>qmake</b> command. <b>qmake</b> will generate Makefile (You need to set PATH to <b>qmake</b> from <b>[QT_INSTALLED_DIRECTORY]/[COMPILER]/bin/qmake</b>). If <b>qmake</b> show any error occur, please check your <b>Qt version</b>  first (qmake --version).
   4. run <b>make</b> command.
   
 The executable file will be in current directory.
