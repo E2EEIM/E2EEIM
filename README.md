@@ -5,7 +5,8 @@
   3. run <b>qmake</B> command (You need to set PATH to <b>qmake</b> from <b>[QT_INSTALLED_DIRECTORY]/5.10.0/[COMPILER]/qmake.exe</b> before run qmake command)
   4. run <b>mingw32-make</b> (You need to set PATH to MinGW before run mingw32-make command)
   
-  <br><br>The executable file will be in <b> release </b> folder
+The executable file will be in <b> release </b> folder
+
 
 On macOS
   1. install Qt5.10 with Clang 7.0
@@ -13,7 +14,8 @@ On macOS
   3. run <b>qmake</b> command. <b>qmake</b> will generate Makefile (You need to set PATH to <b>qmake</b> from <b>[QT_INSTALLED_DIRECTORY]/[COMPILER]/qmake</b>)
   4. run <b>make</b> command.
   
-  <br><br>The executable file will be in <b> [PROJECT_NAME].app/Contents/MacOS </b> folder
+The executable file will be in <b> [PROJECT_NAME].app/Contents/MacOS </b> folder
+
 
 On LINUX
   1. install Qt5.10
@@ -21,4 +23,4 @@ On LINUX
   3. run <b>qmake</b> command. <b>qmake</b> will generate Makefile (You need to set PATH to <b>qmake</b> from <b>[QT_INSTALLED_DIRECTORY]/[COMPILER]/qmake</b>)
   4. run <b>make</b> command.
   
-  <br><br>The executable file will be in current directory
+The executable file will be in current directory
