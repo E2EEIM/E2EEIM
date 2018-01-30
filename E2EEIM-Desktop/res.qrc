@@ -1,9 +1,19 @@
 <RCC>
     <qresource prefix="/img">
-        <file>person.png</file>
-        <file>conversation.png</file>
         <file>user2.svg</file>
         <file>user.svg</file>
         <file>clicked.png</file>
+        <file>appIcon.ico</file>
+        <file>edit.png</file>
+        <file>add.png</file>
+        <file>conversation.png</file>
+        <file>menu_chat.png</file>
+        <file>menu_chat_clicked.png</file>
+        <file>menu_contact.png</file>
+        <file>menu_contact_clicked.png</file>
+        <file>menu_group.png</file>
+        <file>menu_group_clicked.png</file>
+        <file>person.png</file>
+        <file>add_new.png</file>
     </qresource>
 </RCC>
