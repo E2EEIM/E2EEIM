@@ -385,7 +385,7 @@ background: #eeeeee;
              </property>
              <property name="icon">
               <iconset resource="res.qrc">
-               <normaloff>:/img/add_new.png</normaloff>:/img/add_new.png</iconset>
+               <normaloff>:/img/add_conversation.png</normaloff>:/img/add_conversation.png</iconset>
              </property>
              <property name="iconSize">
               <size>

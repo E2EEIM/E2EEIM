@@ -22,6 +22,8 @@ private slots:
 
     void on_pushButton_Group_clicked();
 
+    void on_pushButton_AddList_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

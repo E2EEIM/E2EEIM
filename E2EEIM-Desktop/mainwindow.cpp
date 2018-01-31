@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "addcontact.h"
 #include <qlayout.h>
 #include <algorithm>
 #include <string>
@@ -131,6 +132,9 @@ void MainWindow::on_pushButton_Conversation_clicked()
         ui->splitter->setSizes(currentSizes);
     }
 
+    //show add new conversation icon
+    ui->pushButton_AddList->setIcon((QIcon(":img/add_conversation.png")));
+
     //show current clicked icon
     ui->pushButton_Conversation->setIcon(QIcon(":/img/menu_chat_clicked.png"));
     ui->pushButton_Contact->setIcon(QIcon(":/img/menu_contact.png"));
@@ -154,10 +158,12 @@ void MainWindow::on_pushButton_Contact_clicked()
     QString Filename = "userData/contactList.txt";
     QStringList contactList=Read(Filename);                 //Read user data from file.
     foreach(QString CONTACT, contactList){
-        QListWidgetItem *contact = new QListWidgetItem;
-        contact->setIcon(QIcon(":/img/person.png"));
-        contact->setText(CONTACT);
-        ui->listWidget_Contact->addItem(contact);
+        if(CONTACT != ""){
+            QListWidgetItem *contact = new QListWidgetItem;
+            contact->setIcon(QIcon(":/img/person.png"));
+            contact->setText(CONTACT);
+            ui->listWidget_Contact->addItem(contact);
+        }
     }
 
     //In case user move splitter hide contacts list and don't know how to show it again.
@@ -168,6 +174,11 @@ void MainWindow::on_pushButton_Contact_clicked()
         currentSizes[1]=1;
         ui->splitter->setSizes(currentSizes);
     }
+
+
+    //show add new contact icon
+    ui->pushButton_AddList->setIcon((QIcon(":img/add_contact.png")));
+
 
     //show current clicked icon
     ui->pushButton_Conversation->setIcon(QIcon(":/img/menu_chat.png"));
@@ -204,6 +215,8 @@ void MainWindow::on_pushButton_Group_clicked()
         ui->splitter->setSizes(currentSizes);
     }
 
+    //show add new group icon
+    ui->pushButton_AddList->setIcon((QIcon(":img/add_group.png")));
 
     //show current clicked icon
     ui->pushButton_Conversation->setIcon(QIcon(":/img/menu_chat.png"));
@@ -212,4 +225,35 @@ void MainWindow::on_pushButton_Group_clicked()
     ui->pushButton_Conversation->setIconSize(QSize(70,70));
     ui->pushButton_Contact->setIconSize(QSize(70,70));
     ui->pushButton_Group->setIconSize(QSize(70,70));
+}
+
+void MainWindow::on_pushButton_AddList_clicked()
+{
+    if(currentMenu=="conversation"){
+        qDebug() << "add new conversation";
+    }
+    else if(currentMenu=="contact"){
+        qDebug() << "add new contact";
+        AddContact addcontact;
+        addcontact.setModal(false);
+        addcontact.exec();
+
+        /* Reload contact list*/
+
+        ui->listWidget_Contact->clear();                        //clear current display list
+        QString Filename = "userData/contactList.txt";
+        QStringList contactList=Read(Filename);                 //Read user data from file.
+        foreach(QString CONTACT, contactList){
+            if(CONTACT != ""){
+                QListWidgetItem *contact = new QListWidgetItem;
+                contact->setIcon(QIcon(":/img/person.png"));
+                contact->setText(CONTACT);
+                ui->listWidget_Contact->addItem(contact);
+            }
+        }
+
+    }
+    else if(currentMenu=="group"){
+        qDebug() << "add new group";
+    }
 }

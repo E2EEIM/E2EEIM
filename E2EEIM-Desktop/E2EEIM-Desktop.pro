@@ -25,13 +25,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+    addcontact.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+    addcontact.h
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    addcontact.ui
 
 RESOURCES += \
     res.qrc

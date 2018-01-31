@@ -15,5 +15,8 @@
         <file>menu_group_clicked.png</file>
         <file>person.png</file>
         <file>add_new.png</file>
+        <file>add_contact.png</file>
+        <file>add_conversation.png</file>
+        <file>add_group.png</file>
     </qresource>
 </RCC>
