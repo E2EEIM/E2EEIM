@@ -59,7 +59,6 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-
     QString userDataPath("./userData");
     QDir userData;
     userData.mkdir(userDataPath);
@@ -96,6 +95,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listWidget_Conversation->scrollToBottom();
 
     currentMenu = "conversation";
+
+
+    /*Connect List items event on click*/
+    connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
+                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
 
 }
 
@@ -163,6 +167,8 @@ void MainWindow::on_pushButton_Contact_clicked()
             contact->setIcon(QIcon(":/img/person.png"));
             contact->setText(CONTACT);
             ui->listWidget_Contact->addItem(contact);
+
+
         }
     }
 
@@ -256,4 +262,12 @@ void MainWindow::on_pushButton_AddList_clicked()
     else if(currentMenu=="group"){
         qDebug() << "add new group";
     }
+}
+
+void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
+    qDebug() << item->text();
+    ui->label_ConversationWith->setText(item->text());
+    ui->listWidget_Conversation->clear();
+
+    ui->listWidget_Conversation->scrollToBottom();
 }

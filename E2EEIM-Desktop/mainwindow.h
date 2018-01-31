@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-
+#include <QListWidget>
 namespace Ui {
 class MainWindow;
 }
@@ -23,6 +23,8 @@ private slots:
     void on_pushButton_Group_clicked();
 
     void on_pushButton_AddList_clicked();
+
+    void listWidget_Contact_ItemClicked(QListWidgetItem* item);
 
 private:
     Ui::MainWindow *ui;
