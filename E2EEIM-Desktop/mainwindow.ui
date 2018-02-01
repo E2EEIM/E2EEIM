@@ -461,6 +461,9 @@ background: #eeeeee;
           <property name="alignment">
            <set>Qt::AlignCenter</set>
           </property>
+          <property name="margin">
+           <number>10</number>
+          </property>
          </widget>
         </item>
         <item>
@@ -533,7 +536,10 @@ background: #eeeeee;
               </size>
              </property>
              <property name="styleSheet">
-              <string notr="true">background: rgb(250, 250, 250)</string>
+              <string notr="true">QPlainTextEdit {
+background: rgb(245, 245, 245);
+}
+</string>
              </property>
              <property name="frameShape">
               <enum>QFrame::NoFrame</enum>

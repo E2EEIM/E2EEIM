@@ -14,6 +14,8 @@
 #include <QStringList>
 #include <QDir>
 #include <QStringRef>
+#include <QFileInfo>
+
 using namespace std;
 
 QString currentMenu;
@@ -72,15 +74,28 @@ MainWindow::MainWindow(QWidget *parent) :
     userConversation.mkdir(userConversationDir);
 
 
+    /* Load conversation list*/
+    QDir conversationFile("./userData/conversation");
+    QStringList conversationList;
+    foreach(QFileInfo item, conversationFile.entryInfoList()){
+        if(item.isFile()){
+            qDebug() << item.fileName();
+            conversationList.append(item.fileName());
+        }
+    }
+
     /*Add conversation to list.*/
-    QString Filename = "userData/conversationList.txt";
-    QStringList contactList=Read(Filename);                 //Read user data from file.
-    foreach(QString CONTACT, contactList){
+    foreach(QString conversation, conversationList){
         QListWidgetItem *item = new QListWidgetItem;
         item->setIcon(QIcon(":/img/person.png"));
-        item->setText("Chat with " + CONTACT);
+        item->setText(conversation);
         ui->listWidget_Contact->addItem(item);
     }
+
+
+    /*Connect WidgetListItem on click event*/
+    connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
+                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
 
 
     /*Set icon size in listWidget*/
@@ -89,11 +104,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listWidget_Conversation->scrollToBottom();
 
     currentMenu = "conversation";
-
-
-    /*Connect WidgetListItem on click event*/
-    connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
-                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
 
 }
 
@@ -110,14 +120,21 @@ void MainWindow::on_pushButton_Conversation_clicked()
     //clear current display list
     ui->listWidget_Contact->clear();
 
+    /* Load conversation list*/
+    QDir conversationFile("./userData/conversation");
+    QStringList conversationList;
+    foreach(QFileInfo item, conversationFile.entryInfoList()){
+        if(item.isFile()){
+            qDebug() << item.fileName();
+            conversationList.append(item.fileName());
+        }
+    }
 
     /*Add conversation to list.*/
-    QString Filename = "userData/conversationList.txt";
-    QStringList contactList=Read(Filename);                 //Read user data from file.
-    foreach(QString CONTACT, contactList){
+    foreach(QString conversation, conversationList){
         QListWidgetItem *item = new QListWidgetItem;
         item->setIcon(QIcon(":/img/person.png"));
-        item->setText("Chat with " + CONTACT);
+        item->setText(conversation);
         ui->listWidget_Contact->addItem(item);
     }
 
@@ -262,6 +279,7 @@ void MainWindow::on_pushButton_AddList_clicked()
 void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     ui->label_ConversationWith->setText(item->text());
     ui->listWidget_Conversation->clear();
+    QString conversationWith = ui->label_ConversationWith->text();
 
     /*Load conversation*/
     QString filename="./userData/conversation/"+item->text();
@@ -271,15 +289,15 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     foreach(QString msg, conversation){
         QListWidgetItem *item = new QListWidgetItem;
         if(msg.left(5) == "USER:"){
-            msg = msg.remove("USER:");
+            msg = msg.remove(activeUser+":");
             item->setText(msg);
             item->setTextAlignment(2);
         }
         else{
+            msg = msg.remove(conversationWith+":");
             item->setIcon(QIcon(":/img/person.png"));
             item->setText(msg);
         }
-        qDebug() << msg.length();
         ui->listWidget_Conversation->addItem(item);
     }
 
