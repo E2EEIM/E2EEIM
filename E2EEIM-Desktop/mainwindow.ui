@@ -456,7 +456,7 @@ background: #eeeeee;
            <string notr="true">color: #999999;</string>
           </property>
           <property name="text">
-           <string notr="true">Wade Wilson</string>
+           <string notr="true"/>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -474,10 +474,13 @@ background: #eeeeee;
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
           </property>
-          <property name="selectionMode">
-           <enum>QAbstractItemView::NoSelection</enum>
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
           </property>
-          <property name="selectionRectVisible">
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="wordWrap">
            <bool>true</bool>
           </property>
          </widget>
@@ -541,7 +544,7 @@ background: #eeeeee;
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_5">
+            <widget class="QPushButton" name="pushButton_SEND">
              <property name="minimumSize">
               <size>
                <width>100</width>
@@ -592,7 +595,7 @@ background: #eeeeee;
   <tabstop>plainTextEdit</tabstop>
   <tabstop>listWidget_Conversation</tabstop>
   <tabstop>pushButton</tabstop>
-  <tabstop>pushButton_5</tabstop>
+  <tabstop>pushButton_SEND</tabstop>
   <tabstop>listWidget_Contact</tabstop>
   <tabstop>pushButton_Conversation</tabstop>
   <tabstop>pushButton_Contact</tabstop>

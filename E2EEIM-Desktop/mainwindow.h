@@ -26,6 +26,8 @@ private slots:
 
     void listWidget_Contact_ItemClicked(QListWidgetItem* item);
 
+    void on_pushButton_SEND_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

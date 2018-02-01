@@ -13,9 +13,11 @@
 #include <QTextStream>
 #include <QStringList>
 #include <QDir>
+#include <QStringRef>
 using namespace std;
 
 QString currentMenu;
+QString activeUser;
 
 QStringList Read(QString Filename){
     QFile File(Filename);
@@ -59,9 +61,15 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    activeUser = "USER";
+
     QString userDataPath("./userData");
     QDir userData;
     userData.mkdir(userDataPath);
+
+    QString userConversationDir("./userData/conversation");
+    QDir userConversation;
+    userConversation.mkdir(userConversationDir);
 
 
     /*Add conversation to list.*/
@@ -75,20 +83,6 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
 
-    for(int i=0; i<=40; i++){
-        QListWidgetItem *newItemx = new QListWidgetItem;
-        newItemx->setIcon(QIcon(":/img/person.png"));
-        newItemx->setText("Can you hear me? "+QString::number(i));
-        ui->listWidget_Conversation->addItem(newItemx);
-    }
-
-
-    QListWidgetItem *newItemx = new QListWidgetItem;
-    //newItemx->setIcon(QIcon(":/img/person.png"));
-    newItemx->setText("Yes, I can hear you but I don't know who you are");
-    newItemx->setTextAlignment(2);
-    ui->listWidget_Conversation->addItem(newItemx);
-
     /*Set icon size in listWidget*/
     ui->listWidget_Contact->setIconSize(QSize(50, 50));
     ui->listWidget_Conversation->setIconSize(QSize(50, 50));
@@ -97,7 +91,7 @@ MainWindow::MainWindow(QWidget *parent) :
     currentMenu = "conversation";
 
 
-    /*Connect List items event on click*/
+    /*Connect WidgetListItem on click event*/
     connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
                 this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
 
@@ -264,10 +258,94 @@ void MainWindow::on_pushButton_AddList_clicked()
     }
 }
 
+/*When user click item on contact list.*/
 void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
-    qDebug() << item->text();
     ui->label_ConversationWith->setText(item->text());
     ui->listWidget_Conversation->clear();
 
+    /*Load conversation*/
+    QString filename="./userData/conversation/"+item->text();
+    QStringList conversation=Read(filename);
+
+    /*Show conversation*/
+    foreach(QString msg, conversation){
+        QListWidgetItem *item = new QListWidgetItem;
+        if(msg.left(5) == "USER:"){
+            msg = msg.remove("USER:");
+            item->setText(msg);
+            item->setTextAlignment(2);
+        }
+        else{
+            item->setIcon(QIcon(":/img/person.png"));
+            item->setText(msg);
+        }
+        qDebug() << msg.length();
+        ui->listWidget_Conversation->addItem(item);
+    }
+
     ui->listWidget_Conversation->scrollToBottom();
+}
+
+/*When user click SEND button*/
+void MainWindow::on_pushButton_SEND_clicked()
+{
+
+
+    QString conversationWith = ui->label_ConversationWith->text();
+    QString msg = ui->plainTextEdit->toPlainText();
+    QString Filename="./userData/conversation/"+conversationWith;
+
+    if((conversationWith != "") && (msg != "") ){
+        ui->listWidget_Conversation->clear();
+        QFile File(Filename);
+        if(!File.exists()){
+            if(!File.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "cound not open file for writing";
+                abort();
+            }
+            QTextStream out(&File);
+            out << "";
+
+            File.flush();
+            File.close();
+        }
+        if(File.exists()){
+            if(!File.open(QFile::Append | QFile::Text)){
+                qDebug() << "cound not open file for writing";
+                abort();
+            }
+
+            msg="USER:"+msg+"\n";
+            QTextStream out(&File);
+            out << msg;
+
+            File.flush();
+            File.close();
+        }
+
+        /*Load conversation*/
+        QString filename="./userData/conversation/"+conversationWith;
+        QStringList conversation=Read(filename);
+
+        /*Show conversation*/
+        foreach(QString msg, conversation){
+            QListWidgetItem *item = new QListWidgetItem;
+            if(msg.left(5) == "USER:"){
+                msg = msg.remove("USER:");
+                item->setText(msg);
+                item->setTextAlignment(2);
+            }
+            else{
+                item->setIcon(QIcon(":/img/person.png"));
+                item->setText(msg);
+            }
+
+
+            ui->listWidget_Conversation->addItem(item);
+        }
+
+        ui->listWidget_Conversation->scrollToBottom();
+    }
+
+    ui->plainTextEdit->clear();
 }
