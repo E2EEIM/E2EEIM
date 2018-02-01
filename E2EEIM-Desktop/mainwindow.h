@@ -28,6 +28,8 @@ private slots:
 
     void on_pushButton_SEND_clicked();
 
+    bool eventFilter(QObject *watched, QEvent *event);
+
 private:
     Ui::MainWindow *ui;
 };

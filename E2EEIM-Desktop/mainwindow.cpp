@@ -97,6 +97,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
                 this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
 
+    /*Filter Enter key press when user typing*/
+    ui->plainTextEdit->installEventFilter(this);
 
     /*Set icon size in listWidget*/
     ui->listWidget_Contact->setIconSize(QSize(50, 50));
@@ -104,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->listWidget_Conversation->scrollToBottom();
 
     currentMenu = "conversation";
+
 
 }
 
@@ -366,4 +369,34 @@ void MainWindow::on_pushButton_SEND_clicked()
     }
 
     ui->plainTextEdit->clear();
+}
+
+/*Enter key filter when user typing*/
+bool MainWindow::eventFilter(QObject *watched, QEvent *event)
+{
+    if(watched == ui->plainTextEdit){
+        if(event->type() == QKeyEvent::KeyPress ||
+                event->type() == QKeyEvent::KeyRelease){
+            QKeyEvent * KEY = static_cast<QKeyEvent*>(event);
+
+            if((KEY->key()==Qt::Key_Return ||
+                KEY->key()==Qt::Key_Enter) &&
+                    KEY->modifiers()==Qt::ShiftModifier){
+
+                if(event->type()==QKeyEvent::KeyRelease){
+                    return true;
+                }
+            }
+            else if(KEY->key()==Qt::Key_Return ||
+                    KEY->key()==Qt::Key_Enter){
+
+                        on_pushButton_SEND_clicked();
+                        return true;
+           }
+
+        }
+        return false;
+    }
+    return false;
+
 }
