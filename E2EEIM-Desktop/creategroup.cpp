@@ -76,8 +76,6 @@ void CreateGroup::on_pushButton_clicked()
     foreach( QListWidgetItem *member, groupMember){
         GROUP.append(member->text());
     }
-    foreach(QString item, GROUP)
-        qDebug() << item;
 
     if(groupName==""){
         ui->label->setText("Please enter group name.");

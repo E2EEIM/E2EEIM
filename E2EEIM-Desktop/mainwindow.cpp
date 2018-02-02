@@ -23,7 +23,50 @@ QString currentMenu;
 QString activeUser;
 QString conversationWith;
 
+QStringList getGroupMember(QString GroupName){
+    QFile File("./userData/groupList.txt");
+    QStringList List;
+    if(!File.exists()){
+        if(!File.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "cound not open file for writing";
+            abort();
+        }
+        QTextStream out(&File);
+        out << "";
 
+        File.flush();
+        File.close();
+    }
+
+    if(!File.open(QFile::ReadOnly | QFile::Text)){
+        qDebug() << "cound not open file for Read";
+        abort();
+    }
+
+
+    QTextStream in(&File);
+    QString line;
+    short flagLoad=0;
+    while(!in.atEnd())
+    {
+            line=in.readLine();
+            if(line.left(2)=="::"){
+                if((line.split("::").at(1)) == GroupName){
+                    flagLoad=1;
+                    continue;
+                }
+                else if(flagLoad==1)
+                    break;
+            }
+            if(flagLoad!=0){
+                List.append(line);
+
+            }
+    }
+    return List;
+}
+
+// ///////////////////////////////////////READ CONTACT LIST
 QStringList Read(QString Filename){
     QFile File(Filename);
     QStringList List;
@@ -97,25 +140,41 @@ QStringList ReadConversation(QString Filename){
     QTextStream in(&File);
     QString line;
     QString tmp="[-STaRT-]";
-    while( !in.atEnd())
-    {
-         line= in.readLine();
-         if((line.left(activeUser_length+1)!=(activeUser+":")) &&
-                 (line.left(conversationWith_length+1)!=(conversationWith+":"))){
-             tmp=tmp+"\n"+line;
-             if(in.atEnd())
-                 List.append(tmp);
-             continue;
-         }
-         if(tmp!="[-STaRT-]"){
-             List.append(tmp);
-         }
-         if(in.atEnd()){
-             List.append(line);
-         }
-         tmp=line;
 
+    if(Filename.split("::").first()=="./userData/conversation/GROUP"){ //In case group conversation;
+        QStringList groupMember=getGroupMember(Filename.split("::").last());
+        while( !in.atEnd())
+        {
+            line=in.readLine();
+            if(line.left(activeUser_length+1)!=(activeUser+":")){
+                foreach(QString memberName, groupMember){
+                    if(line.left(memberName.length()+1)==(memberName+":")){
 
+                    }
+                }
+            }
+        }
+
+    }
+    else{
+        while( !in.atEnd())
+        {
+            line= in.readLine();
+            if((line.left(activeUser_length+1)!=(activeUser+":")) &&
+                    (line.left(conversationWith_length+1)!=(conversationWith+":"))){
+                tmp=tmp+"\n"+line;
+                if(in.atEnd())
+                    List.append(tmp);
+                continue;
+            }
+            if(tmp!="[-STaRT-]"){
+                List.append(tmp);
+            }
+            if(in.atEnd()){
+                List.append(line);
+            }
+             tmp=line;
+        }
     }
 
     File.flush();
