@@ -146,13 +146,29 @@ QStringList ReadConversation(QString Filename){
         while( !in.atEnd())
         {
             line=in.readLine();
+            int flagFistLine=1;
             if(line.left(activeUser_length+1)!=(activeUser+":")){
+                flagFistLine=0;
                 foreach(QString memberName, groupMember){
                     if(line.left(memberName.length()+1)==(memberName+":")){
-
+                        flagFistLine=1;
+                        break;
                     }
                 }
             }
+            if(flagFistLine==0){
+                tmp=tmp+"\n"+line;
+                if(in.atEnd())
+                    List.append(tmp);
+                continue;
+            }
+            if(tmp!="[-STaRT-]"){
+                List.append(tmp);
+            }
+            if(in.atEnd()){
+                List.append(line);
+            }
+            tmp=line;
         }
 
     }
