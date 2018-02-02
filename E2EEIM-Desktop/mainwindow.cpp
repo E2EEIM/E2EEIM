@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "addcontact.h"
+#include "creategroup.h"
 #include <qlayout.h>
 #include <algorithm>
 #include <string>
@@ -47,8 +48,16 @@ QStringList Read(QString Filename){
    QString line;
     while( !in.atEnd())
     {
-         line= in.readLine();
-         List.append(line);
+        if(Filename=="userData/groupList.txt"){
+            line=in.readLine();
+            if(line.left(2)!="::")
+                continue;
+            List.append(line.split("::").at(1));
+        }
+        else{
+            line= in.readLine();
+            List.append(line);
+        }
     }
 
     File.flush();
@@ -100,11 +109,9 @@ QStringList ReadConversation(QString Filename){
          }
          if(tmp!="[-STaRT-]"){
              List.append(tmp);
-             qDebug() << "append single "+tmp;
          }
          if(in.atEnd()){
              List.append(line);
-             qDebug() << "append single "+line;
          }
          tmp=line;
 
@@ -167,6 +174,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     currentMenu = "conversation";
 
+    ui->frame_2->hide();
+
 
 }
 
@@ -179,6 +188,8 @@ MainWindow::~MainWindow()
 void MainWindow::on_pushButton_Conversation_clicked()
 {
     currentMenu = "conversation";
+
+    ui->frame_2->hide();
 
     //clear current display list
     ui->listWidget_Contact->clear();
@@ -228,6 +239,8 @@ void MainWindow::on_pushButton_Contact_clicked()
 
     currentMenu = "contact";
 
+    ui->frame_2->show();
+
     //clear current display list
     ui->listWidget_Contact->clear();
 
@@ -273,6 +286,9 @@ void MainWindow::on_pushButton_Group_clicked()
 {
 
     currentMenu = "group";
+
+    ui->frame_2->show();
+
     //clear current display list
     ui->listWidget_Contact->clear();
 
@@ -282,7 +298,7 @@ void MainWindow::on_pushButton_Group_clicked()
     foreach(QString GROUP, contactList){
         QListWidgetItem *group = new QListWidgetItem;
         group->setIcon(QIcon(":/img/person.png"));
-        group->setText(GROUP);
+        group->setText("GROUP::"+GROUP);
         ui->listWidget_Contact->addItem(group);
     }
 
@@ -319,21 +335,19 @@ void MainWindow::on_pushButton_AddList_clicked()
         addcontact.exec();
 
         /* Reload contact list*/
+        on_pushButton_Contact_clicked();
 
-        ui->listWidget_Contact->clear();                        //clear current display list
-        QString Filename = "userData/contactList.txt";
-        QStringList contactList=Read(Filename);                 //Read user data from file.
-        foreach(QString CONTACT, contactList){
-            if(CONTACT != ""){
-                QListWidgetItem *contact = new QListWidgetItem;
-                contact->setIcon(QIcon(":/img/person.png"));
-                contact->setText(CONTACT);
-                ui->listWidget_Contact->addItem(contact);
-            }
-        }
 
     }
     else if(currentMenu=="group"){
+
+        CreateGroup createGroup;
+        createGroup.setModal(false);
+        createGroup.exec();
+
+        /* Reload contact list*/
+        on_pushButton_Group_clicked();
+
 
     }
 }
@@ -420,7 +434,6 @@ void MainWindow::on_pushButton_SEND_clicked()
                 item->setIcon(QIcon(":/img/person.png"));
                 item->setText(msg);
             }
-
 
             ui->listWidget_Conversation->addItem(item);
         }

@@ -26,15 +26,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    addcontact.cpp
+    addcontact.cpp \
+    creategroup.cpp
 
 HEADERS += \
         mainwindow.h \
-    addcontact.h
+    addcontact.h \
+    creategroup.h
 
 FORMS += \
         mainwindow.ui \
-    addcontact.ui
+    addcontact.ui \
+    creategroup.ui
 
 RESOURCES += \
     res.qrc
