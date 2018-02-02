@@ -22,7 +22,6 @@ void AddContact::on_pushButton_clicked()
 {
     QString ContactName=ui->lineEdit->text();
     QString Filename = "userData/contactList.txt";
-    qDebug() << ContactName;
 
     if(ContactName != ""){
         QFile File(Filename);

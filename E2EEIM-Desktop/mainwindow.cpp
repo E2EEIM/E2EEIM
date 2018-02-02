@@ -20,6 +20,8 @@ using namespace std;
 
 QString currentMenu;
 QString activeUser;
+QString conversationWith;
+
 
 QStringList Read(QString Filename){
     QFile File(Filename);
@@ -55,6 +57,64 @@ QStringList Read(QString Filename){
 }
 
 
+QStringList ReadConversation(QString Filename){
+
+    int activeUser_length;
+    int conversationWith_length;
+
+    activeUser_length=activeUser.length();
+    conversationWith_length=conversationWith.length();
+
+    QFile File(Filename);
+    QStringList List;
+    if(!File.exists()){
+        if(!File.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "Cound not open file for writing";
+            abort();
+        }
+        QTextStream out(&File);
+        out << "";
+
+        File.flush();
+        File.close();
+    }
+
+
+    if(!File.open(QFile::ReadOnly | QFile::Text)){
+        qDebug() << "Cound not open file for Read";
+        abort();
+    }
+
+    QTextStream in(&File);
+    QString line;
+    QString tmp="[-STaRT-]";
+    while( !in.atEnd())
+    {
+         line= in.readLine();
+         if((line.left(activeUser_length+1)!=(activeUser+":")) &&
+                 (line.left(conversationWith_length+1)!=(conversationWith+":"))){
+             tmp=tmp+"\n"+line;
+             if(in.atEnd())
+                 List.append(tmp);
+             continue;
+         }
+         if(tmp!="[-STaRT-]"){
+             List.append(tmp);
+             qDebug() << "append single "+tmp;
+         }
+         if(in.atEnd()){
+             List.append(line);
+             qDebug() << "append single "+line;
+         }
+         tmp=line;
+
+
+    }
+
+    File.flush();
+    File.close();
+    return List;
+}
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -79,7 +139,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QStringList conversationList;
     foreach(QFileInfo item, conversationFile.entryInfoList()){
         if(item.isFile()){
-            qDebug() << item.fileName();
+
             conversationList.append(item.fileName());
         }
     }
@@ -128,7 +188,7 @@ void MainWindow::on_pushButton_Conversation_clicked()
     QStringList conversationList;
     foreach(QFileInfo item, conversationFile.entryInfoList()){
         if(item.isFile()){
-            qDebug() << item.fileName();
+
             conversationList.append(item.fileName());
         }
     }
@@ -250,10 +310,10 @@ void MainWindow::on_pushButton_Group_clicked()
 void MainWindow::on_pushButton_AddList_clicked()
 {
     if(currentMenu=="conversation"){
-        qDebug() << "add new conversation";
+
     }
     else if(currentMenu=="contact"){
-        qDebug() << "add new contact";
+
         AddContact addcontact;
         addcontact.setModal(false);
         addcontact.exec();
@@ -274,7 +334,7 @@ void MainWindow::on_pushButton_AddList_clicked()
 
     }
     else if(currentMenu=="group"){
-        qDebug() << "add new group";
+
     }
 }
 
@@ -282,11 +342,11 @@ void MainWindow::on_pushButton_AddList_clicked()
 void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     ui->label_ConversationWith->setText(item->text());
     ui->listWidget_Conversation->clear();
-    QString conversationWith = ui->label_ConversationWith->text();
+    conversationWith = ui->label_ConversationWith->text();
 
     /*Load conversation*/
     QString filename="./userData/conversation/"+item->text();
-    QStringList conversation=Read(filename);
+    QStringList conversation=ReadConversation(filename);
 
     /*Show conversation*/
     foreach(QString msg, conversation){
@@ -346,7 +406,7 @@ void MainWindow::on_pushButton_SEND_clicked()
 
         /*Load conversation*/
         QString filename="./userData/conversation/"+conversationWith;
-        QStringList conversation=Read(filename);
+        QStringList conversation=ReadConversation(filename);
 
         /*Show conversation*/
         foreach(QString msg, conversation){
