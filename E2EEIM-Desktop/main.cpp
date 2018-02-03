@@ -7,7 +7,10 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);       // High-DPI Icons support
 
     QApplication a(argc, argv);
-    MainWindow w;
+
+    QString activeUser="Eto Eeim";
+    MainWindow w(activeUser);
+    w.setWindowTitle("E2EEIM-"+activeUser);
     w.show();
 
     return a.exec();

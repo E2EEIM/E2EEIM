@@ -199,13 +199,13 @@ QStringList ReadConversation(QString Filename){
 }
 
 
-MainWindow::MainWindow(QWidget *parent) : // /////////////////////////////////////////////////////////////
+MainWindow::MainWindow(QString activeUser, QWidget *parent) : // /////////////////////////////////////////////////////////////
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
-    ACTIVE_USR = "Eto Eeim";
+    ACTIVE_USR = activeUser;
 
     QString userDataPath("./userData");
     QDir userData;
@@ -450,6 +450,7 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
             item->setTextAlignment(2);
         }
         else{
+            msg = msg.remove(conversationWith+": ");
             item->setIcon(QIcon(":/img/person.png"));
             item->setText(msg);
         }
@@ -510,6 +511,7 @@ void MainWindow::on_pushButton_SEND_clicked()
                 item->setTextAlignment(2);
             }
             else{
+                msg = msg.remove(conversationWith+": ");
                 item->setIcon(QIcon(":/img/person.png"));
                 item->setText(msg);
             }
