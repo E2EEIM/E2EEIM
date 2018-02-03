@@ -207,6 +207,9 @@ MainWindow::MainWindow(QString activeUser, QWidget *parent) : // ///////////////
 
     ACTIVE_USR = activeUser;
 
+    if(activeUser=="")
+        QCoreApplication::quit();
+
     QString userDataPath("./userData");
     QDir userData;
     userData.mkdir(userDataPath);

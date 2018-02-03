@@ -27,17 +27,20 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     addcontact.cpp \
-    creategroup.cpp
+    creategroup.cpp \
+    signin.cpp
 
 HEADERS += \
         mainwindow.h \
     addcontact.h \
-    creategroup.h
+    creategroup.h \
+    signin.h
 
 FORMS += \
         mainwindow.ui \
     addcontact.ui \
-    creategroup.ui
+    creategroup.ui \
+    signin.ui
 
 RESOURCES += \
     res.qrc
