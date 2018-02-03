@@ -199,13 +199,13 @@ QStringList ReadConversation(QString Filename){
 }
 
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent) : // /////////////////////////////////////////////////////////////
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
-    ACTIVE_USR = "USER";
+    ACTIVE_USR = "Eto Eeim";
 
     QString userDataPath("./userData");
     QDir userData;
@@ -444,16 +444,16 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     /*Show conversation*/
     foreach(QString msg, conversation){
         QListWidgetItem *item = new QListWidgetItem;
-        if(msg.left(5) == "USER:"){
-            msg = msg.remove(ACTIVE_USR+":");
+        if(msg.left(ACTIVE_USR.length()+1) == ACTIVE_USR+":"){
+            msg = msg.remove(ACTIVE_USR+": ");
             item->setText(msg);
             item->setTextAlignment(2);
         }
         else{
-            msg = msg.remove(conversationWith+":");
             item->setIcon(QIcon(":/img/person.png"));
             item->setText(msg);
         }
+
         ui->listWidget_Conversation->addItem(item);
     }
 
@@ -489,7 +489,7 @@ void MainWindow::on_pushButton_SEND_clicked()
                 abort();
             }
 
-            msg="USER:"+msg+"\n";
+            msg=ACTIVE_USR+": "+msg+"\n";
             QTextStream out(&File);
             out << msg;
 
@@ -504,8 +504,8 @@ void MainWindow::on_pushButton_SEND_clicked()
         /*Show conversation*/
         foreach(QString msg, conversation){
             QListWidgetItem *item = new QListWidgetItem;
-            if(msg.left(5) == "USER:"){
-                msg = msg.remove("USER:");
+            if(msg.left(ACTIVE_USR.length()+1) == ACTIVE_USR+":"){
+                msg = msg.remove(ACTIVE_USR+": ");
                 item->setText(msg);
                 item->setTextAlignment(2);
             }
