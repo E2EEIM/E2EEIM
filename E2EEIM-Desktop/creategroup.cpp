@@ -69,8 +69,8 @@ void CreateGroup::on_pushButton_clicked()
     QStringList GROUP;
 
     QString groupName=ui->lineEdit->text();
-    groupName=groupName.remove("::");
-    GROUP.append("::"+groupName+"::");
+    groupName=groupName.remove("~~");
+    GROUP.append("~~"+groupName+"~~");
 
     QList <QListWidgetItem*> groupMember = ui->listWidget->selectedItems();
     foreach( QListWidgetItem *member, groupMember){

@@ -50,8 +50,8 @@ QStringList getGroupMember(QString GroupName){
     while(!in.atEnd())
     {
             line=in.readLine();
-            if(line.left(2)=="::"){
-                if((line.split("::").at(1)) == GroupName){
+            if(line.left(2)=="~~"){
+                if((line.split("~~").at(1)) == GroupName){
                     flagLoad=1;
                     continue;
                 }
@@ -93,9 +93,9 @@ QStringList Read(QString Filename){
     {
         if(Filename=="userData/groupList.txt"){
             line=in.readLine();
-            if(line.left(2)!="::")
+            if(line.left(2)!="~~")
                 continue;
-            List.append(line.split("::").at(1));
+            List.append(line.split("~~").at(1));
         }
         else{
             line= in.readLine();
@@ -141,8 +141,8 @@ QStringList ReadConversation(QString Filename){
     QString line;
     QString tmp="[-STaRT-]";
 
-    if(Filename.split("::").first()=="./userData/conversation/GROUP"){ //In case group conversation;
-        QStringList groupMember=getGroupMember(Filename.split("::").last());
+    if(Filename.split("~~").first()=="./userData/conversation/GROUP"){ //In case group conversation;
+        QStringList groupMember=getGroupMember(Filename.split("~~").last());
         while( !in.atEnd())
         {
             line=in.readLine();
@@ -373,7 +373,7 @@ void MainWindow::on_pushButton_Group_clicked()
     foreach(QString GROUP, contactList){
         QListWidgetItem *group = new QListWidgetItem;
         group->setIcon(QIcon(":/img/person.png"));
-        group->setText("GROUP::"+GROUP);
+        group->setText("GROUP~~"+GROUP);
         ui->listWidget_Contact->addItem(group);
     }
 
