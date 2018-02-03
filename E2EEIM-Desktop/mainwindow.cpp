@@ -20,11 +20,11 @@
 using namespace std;
 
 QString currentMenu;
-QString activeUser;
+QString ACTIVE_USR;
 QString conversationWith;
 
 QStringList getGroupMember(QString GroupName){
-    QFile File("./userData/groupList.txt");
+    QFile File("./userData/"+ACTIVE_USR+"/groupList.txt");
     QStringList List;
     if(!File.exists()){
         if(!File.open(QFile::WriteOnly | QFile::Text)){
@@ -91,7 +91,7 @@ QStringList Read(QString Filename){
    QString line;
     while( !in.atEnd())
     {
-        if(Filename=="userData/groupList.txt"){
+        if(Filename=="userData/"+ACTIVE_USR+"/groupList.txt"){
             line=in.readLine();
             if(line.left(2)!="~~")
                 continue;
@@ -111,10 +111,10 @@ QStringList Read(QString Filename){
 
 QStringList ReadConversation(QString Filename){
 
-    int activeUser_length;
+    int ACTIVE_USR_length;
     int conversationWith_length;
 
-    activeUser_length=activeUser.length();
+    ACTIVE_USR_length=ACTIVE_USR.length();
     conversationWith_length=conversationWith.length();
 
     QFile File(Filename);
@@ -141,13 +141,13 @@ QStringList ReadConversation(QString Filename){
     QString line;
     QString tmp="[-STaRT-]";
 
-    if(Filename.split("~~").first()=="./userData/conversation/GROUP"){ //In case group conversation;
+    if(Filename.split("~~").first()=="./userData/"+ACTIVE_USR+"/conversation/GROUP"){ //In case group conversation;
         QStringList groupMember=getGroupMember(Filename.split("~~").last());
         while( !in.atEnd())
         {
             line=in.readLine();
             int flagFistLine=1;
-            if(line.left(activeUser_length+1)!=(activeUser+":")){
+            if(line.left(ACTIVE_USR_length+1)!=(ACTIVE_USR+":")){
                 flagFistLine=0;
                 foreach(QString memberName, groupMember){
                     if(line.left(memberName.length()+1)==(memberName+":")){
@@ -176,7 +176,7 @@ QStringList ReadConversation(QString Filename){
         while( !in.atEnd())
         {
             line= in.readLine();
-            if((line.left(activeUser_length+1)!=(activeUser+":")) &&
+            if((line.left(ACTIVE_USR_length+1)!=(ACTIVE_USR+":")) &&
                     (line.left(conversationWith_length+1)!=(conversationWith+":"))){
                 tmp=tmp+"\n"+line;
                 if(in.atEnd())
@@ -205,19 +205,23 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    activeUser = "USER";
+    ACTIVE_USR = "USER";
 
     QString userDataPath("./userData");
     QDir userData;
     userData.mkdir(userDataPath);
 
-    QString userConversationDir("./userData/conversation");
+    QString activeUserDataPath("./userData/"+ACTIVE_USR);
+    QDir activeUserData;
+    activeUserData.mkdir(activeUserDataPath);
+
+    QString userConversationDir("./userData/"+ACTIVE_USR+"/conversation");
     QDir userConversation;
     userConversation.mkdir(userConversationDir);
 
 
     /* Load conversation list*/
-    QDir conversationFile("./userData/conversation");
+    QDir conversationFile("./userData/"+ACTIVE_USR+"/conversation");
     QStringList conversationList;
     foreach(QFileInfo item, conversationFile.entryInfoList()){
         if(item.isFile()){
@@ -270,7 +274,7 @@ void MainWindow::on_pushButton_Conversation_clicked()
     ui->listWidget_Contact->clear();
 
     /* Load conversation list*/
-    QDir conversationFile("./userData/conversation");
+    QDir conversationFile("./userData/"+ACTIVE_USR+"/conversation");
     QStringList conversationList;
     foreach(QFileInfo item, conversationFile.entryInfoList()){
         if(item.isFile()){
@@ -321,7 +325,7 @@ void MainWindow::on_pushButton_Contact_clicked()
 
 
     /*Add contact to contact list.*/
-    QString Filename = "userData/contactList.txt";
+    QString Filename = "userData/"+ACTIVE_USR+"/contactList.txt";
     QStringList contactList=Read(Filename);                 //Read user data from file.
     foreach(QString CONTACT, contactList){
         if(CONTACT != ""){
@@ -368,7 +372,7 @@ void MainWindow::on_pushButton_Group_clicked()
     ui->listWidget_Contact->clear();
 
     /*Add group to list.*/
-    QString Filename = "userData/groupList.txt";
+    QString Filename = "userData/"+ACTIVE_USR+"/groupList.txt";
     QStringList contactList=Read(Filename);                 //Read user data from file.
     foreach(QString GROUP, contactList){
         QListWidgetItem *group = new QListWidgetItem;
@@ -405,7 +409,7 @@ void MainWindow::on_pushButton_AddList_clicked()
     }
     else if(currentMenu=="contact"){
 
-        AddContact addcontact;
+        AddContact addcontact(this, ACTIVE_USR);
         addcontact.setModal(false);
         addcontact.exec();
 
@@ -416,7 +420,7 @@ void MainWindow::on_pushButton_AddList_clicked()
     }
     else if(currentMenu=="group"){
 
-        CreateGroup createGroup(this, activeUser);
+        CreateGroup createGroup(this, ACTIVE_USR);
         createGroup.setModal(false);
         createGroup.exec();
 
@@ -434,14 +438,14 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     conversationWith = ui->label_ConversationWith->text();
 
     /*Load conversation*/
-    QString filename="./userData/conversation/"+item->text();
+    QString filename="./userData/"+ACTIVE_USR+"/conversation/"+item->text();
     QStringList conversation=ReadConversation(filename);
 
     /*Show conversation*/
     foreach(QString msg, conversation){
         QListWidgetItem *item = new QListWidgetItem;
         if(msg.left(5) == "USER:"){
-            msg = msg.remove(activeUser+":");
+            msg = msg.remove(ACTIVE_USR+":");
             item->setText(msg);
             item->setTextAlignment(2);
         }
@@ -463,7 +467,7 @@ void MainWindow::on_pushButton_SEND_clicked()
 
     QString conversationWith = ui->label_ConversationWith->text();
     QString msg = ui->plainTextEdit->toPlainText();
-    QString Filename="./userData/conversation/"+conversationWith;
+    QString Filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
 
     if((conversationWith != "") && (msg != "") ){
         ui->listWidget_Conversation->clear();
@@ -494,7 +498,7 @@ void MainWindow::on_pushButton_SEND_clicked()
         }
 
         /*Load conversation*/
-        QString filename="./userData/conversation/"+conversationWith;
+        QString filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
         QStringList conversation=ReadConversation(filename);
 
         /*Show conversation*/

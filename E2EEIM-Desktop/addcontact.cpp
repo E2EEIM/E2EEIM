@@ -4,13 +4,14 @@
 #include <QFile>
 #include <QTextStream>
 
+QString ACTIVE_USER2;
 
-
-AddContact::AddContact(QWidget *parent) :
+AddContact::AddContact(QWidget *parent, QString activeUser) :
     QDialog(parent),
     ui(new Ui::AddContact)
 {
     ui->setupUi(this);
+    ACTIVE_USER2=activeUser;
 }
 
 AddContact::~AddContact()
@@ -21,7 +22,7 @@ AddContact::~AddContact()
 void AddContact::on_pushButton_clicked()
 {
     QString ContactName=ui->lineEdit->text();
-    QString Filename = "userData/contactList.txt";
+    QString Filename = "userData/"+ACTIVE_USER2+"/contactList.txt";
 
     if(ContactName != ""){
         QFile File(Filename);

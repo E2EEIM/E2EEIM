@@ -12,7 +12,7 @@ class AddContact : public QDialog
     Q_OBJECT
 
 public:
-    explicit AddContact(QWidget *parent = 0);
+    explicit AddContact(QWidget *parent = 0, QString activeUser="");
     ~AddContact();
 
 private slots:

@@ -51,7 +51,7 @@ CreateGroup::CreateGroup(QWidget *parent, QString activeUser) :
     ACTIVE_USER = activeUser;
 
     ui->listWidget->clear();                                //clear current display list
-    QString Filename = "userData/contactList.txt";
+    QString Filename = "userData/"+ACTIVE_USER+"/contactList.txt";
     QStringList contactList=ReadContactList(Filename);                 //Read user data from file.
     foreach(QString CONTACT, contactList){
         if(CONTACT != ""){
@@ -87,7 +87,7 @@ void CreateGroup::on_pushButton_clicked()
     }
     else{
         foreach(QString item, GROUP) {
-            QString Filename = "userData/groupList.txt";
+            QString Filename = "userData/"+ACTIVE_USER+"/groupList.txt";
             QFile File(Filename);
                 if(!File.exists()){
                     if(!File.open(QFile::WriteOnly | QFile::Text)){
