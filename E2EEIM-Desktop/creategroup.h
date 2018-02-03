@@ -12,7 +12,7 @@ class CreateGroup : public QDialog
     Q_OBJECT
 
 public:
-    explicit CreateGroup(QWidget *parent = 0);
+    explicit CreateGroup(QWidget *parent = 0, QString activeUser="");
     ~CreateGroup();
 
 private slots:

@@ -7,6 +7,8 @@
 #include <QString>
 #include <QList>
 
+QString ACTIVE_USER;
+
 QStringList ReadContactList(QString Filename){
     QFile File(Filename);
     QStringList List;
@@ -40,11 +42,13 @@ QStringList ReadContactList(QString Filename){
     return List;
 }
 
-CreateGroup::CreateGroup(QWidget *parent) :
+CreateGroup::CreateGroup(QWidget *parent, QString activeUser) :
     QDialog(parent),
     ui(new Ui::CreateGroup)
 {
     ui->setupUi(this);
+
+    ACTIVE_USER = activeUser;
 
     ui->listWidget->clear();                                //clear current display list
     QString Filename = "userData/contactList.txt";
@@ -76,6 +80,7 @@ void CreateGroup::on_pushButton_clicked()
     foreach( QListWidgetItem *member, groupMember){
         GROUP.append(member->text());
     }
+    GROUP.append(ACTIVE_USER);
 
     if(groupName==""){
         ui->label->setText("Please enter group name.");

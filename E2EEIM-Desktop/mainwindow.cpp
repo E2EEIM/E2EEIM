@@ -416,7 +416,7 @@ void MainWindow::on_pushButton_AddList_clicked()
     }
     else if(currentMenu=="group"){
 
-        CreateGroup createGroup;
+        CreateGroup createGroup(this, activeUser);
         createGroup.setModal(false);
         createGroup.exec();
 
