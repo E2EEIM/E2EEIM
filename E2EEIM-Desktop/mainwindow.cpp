@@ -16,6 +16,7 @@
 #include <QDir>
 #include <QStringRef>
 #include <QFileInfo>
+#include <QPainter>
 
 using namespace std;
 
@@ -258,6 +259,18 @@ MainWindow::MainWindow(QString activeUser, QWidget *parent) : // ///////////////
 
     ui->frame_2->hide();
 
+    /*
+    ui->listWidget_Conversation->setStyleSheet(
+      "QListWidget::item {"
+      "border: 2px solid #eeeeee;"
+      "padding: 5px;"
+      "border-radius: 25px;"
+      "background-color: #eeeeee;"
+      "}"
+      "QListWidget::item:selected {"
+         "background-color: red;"
+      "}");
+       */
 
 }
 

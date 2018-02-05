@@ -474,6 +474,18 @@ background: #eeeeee;
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="styleSheet">
+           <string notr="true">QListWidget::item { 
+background: #fafafa; 
+border: 2px solid white;
+border-radius: 20;
+padding: 15px;
+} 
+ 
+QListWidget::item:selected { 
+background: #999999; 
+}</string>
+          </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
           </property>
