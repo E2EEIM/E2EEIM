@@ -31,8 +31,8 @@ The executable file will be in current directory.
 
 
 # Note #
-1. The application will create **userData** folder in the same directory that store the application excutable file. The application will create more files and folder insite **userData** folder are as follows.
-     - When user sign in for the first time, the application will create folder, set folder name as **[USER_NAME]** insite **userData**directory and create **conversation** folder insite **[USER_NAME]** folder.
+1. The application will create **userData** folder in the same directory that store the application excutable file. The application will create more files and folder inside **userData** folder are as follows.
+     - When user sign in for the first time, the application will create folder, set folder name as **[USER_NAME]** inside **userData**directory and create **conversation** folder inside **[USER_NAME]** folder.
      - When user click contact menu or group menu (icon in dark color bar) for the first time, the application will create contactList.txt and groupList.txt file.
      - When user click any item on contact list, the application will create file for each contact and set file name as **[CONTACT_ID]** and stored in **userData/[USER_NAME]/conversation/**.
      
