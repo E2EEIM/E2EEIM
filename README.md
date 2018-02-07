@@ -28,3 +28,14 @@ The executable file will be in **[PROJECT_NAME].app/Contents/MacOS** folder.
   4. Run **make** command.
   
 The executable file will be in current directory.
+
+
+# Note #
+1. The application will create **userData** folder in the same directory that store the application excutable file. The application will create more files and folder insite **userData** folder are as follows.
+        - When user sign in for the first time, the application will create folder, set folder name as **[USER_NAME]** insite **userData**directory and create **conversation** folder insite **[USER_NAME]** folder.
+        - When user click contact menu or group menu (icon in dark color bar) for the first time, the application will create contactList.txt and groupList.txt file.
+        - When user click any item on contact list, the application will create file for each contact and set file name as **[CONTACT_ID]** and stored in **userData/[USER_NAME]/conversation/**.
+    **userData will not remove by qmake clean, make clean or make distclean**
+    
+2. **Sign in dialog only require USER_ID, server will send encrypted message to user to decrypt for vertify identidy when user sign in(when encryption part implemented).**
+
