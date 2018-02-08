@@ -1,0 +1,22 @@
+<RCC>
+    <qresource prefix="/img">
+        <file>user2.svg</file>
+        <file>user.svg</file>
+        <file>clicked.png</file>
+        <file>appIcon.ico</file>
+        <file>edit.png</file>
+        <file>add.png</file>
+        <file>conversation.png</file>
+        <file>menu_chat.png</file>
+        <file>menu_chat_clicked.png</file>
+        <file>menu_contact.png</file>
+        <file>menu_contact_clicked.png</file>
+        <file>menu_group.png</file>
+        <file>menu_group_clicked.png</file>
+        <file>person.png</file>
+        <file>add_new.png</file>
+        <file>add_contact.png</file>
+        <file>add_conversation.png</file>
+        <file>add_group.png</file>
+    </qresource>
+</RCC>
