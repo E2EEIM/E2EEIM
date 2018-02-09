@@ -18,5 +18,6 @@
         <file>add_contact.png</file>
         <file>add_conversation.png</file>
         <file>add_group.png</file>
+        <file>menu_text.png</file>
     </qresource>
 </RCC>

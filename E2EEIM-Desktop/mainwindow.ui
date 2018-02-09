@@ -133,7 +133,7 @@ background: #999999;
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>100</y>
+         <y>140</y>
          <width>70</width>
          <height>70</height>
         </rect>
@@ -174,7 +174,7 @@ background: #999999;
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>170</y>
+         <y>210</y>
          <width>70</width>
          <height>70</height>
         </rect>
@@ -212,7 +212,7 @@ background: #999999;
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>30</y>
+         <y>70</y>
          <width>70</width>
          <height>70</height>
         </rect>
@@ -252,7 +252,7 @@ background: #999999;
          <x>0</x>
          <y>0</y>
          <width>70</width>
-         <height>30</height>
+         <height>70</height>
         </rect>
        </property>
        <property name="styleSheet">
@@ -301,9 +301,9 @@ QComboBox::drop-down
  }
 QComboBox::down-arrow
 {
-     image: url(:/img/menu_chat.png);
-     width: 130px;
-     height: 130px;
+     image: url(:/img/menu_text.png);
+     width: 70px;
+     height: 70px;
 }</string>
        </property>
        <property name="currentText">
