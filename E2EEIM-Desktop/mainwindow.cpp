@@ -16,23 +16,6 @@
 //
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "addcontact.h"
-#include "creategroup.h"
-#include <qlayout.h>
-#include <algorithm>
-#include <string>
-#include <QDesktopWidget>
-#include <QMainWindow>
-#include <QWidget>
-#include <QFile>
-#include <QString>
-#include <QDebug>
-#include <QTextStream>
-#include <QStringList>
-#include <QDir>
-#include <QStringRef>
-#include <QFileInfo>
-#include <QPainter>
 
 using namespace std;
 
@@ -262,6 +245,10 @@ MainWindow::MainWindow(QString activeUser, QWidget *parent) : // ///////////////
     /*Connect WidgetListItem on click event*/
     connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
                 this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
+
+    /*Connect combobox on click event*/
+    connect(ui->comboBox, SIGNAL(currentTextChanged(QString)),
+                this, SLOT(textMenuChange()));
 
     /*Filter Enter key press when user typing*/
     ui->plainTextEdit->installEventFilter(this);
@@ -557,6 +544,19 @@ void MainWindow::on_pushButton_SEND_clicked()
     ui->plainTextEdit->clear();
 }
 
+void MainWindow::textMenuChange(){
+    QString selected = ui->comboBox->currentText();
+    qDebug() << selected;
+    //ui->comboBox->setCurrentIndex(0);
+    if(selected=="Quit"){
+        cleanClose();
+    }
+}
+
+void MainWindow::cleanClose(){
+    QCoreApplication::quit();
+}
+
 /*Enter key filter when user typing*/
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
@@ -586,3 +586,5 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
     return false;
 
 }
+
+

@@ -19,6 +19,23 @@
 
 #include <QMainWindow>
 #include <QListWidget>
+#include "addcontact.h"
+#include "creategroup.h"
+#include <qlayout.h>
+#include <algorithm>
+#include <string>
+#include <QDesktopWidget>
+#include <QMainWindow>
+#include <QWidget>
+#include <QFile>
+#include <QString>
+#include <QDebug>
+#include <QTextStream>
+#include <QStringList>
+#include <QDir>
+#include <QStringRef>
+#include <QFileInfo>
+#include <QPainter>
 
 namespace Ui {
 class MainWindow;
@@ -45,7 +62,12 @@ private slots:
 
     void on_pushButton_SEND_clicked();
 
+    void textMenuChange();
+
+    void cleanClose();
+
     bool eventFilter(QObject *watched, QEvent *event);
+
 
 private:
     Ui::MainWindow *ui;
