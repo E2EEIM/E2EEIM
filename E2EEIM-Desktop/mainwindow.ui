@@ -79,7 +79,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="res.qrc">
-    <normaloff>:/img/appIcon.ico</normaloff>:/img/appIcon.ico</iconset>
+    <normaloff>:/img/icons/E2EEIM.png</normaloff>:/img/icons/E2EEIM.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -158,7 +158,7 @@ background: #999999;
        </property>
        <property name="icon">
         <iconset resource="res.qrc">
-         <normaloff>:/img/menu_contact.png</normaloff>:/img/menu_contact.png</iconset>
+         <normaloff>:/img/icons/menu_contact.png</normaloff>:/img/icons/menu_contact.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -199,7 +199,7 @@ background: #999999;
        </property>
        <property name="icon">
         <iconset resource="res.qrc">
-         <normaloff>:/img/menu_group.png</normaloff>:/img/menu_group.png</iconset>
+         <normaloff>:/img/icons/menu_group.png</normaloff>:/img/icons/menu_group.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -237,7 +237,7 @@ background: #999999;
        </property>
        <property name="icon">
         <iconset resource="res.qrc">
-         <normaloff>:/img/menu_chat_clicked.png</normaloff>:/img/menu_chat_clicked.png</iconset>
+         <normaloff>:/img/icons/menu_chat_clicked.png</normaloff>:/img/icons/menu_chat_clicked.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -301,7 +301,7 @@ QComboBox::drop-down
  }
 QComboBox::down-arrow
 {
-     image: url(:/img/menu_text.png);
+     image: url(:/img/icons/menu_text.png);
      width: 70px;
      height: 70px;
 }</string>
@@ -444,7 +444,7 @@ background: #eeeeee;
              </property>
              <property name="icon">
               <iconset resource="res.qrc">
-               <normaloff>:/img/add_conversation.png</normaloff>:/img/add_conversation.png</iconset>
+               <normaloff>:/img/icons/add_conversation.png</normaloff>:/img/icons/add_conversation.png</iconset>
              </property>
              <property name="iconSize">
               <size>

@@ -236,7 +236,7 @@ MainWindow::MainWindow(QString activeUser, QWidget *parent) : // ///////////////
     /*Add conversation to list.*/
     foreach(QString conversation, conversationList){
         QListWidgetItem *item = new QListWidgetItem;
-        item->setIcon(QIcon(":/img/person.png"));
+        item->setIcon(QIcon(":/img/icons/person.png"));
         item->setText(conversation);
         ui->listWidget_Contact->addItem(item);
     }
@@ -305,7 +305,7 @@ void MainWindow::on_pushButton_Conversation_clicked()
     /*Add conversation to list.*/
     foreach(QString conversation, conversationList){
         QListWidgetItem *item = new QListWidgetItem;
-        item->setIcon(QIcon(":/img/person.png"));
+        item->setIcon(QIcon(":/img/icons/person.png"));
         item->setText(conversation);
         ui->listWidget_Contact->addItem(item);
     }
@@ -320,12 +320,12 @@ void MainWindow::on_pushButton_Conversation_clicked()
     }
 
     //show add new conversation icon
-    ui->pushButton_AddList->setIcon((QIcon(":img/add_conversation.png")));
+    ui->pushButton_AddList->setIcon((QIcon(":img/icons/add_conversation.png")));
 
     //show current clicked icon
-    ui->pushButton_Conversation->setIcon(QIcon(":/img/menu_chat_clicked.png"));
-    ui->pushButton_Contact->setIcon(QIcon(":/img/menu_contact.png"));
-    ui->pushButton_Group->setIcon(QIcon(":/img/menu_group.png"));
+    ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_chat_clicked.png"));
+    ui->pushButton_Contact->setIcon(QIcon(":/img/icons/menu_contact.png"));
+    ui->pushButton_Group->setIcon(QIcon(":/img/icons/menu_group.png"));
     ui->pushButton_Conversation->setIconSize(QSize(70,70));
     ui->pushButton_Contact->setIconSize(QSize(70,70));
     ui->pushButton_Group->setIconSize(QSize(70,70));
@@ -349,7 +349,7 @@ void MainWindow::on_pushButton_Contact_clicked()
     foreach(QString CONTACT, contactList){
         if(CONTACT != ""){
             QListWidgetItem *contact = new QListWidgetItem;
-            contact->setIcon(QIcon(":/img/person.png"));
+            contact->setIcon(QIcon(":/img/icons/person.png"));
             contact->setText(CONTACT);
             ui->listWidget_Contact->addItem(contact);
 
@@ -368,13 +368,13 @@ void MainWindow::on_pushButton_Contact_clicked()
 
 
     //show add new contact icon
-    ui->pushButton_AddList->setIcon((QIcon(":img/add_contact.png")));
+    ui->pushButton_AddList->setIcon((QIcon(":img/icons/add_contact.png")));
 
 
     //show current clicked icon
-    ui->pushButton_Conversation->setIcon(QIcon(":/img/menu_chat.png"));
-    ui->pushButton_Contact->setIcon(QIcon(":/img/menu_contact_clicked.png"));
-    ui->pushButton_Group->setIcon(QIcon(":/img/menu_group.png"));
+    ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_chat.png"));
+    ui->pushButton_Contact->setIcon(QIcon(":/img/icons/menu_contact_clicked.png"));
+    ui->pushButton_Group->setIcon(QIcon(":/img/icons/menu_group.png"));
     ui->pushButton_Conversation->setIconSize(QSize(70,70));
     ui->pushButton_Contact->setIconSize(QSize(70,70));
     ui->pushButton_Group->setIconSize(QSize(70,70));
@@ -395,7 +395,7 @@ void MainWindow::on_pushButton_Group_clicked()
     QStringList contactList=Read(Filename);                 //Read user data from file.
     foreach(QString GROUP, contactList){
         QListWidgetItem *group = new QListWidgetItem;
-        group->setIcon(QIcon(":/img/person.png"));
+        group->setIcon(QIcon(":/img/icons/person.png"));
         group->setText("GROUP~~"+GROUP);
         ui->listWidget_Contact->addItem(group);
     }
@@ -410,12 +410,12 @@ void MainWindow::on_pushButton_Group_clicked()
     }
 
     //show add new group icon
-    ui->pushButton_AddList->setIcon((QIcon(":img/add_group.png")));
+    ui->pushButton_AddList->setIcon((QIcon(":img/icons/add_group.png")));
 
     //show current clicked icon
-    ui->pushButton_Conversation->setIcon(QIcon(":/img/menu_chat.png"));
-    ui->pushButton_Contact->setIcon(QIcon(":/img/menu_contact.png"));
-    ui->pushButton_Group->setIcon(QIcon(":/img/menu_group_clicked.png"));
+    ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_chat.png"));
+    ui->pushButton_Contact->setIcon(QIcon(":/img/icons/menu_contact.png"));
+    ui->pushButton_Group->setIcon(QIcon(":/img/icons/menu_group_clicked.png"));
     ui->pushButton_Conversation->setIconSize(QSize(70,70));
     ui->pushButton_Contact->setIconSize(QSize(70,70));
     ui->pushButton_Group->setIconSize(QSize(70,70));
@@ -470,7 +470,7 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         }
         else{
             msg = msg.remove(conversationWith+": ");
-            item->setIcon(QIcon(":/img/person.png"));
+            item->setIcon(QIcon(":/img/icons/person.png"));
             item->setText(msg);
         }
 
@@ -531,7 +531,7 @@ void MainWindow::on_pushButton_SEND_clicked()
             }
             else{
                 msg = msg.remove(conversationWith+": ");
-                item->setIcon(QIcon(":/img/person.png"));
+                item->setIcon(QIcon(":/img/icons/person.png"));
                 item->setText(msg);
             }
 

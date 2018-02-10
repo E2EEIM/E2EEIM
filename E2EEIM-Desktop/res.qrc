@@ -1,23 +1,24 @@
 <RCC>
     <qresource prefix="/img">
-        <file>user2.svg</file>
-        <file>user.svg</file>
-        <file>clicked.png</file>
-        <file>appIcon.ico</file>
-        <file>edit.png</file>
-        <file>add.png</file>
-        <file>conversation.png</file>
-        <file>menu_chat.png</file>
-        <file>menu_chat_clicked.png</file>
-        <file>menu_contact.png</file>
-        <file>menu_contact_clicked.png</file>
-        <file>menu_group.png</file>
-        <file>menu_group_clicked.png</file>
-        <file>person.png</file>
-        <file>add_new.png</file>
-        <file>add_contact.png</file>
-        <file>add_conversation.png</file>
-        <file>add_group.png</file>
-        <file>menu_text.png</file>
+        <file>icons/user2.svg</file>
+        <file>icons/user.svg</file>
+        <file>icons/clicked.png</file>
+        <file>icons/appIcon.ico</file>
+        <file>icons/edit.png</file>
+        <file>icons/add.png</file>
+        <file>icons/conversation.png</file>
+        <file>icons/menu_chat.png</file>
+        <file>icons/menu_chat_clicked.png</file>
+        <file>icons/menu_contact.png</file>
+        <file>icons/menu_contact_clicked.png</file>
+        <file>icons/menu_group.png</file>
+        <file>icons/menu_group_clicked.png</file>
+        <file>icons/person.png</file>
+        <file>icons/add_new.png</file>
+        <file>icons/add_contact.png</file>
+        <file>icons/add_conversation.png</file>
+        <file>icons/add_group.png</file>
+        <file>icons/menu_text.png</file>
+        <file>icons/E2EEIM.png</file>
     </qresource>
 </RCC>
