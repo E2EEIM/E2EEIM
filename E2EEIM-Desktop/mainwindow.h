@@ -21,6 +21,7 @@
 #include <QListWidget>
 #include "addcontact.h"
 #include "creategroup.h"
+#include "setting.h"
 #include <qlayout.h>
 #include <algorithm>
 #include <string>
@@ -67,6 +68,8 @@ private slots:
     void cleanClose();
 
     bool eventFilter(QObject *watched, QEvent *event);
+
+    QStringList readTextLine(QString Filename);
 
 
 private:

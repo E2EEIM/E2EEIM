@@ -18,6 +18,12 @@
 #define CREATEGROUP_H
 
 #include <QDialog>
+#include <QFile>
+#include <QDebug>
+#include <QTextStream>
+#include <QStringList>
+#include <QString>
+#include <QList>
 
 namespace Ui {
 class CreateGroup;

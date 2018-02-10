@@ -16,12 +16,7 @@
 //
 #include "creategroup.h"
 #include "ui_creategroup.h"
-#include <QFile>
-#include <QDebug>
-#include <QTextStream>
-#include <QStringList>
-#include <QString>
-#include <QList>
+
 
 QString ACTIVE_USER;
 

@@ -67,7 +67,7 @@ QStringList getGroupMember(QString GroupName){
 }
 
 // ///////////////////////////////////////READ CONTACT LIST
-QStringList Read(QString Filename){
+QStringList MainWindow::readTextLine(QString Filename){
     QFile File(Filename);
     QStringList List;
     if(!File.exists()){
@@ -345,7 +345,7 @@ void MainWindow::on_pushButton_Contact_clicked()
 
     /*Add contact to contact list.*/
     QString Filename = "userData/"+ACTIVE_USR+"/contactList.txt";
-    QStringList contactList=Read(Filename);                 //Read user data from file.
+    QStringList contactList=readTextLine(Filename);                 //Read user data from file.
     foreach(QString CONTACT, contactList){
         if(CONTACT != ""){
             QListWidgetItem *contact = new QListWidgetItem;
@@ -392,7 +392,7 @@ void MainWindow::on_pushButton_Group_clicked()
 
     /*Add group to list.*/
     QString Filename = "userData/"+ACTIVE_USR+"/groupList.txt";
-    QStringList contactList=Read(Filename);                 //Read user data from file.
+    QStringList contactList=readTextLine(Filename);                 //Read user data from file.
     foreach(QString GROUP, contactList){
         QListWidgetItem *group = new QListWidgetItem;
         group->setIcon(QIcon(":/img/icons/person.png"));
@@ -551,6 +551,14 @@ void MainWindow::textMenuChange(){
     if(selected=="Quit"){
         cleanClose();
     }
+    if(selected=="Setting"){
+        Setting settingWindow(ACTIVE_USR);
+        settingWindow.setWindowTitle("Setting");
+        settingWindow.setModal(false);
+        settingWindow.exec();
+        on_pushButton_Conversation_clicked();
+    }
+    ui->comboBox->setCurrentIndex(0);
 }
 
 void MainWindow::cleanClose(){
