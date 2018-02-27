@@ -276,7 +276,6 @@ QComboBox:hover
 {
 	background-color: #ffffff;
 	color: white;
-
 }
 
 QComboBox:on
