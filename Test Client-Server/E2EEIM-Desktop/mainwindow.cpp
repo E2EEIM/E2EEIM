@@ -216,6 +216,7 @@ QStringList ReadConversation(QString Filename){
 }
 
 
+
 MainWindow::MainWindow(Connection &conn ,QString activeUser, QWidget *parent) : // /////////////////////////////////////////////////////////////
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -532,7 +533,7 @@ void MainWindow::on_pushButton_SEND_clicked()
         }
 
         connection->send("SEND TO="+conversationWith+"-------MESSAGE="+msg);
-        connection->letDisconnect();
+        //connection->letDisconnect();
 
         /*Load conversation*/
         QString filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;

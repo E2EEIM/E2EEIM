@@ -35,6 +35,8 @@ private slots:
 
     void on_pushButton_DeleteConversation_clicked();
 
+    void on_pushButton_clicked();
+
 private:
     Ui::Setting *ui;
     QString ActiveUser;

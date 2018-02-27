@@ -18,6 +18,7 @@ public:
 
 signals:
     void error(QTcpSocket::SocketError socketError);
+    void newMessage(QByteArray pkg);
 
 
 

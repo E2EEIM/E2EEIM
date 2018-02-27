@@ -546,7 +546,6 @@ void MainWindow::on_pushButton_SEND_clicked()
 
 void MainWindow::textMenuChange(){
     QString selected = ui->comboBox->currentText();
-    qDebug() << selected;
     //ui->comboBox->setCurrentIndex(0);
     if(selected=="Quit"){
         cleanClose();

@@ -5,6 +5,7 @@
 #include <QTcpServer>
 #include <QDebug>
 #include "mythread.h"
+#include <QList>
 
 class MyServer : public QTcpServer
 {
@@ -15,10 +16,13 @@ public:
 signals:
 
 public slots:
+    void receiveMessage(QByteArray pkg);
+
+private slots:
+    //void receiveMessage(QByteArray package);
 
 protected:
     void incomingConnection(qintptr socketDescriptor);
-
     QQueue<QByteArray> *queue;
 };
 

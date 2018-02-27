@@ -260,50 +260,55 @@ background: #999999;
 {
     selection-background-color: #dddddd;
     selection-color: #999999;
-    color: #eeeeee;
-    background-color: #dddddd;
+	background-color: #dddddd;
     border: 0px;
     border-radius: 0;
     padding: 0px 0px 0px 0px;
 }
-
+QComboBox QListView
+{
+	color: #eeeeee;
+	background-color: #999999;
+	border: 0px;
+}
 
 QComboBox:hover
 {
-    border: 0px;
 	background-color: #ffffff;
-    color: #999999;
+	color: white;
 
 }
 
 QComboBox:on
 {
-    color: #eeeeee;
     selection-background-color: #eeeeee;
 }
 
 QComboBox:!on
 {
+	border: 0px;
     padding: 0px 0px 0px 0px;
+	font-size: 14px;
 
 }
 
 QComboBox QAbstractItemView
 {
-    border: 0px;
+    color: #eeeeee;
 }
 
 QComboBox::drop-down
 {
-     width: 70px;
 	border: 0px;
 	padding: 0px 0px 0px 0px;
+	width: 70px;
  }
 QComboBox::down-arrow
 {
      image: url(:/img/icons/menu_text.png);
      width: 70px;
      height: 70px;
+	border: 0px;
 }</string>
        </property>
        <property name="currentText">
@@ -622,6 +627,12 @@ background: rgb(245, 245, 245);
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_SEND">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="minimumSize">
               <size>
                <width>100</width>

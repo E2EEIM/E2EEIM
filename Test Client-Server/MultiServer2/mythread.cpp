@@ -39,7 +39,7 @@ void MyThread::readyRead(){
 
     qDebug() << socketDescriptor << " Data in: " << Data;
 
-    queuePtr->enqueue(Data);
+    emit this->newMessage(Data);
 
     Data="Server Recevied your message as:" + Data;
 

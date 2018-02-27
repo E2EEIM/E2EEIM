@@ -357,3 +357,8 @@ void Setting::deleteItem(QStringList deleteList, QString fileName){
 
 
 
+
+void Setting::on_pushButton_clicked()
+{
+    this->close();
+}
