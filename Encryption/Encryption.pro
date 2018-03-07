@@ -24,3 +24,7 @@ unix | osx{
     INCLUDEPATH += /usr/local/include
     LIBS += /usr/local/lib/libgpgme.11.dylib
 }
+
+extraclean.commands =  rm .q* E2* *.gpg *.out;
+distclean.depends = extraclean
+QMAKE_EXTRA_TARGETS += distclean extraclean
