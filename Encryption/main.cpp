@@ -208,31 +208,29 @@ void encrypt(gpgme_ctx_t ctx, gpgme_error_t err, gpgme_key_t recv,
 
 }
 
-void encryptSign(){ //Not finished yet.
-    //gpgme_op_encrypt_sign(ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
-}
+void encryptSign(gpgme_ctx_t ctx, gpgme_error_t err, gpgme_key_t recpKey,
+                 const char *inputFileName,const char *outputFileName){    //Not finished yet.
 
-void decrypt(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFileName,
-             const char *outputFileName){
-
-    gpgme_decrypt_result_t decryptResult;
+    gpgme_encrypt_result_t encryptResult;
+    gpgme_key_t keys[2]={NULL, NULL};
+    keys[0]=recpKey;
     gpgme_data_t in, out;
     FILE *outputFile;
+    int ret;
     int BUF_SIZE = 512;
     char buf[BUF_SIZE + 1];
-    int ret;
 
-    err=gpgme_data_new_from_file(&in, inputFileName, 1);
+    err = gpgme_data_new_from_file (&in, inputFileName, 1);
     detectError(err);
 
-    err=gpgme_data_new(&out);
+    err = gpgme_data_new (&out);
     detectError(err);
 
-    gpgme_op_decrypt(ctx, in, out);
+    err=gpgme_op_encrypt_sign(ctx, keys, GPGME_ENCRYPT_ALWAYS_TRUST, in, out);
     detectError(err);
 
-    decryptResult = gpgme_op_decrypt_result(ctx);
-    if(decryptResult->wrong_key_usage){
+    encryptResult = gpgme_op_encrypt_result (ctx);
+    if (encryptResult->invalid_recipients) {
         detectError(err);
     }
 
@@ -262,6 +260,116 @@ void decrypt(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFileName,
     // Release the "out" data object
     gpgme_data_release (out);
 
+
+}
+
+void decrypt(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFileName,
+             const char *outputFileName){
+
+    gpgme_decrypt_result_t decryptResult;
+    gpgme_data_t in, out;
+    FILE *outputFile;
+    int BUF_SIZE = 512;
+    char buf[BUF_SIZE + 1];
+    int ret;
+
+    err=gpgme_data_new_from_file(&in, inputFileName, 1);
+    detectError(err);
+
+    err=gpgme_data_new(&out);
+    detectError(err);
+
+    gpgme_op_decrypt(ctx, in, out);
+    detectError(err);
+
+    decryptResult = gpgme_op_decrypt_result(ctx);
+    if(decryptResult->wrong_key_usage){
+        detectError(err);
+    }
+
+
+    outputFile = fopen (outputFileName, "w+");
+
+    // Rewind the "out" data object
+    ret = gpgme_data_seek (out, 0, SEEK_SET);
+    // Error handling
+    if (ret)
+        detectError(gpgme_err_code_from_errno (errno));
+
+    // Read the contents of "out" and place it into buf
+    while ((ret = gpgme_data_read (out, buf, BUF_SIZE)) > 0) {
+        // Write the contents of "buf" to "outputFile"
+        fwrite (buf, ret, 1, outputFile);
+    }
+
+    // Error handling
+    if (ret < 0)
+        detectError(gpgme_err_code_from_errno (errno));
+
+    // Close "outputFile"
+    fclose(outputFile);
+
+    // Release the "in" data object
+    gpgme_data_release (in);
+    // Release the "out" data object
+    gpgme_data_release (out);
+
+
+}
+
+gpgme_verify_result_t decryptVerify(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFileName,
+             const char *outputFileName){
+
+    gpgme_decrypt_result_t decryptResult;
+    gpgme_verify_result_t verifyResult;
+    gpgme_data_t in, out;
+    FILE *outputFile;
+    int BUF_SIZE = 512;
+    char buf[BUF_SIZE + 1];
+    int ret;
+
+    err=gpgme_data_new_from_file(&in, inputFileName, 1);
+    detectError(err);
+
+    err=gpgme_data_new(&out);
+    detectError(err);
+
+    gpgme_op_decrypt_verify(ctx, in, out);
+    detectError(err);
+
+    decryptResult = gpgme_op_decrypt_result(ctx);
+    if(decryptResult->wrong_key_usage){
+        detectError(err);
+    }
+    verifyResult = gpgme_op_verify_result(ctx);
+
+    outputFile = fopen (outputFileName, "w+");
+
+    // Rewind the "out" data object
+    ret = gpgme_data_seek (out, 0, SEEK_SET);
+    // Error handling
+    if (ret)
+        detectError(gpgme_err_code_from_errno (errno));
+
+    // Read the contents of "out" and place it into buf
+    while ((ret = gpgme_data_read (out, buf, BUF_SIZE)) > 0) {
+        // Write the contents of "buf" to "outputFile"
+        fwrite (buf, ret, 1, outputFile);
+    }
+
+    // Error handling
+    if (ret < 0)
+        detectError(gpgme_err_code_from_errno (errno));
+
+    // Close "outputFile"
+    fclose(outputFile);
+
+    // Release the "in" data object
+    gpgme_data_release (in);
+    // Release the "out" data object
+    gpgme_data_release (out);
+
+    return verifyResult;
 
 }
 
@@ -379,45 +487,58 @@ int main(int argc, char *argv[])
 
     recipientKey = key;
 
-
-    const char *senderx="e2eeim@e2eeim.crypto";
-    gpgme_set_sender(ctx, senderx);
-
-    const char *sender=gpgme_get_sender(ctx);
-
-    qDebug() << "SENDER" << sender;
-
-    qDebug() << "7--------------Encryption---------------7";
+    qDebug() << "7---------Symmetric Encryption----------7";
     const char *inputEncrypt="main.cpp";
-    const char *outputEncrypt="main.cpp.gpg";
+    const char *outputEncrypt="main.cpp.SymEncrypted";
     encrypt(ctx, err, recipientKey, inputEncrypt, outputEncrypt);
     qDebug() << "Finished encryption, output saved into" << outputEncrypt << endl;
 
 
-    qDebug() << "8--------------Decryption---------------8";
-    const char *inputDecrypt="main.cpp.gpg";
-    const char *outputDecrypt="main.cpp.out";
+    qDebug() << "8-------- Symmetric Decryption-----------8";
+    const char *inputDecrypt="main.cpp.SymEncrypted";
+    const char *outputDecrypt="main.cpp.SymDecrypted";
     decrypt(ctx, err, inputDecrypt, outputDecrypt);
     qDebug() << "Finished decryption, output saved into" << outputDecrypt << endl;
 
-    qDebug() << "9--------------Delete Keys--------------9";
+    // //////////////////////////////////////////////////////
+
+    qDebug() << "9--------Asymmetric Encryption-----------9";
+    const char *outputEncrypt2="main.cpp.AsymEncrypted";
+
+    gpgme_signers_add(ctx, senderKey);
+
+    encryptSign(ctx, err, recipientKey, inputEncrypt, outputEncrypt2);
+    qDebug() << "Finished encryption, output saved into" << outputEncrypt2 << endl;
+
+
+    qDebug() << "10--------Asymmetric Decryption----------10";
+    const char *inputDecrypt2="main.cpp.AsymEncrypted";
+    const char *outputDecrypt2="main.cpp.AsymDecrypted";
+    gpgme_verify_result_t verifyResult;
+    verifyResult = decryptVerify(ctx, err, inputDecrypt2, outputDecrypt2);
+    qDebug() << "Finished decryption, output saved into" << outputDecrypt2 << endl;
+
+
+    qDebug() << "11--------------Delete Keys--------------11";
 
     printKeys(senderKey);
     err = gpgme_op_delete (ctx,senderKey,1);
-    detectError(err);
-    qDebug() << "DELETED!!\n";
+    //detectError(err);
+    //qDebug() << "DELETED!!\n";
 
     printKeys(recipientKey);
     err = gpgme_op_delete (ctx,recipientKey,1);
-    detectError(err);
-    qDebug() << "DELETED!!\n";
+    //detectError(err);
+    //qDebug() << "DELETED!!\n";
 
     qDebug() << "\n\nALL DONE\n\n";
 
-    qDebug() << "At runtime, runtime generated 3 files as follow";
+    qDebug() << "At runtime, the program generated 5 files as follow";
     qDebug() << "E2EEIM_Public_Key.key";
-    qDebug() << "main.cpp.gpg";
-    qDebug() << "main.cpp.out";
+    qDebug() << "main.cpp.SymEncrypted";
+    qDebug() << "main.cpp.SymDncrypted";
+    qDebug() << "main.cpp.AsymEncrypted";
+    qDebug() << "main.cpp.AsymDncrypted";
     qDebug() << "\nYou can delete it all by 'make distclean'";
     qDebug() << "(If 'Makefile' generated by 'qmake')";
 

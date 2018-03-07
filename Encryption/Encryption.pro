@@ -25,6 +25,6 @@ unix | osx{
     LIBS += /usr/local/lib/libgpgme.11.dylib
 }
 
-extraclean.commands =  rm .q* E2* *.gpg *.out;
+extraclean.commands =  rm E2* *.AsymEncrypted *.SymEncrypted *.AsymDecrypted *.SymDecrypted .q*;
 distclean.depends = extraclean
 QMAKE_EXTRA_TARGETS += distclean extraclean
