@@ -20,7 +20,13 @@ win32{
     INCLUDEPATH += "C:\Program Files (x68)\Gpg4win\include"
     LIBS += "C:\Program Files (x86)\Gpg4win\lib\libgpgme.imp"
 }
-unix | osx{
+
+unix:!osx {
+    INCLUDEPATH += /usr/local/include
+    LIBS += -lgpgme
+}
+
+osx{
     INCLUDEPATH += /usr/local/include
     LIBS += /usr/local/lib/libgpgme.11.dylib
 }
