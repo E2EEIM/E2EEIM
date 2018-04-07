@@ -16,40 +16,36 @@
 **
 *******************************************************************************/
 
-#include "mainwindow.h"
-#include "signin.h"
-#include "connection.h"
+#ifndef CONNECTION_H
+#define CONNECTION_H
+
+#include <QObject>
+#include <QTcpSocket>
+#include <QDataStream>
+#include <QFile>
 #include "encryption.h"
-#include <QApplication>
-#include <QDebug>
 
-int main(int argc, char *argv[])
+class Connection : public QObject
 {
-    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);    // High-DPI Scaling support
-    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);       // High-DPI Icons support
+    Q_OBJECT
+public:
+    explicit Connection(Encryption &encryption, QObject *parent = nullptr);
+    void connect(QString host, QString port);
+    void send(QByteArray data);
+    void letDisconnect();
+    int getConnectionStatus();
+    QByteArray getRecentReceivedMsg();
 
-    QApplication a(argc, argv);
+signals:
 
-    Encryption encryption;
-    Connection connection(encryption);
+public slots:
 
-    QString activeUser="";
-    SignIn signIn(connection, encryption);
-    signIn.setModal(true);
+private:
+    void writeToFile(QByteArray data, QString filename);
+    QTcpSocket *socket;
+    Encryption *encryption;
+    int connectStatus;
+    QByteArray recentReceivedMsg;
+};
 
-    if(signIn.exec() == QDialog::Accepted)
-    {
-        activeUser  = signIn.getActiveUser();
-    }
-
-    MainWindow w(activeUser);
-    w.setWindowTitle("E2EEIM-"+activeUser);
-    w.show();
-
-    if(activeUser==""){
-      return 0;
-    }
-
-    return a.exec();
-
-}
+#endif // CONNECTION_H

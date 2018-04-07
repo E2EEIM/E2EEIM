@@ -14,7 +14,7 @@
    <string>Dialog</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="res.qrc">
+   <iconset resource="../../../Desktop/ClientEncrypt/E2EEIM-Desktop/res.qrc">
     <normaloff>:/img/icons/E2EEIM.png</normaloff>:/img/icons/E2EEIM.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -24,7 +24,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -309,8 +309,6 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="res.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
