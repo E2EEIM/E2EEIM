@@ -199,7 +199,7 @@ QStringList Encryption::getE2eeimAccounts(){
         QString email=QString(key->uids->email);
         if(email.split("@").at(1) == "e2eeim.chat"){
             QString name=QString(key->uids->name);
-            QString fpr=QString(key->fpr);
+            QString fpr=QString(key->subkeys->fpr);
             accounts.append(name);
             accounts.append(fpr);
         }
@@ -458,11 +458,13 @@ gpgme_key_t Encryption::getServerPubKey(){
     return serverKey;
 }
 
+/*
 void Encryption::deletePrivateKey(gpgme_key_t priKey){
 
     err=gpgme_op_delete_ext(ctx, priKey, GPGME_DELETE_FORCE | GPGME_DELETE_FORCE);
     detectError(err);
 }
+*/
 
 /*
 int main(int argc, char *argv[])
