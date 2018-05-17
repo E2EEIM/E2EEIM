@@ -72,8 +72,12 @@ void Connection::connect(QString host, QString port){
                 gpgme_import_result_t keyImportResult=encryption->importKey("servPubKey.key");
 
                 //Init server public key
+                QString fpr=QString(keyImportResult->imports->fpr);
+                QByteArray ba=fpr.toLatin1();
+                const char *patt=ba.data();
+
                 gpgme_key_t serverKey;
-                serverKey = encryption->getKey(keyImportResult->imports->fpr, 0);
+                serverKey = encryption->getKey(patt, 0);
                 encryption->setServerKey(serverKey);
 
                 connectStatus=1; //connected;
@@ -113,7 +117,7 @@ void Connection::send(QByteArray data){
 
     int op=QString(data.mid(4,1)).data()->unicode();
 
-    if(op==3){
+    if(op==3 || op==5 || op==7){
         socket->waitForReadyRead();
         QByteArray data = socket->readAll();
         recentReceivedMsg=data;

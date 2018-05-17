@@ -5,13 +5,16 @@
 #include <QHostAddress>
 
 MyThread::MyThread(QQueue<QByteArray> *queue, QList<QString> *usernameList,
-                   QList<QString> *userKeyList, int ID, QObject *parent) :
+                   QList<QString> *userKeyList, QList<QString> *loginUser,
+                   QList<QString> *loginRanNum, int ID, QObject *parent) :
     QThread(parent)
 {
 
     queuePtr=queue;
     this->usernameList=usernameList;
     this->userKeyList=userKeyList;
+    this->loginUser=loginUser;
+    this->loginRanNum=loginRanNum;
 
     this->socketDescriptor = ID;
 
@@ -130,6 +133,7 @@ void MyThread::run(){
 void MyThread::dataFilter(QByteArray data){
 
     //QString dataQString(data);
+    bool ok;
     int intOp=QString(data.mid(4,1)).data()->unicode();
     qDebug() << "intOp:"<< intOp;
 
@@ -181,13 +185,18 @@ void MyThread::dataFilter(QByteArray data){
         QByteArray payload=decryptData(data, "signUp.pgp");
 
         qDebug() << "\n-DECRYPTED PAYLOAD-";
+        qDebug() << "HEAD:" << QString(payload).mid(0, 20);
         int usernameLength=QString(payload).mid(0,1).data()->unicode();
 
-        QString username(payload.mid(5, usernameLength));
+        QString username=QString(payload).mid(5, usernameLength);
 
+        /*
         int userPublicKeyLength;
         QDataStream ds(payload.mid(1,4));
         ds >> userPublicKeyLength;
+        */
+        int userPublicKeyLength;
+        userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
 
         qDebug() << "Username length:"<< usernameLength;
         qDebug() << "Username:" << username;
@@ -196,23 +205,32 @@ void MyThread::dataFilter(QByteArray data){
         //qDebug() << "User's public key:"<< payload.mid(5+usernameLength);
 
 
+        QString result;
 
-        qDebug() << "\n!!!!! ASSUME USERNAME AVAILABLE FOR SIGN UP !!!!!";
+        if(usernameList->indexOf(username)==(-1)){
 
+            qDebug() << "\n-ADD NEW USER TO LIST-";
+            addNewUser(payload);
+            qDebug() << "Username:"<< username;
+            qDebug() << "User's KeyID:" << userKeyList->at(usernameList->indexOf(username));
 
-        qDebug() << "\n-ADD NEW USER TO LIST-";
-        addNewUser(payload);
-        qDebug() << "Username:"<< username;
-        qDebug() << "User's KeyID:" << userKeyList->at(usernameList->indexOf(username));
+            qDebug() << "\n\n\n\n\n";
 
-        qDebug() << "\n\n\n\n\n";
+            result="Sign up success, "+username+" ready for sign in!";
+
+        }
+        else{
+
+            result= "Username: "+username+" not available!";
+
+        }
+
 
 
         //Send sign up result
 
         //Create <-*4 sign up result
         data.clear();
-        QString result="Sign up success, "+username+" ready for sign in!";
         QByteArray signUpResult;
         signUpResult.append(result);
         QString userSubkey=userKeyList->at(usernameList->indexOf(username));
@@ -232,6 +250,173 @@ void MyThread::dataFilter(QByteArray data){
         QDataStream ds2(&dataSize, QIODevice::WriteOnly);
         ds2 << payloadAndOpSize;
         data.insert(0, dataSize);
+
+        send(data);
+
+    }
+
+    if(intOp==5){
+        qDebug() << "*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5";
+        qDebug() << "*5-> RECEIVED Client sign in request\n";
+        printf("                 1 byte            4 byte           <255      ~4000\n");
+        printf("          +------------------+------------------+----------+-----------+\n");
+        printf("payload = |  Username Length | UsrPubKey Length | Username | UsrPubKey |\n");
+        printf("          +------------------+------------------+----------+-----------+\n");
+        printf("\n");
+        printf("+---------------------+-------------+----------------------------------+\n");
+        printf("|  data Size (4 byte) | OP (1 byte) |          encrypted(payload)      |\n");
+        printf("+---------------------+-------------+----------------------------------+\n");
+
+        printDataDetail(data);
+
+        //decrypt data to get payload
+        QByteArray payload=decryptData(data, "signIn.pgp");
+
+        qDebug() << "\n-DECRYPTED PAYLOAD-";
+        int usernameLength=QString(payload).mid(0,1).data()->unicode();
+
+        QString username(payload.mid(5, usernameLength));
+
+        int userPublicKeyLength;
+        userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
+
+        qDebug() << "Username length:"<< usernameLength;
+        qDebug() << "Username:" << username;
+        qDebug() << "User's public key Length:" << userPublicKeyLength;
+        qDebug() << "User's public key:"<< "[remove next line's //(comment) to see user's public key]";
+        //qDebug() << "User's public key:"<< payload.mid(5+usernameLength);
+
+        if(usernameList->indexOf(username)!=(-1)){
+
+            qDebug() << "USER INDEX: " << usernameList->indexOf(username);
+            gpgme_key_t userKey=getKey(userKeyList->at(usernameList->indexOf(username)));
+
+            printKeys(userKey);
+
+            int rNum = qrand();
+            QByteArray qb;
+            qb.setNum(rNum);
+
+
+            qDebug() << "int rNum:" << rNum;
+            qDebug() << "QBy rNum:" << qb;
+
+            loginUser->append(username);
+            loginRanNum->append(QString(qb));
+
+            qDebug() << "loginUser:" << username;
+            qDebug() << "loginRanNum:" << loginRanNum->at(
+                            loginUser->indexOf(username));
+
+
+            QByteArray cipher=encryptToClient(qb, username, "rannum.cipher");
+
+            data.clear();
+
+            data.append(cipher);
+
+            // Insert operation in front of byte array (data[0]).
+            data.insert(0, (char)6);
+
+            //Insert size of(operation + payload) in front of byte array (data[0]).
+            int dataSize=data.size();
+            QByteArray dataSizeByte;
+            QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+            ds << dataSize;
+            data.insert(0, dataSizeByte);
+
+            send(data);
+
+
+        }
+        else{
+            qDebug() << "USER NOT FOUND IN THIS SERVER!!!!";
+
+            QByteArray qb="USER NOT FOUND IN THIS SERVER!";
+
+            qDebug() << "qb:" << qb; // ////////////////////////////////
+
+            //QByteArray cipher=encryptToClient(qb, username, "rannum.cipher");
+            data.clear();
+            data.append(qb);
+
+            //qDebug() << "cipher:" << cipher; // ////////////////////////////////
+
+            // Insert operation in front of byte array (data[0]).
+            data.insert(0, (char)6);
+
+            qDebug() << "data:" << data; // ////////////////////////////////
+
+            //Insert size of(operation + payload) in front of byte array (data[0]).
+            int dataSize=data.size();
+            QByteArray dataSizeByte;
+            QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+            ds << dataSize;
+            data.insert(0, dataSizeByte);
+
+            qDebug() << "data:" << data; // ////////////////////////////////
+
+            send(data);
+
+
+        }
+
+    }
+    if(intOp==7){
+        qDebug() << "*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7";
+        qDebug() << "*7-> RECEIVED Sign in verification";
+        printf("+----------------------+----------------------+--------------------+\n");
+        printf("|  data Size (4 byte)  | Operation (1 byte)   | Encrypted(payload) |\n");
+        printf("+----------------------+----------------------+--------------------+\n");
+
+        printDataDetail(data);
+        QByteArray payload=decryptData(data, "signInVerify.pgp");
+
+        qDebug() << payload;
+
+        QString dataQS=QString(payload);
+
+        QString verifyNum=dataQS.split("@@").first();
+        QString keyID=dataQS.split("@@").last();
+
+        qDebug() << "verifyNum:" << verifyNum;
+        qDebug() << "keyID:" << keyID;
+
+        gpgme_key_t userKey=getKey(keyID);
+
+        QString username=(userKey->uids->name);
+        qDebug() << "username:" << username;
+
+        int userIndex=loginUser->indexOf(username);
+
+        QByteArray qb;
+
+        if(loginRanNum->at(userIndex)==verifyNum){
+
+            qb = "verify success!!!";
+
+        }
+        else{
+            qb = "Server couldn't verify this account's private key belongs to you!";
+        }
+
+        qDebug() << qb;
+
+        QByteArray cipher=encryptToClient(qb, username, "signInResult.cipher");
+
+        data.clear();
+
+        data.append(cipher);
+
+        // Insert operation in front of byte array (data[0]).
+        data.insert(0, (char)8);
+
+        //Insert size of(operation + payload) in front of byte array (data[0]).
+        int dataSize=data.size();
+        QByteArray dataSizeByte;
+        QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+        ds << dataSize;
+        data.insert(0, dataSizeByte);
 
         send(data);
 
@@ -262,19 +447,36 @@ void MyThread::printDataDetail(QByteArray data){
 QByteArray MyThread::decryptData(QByteArray data, const char* outputFileName){
 
     QByteArray decrypted;
-    QByteArray ciper=data.mid(5);
+    QByteArray cipher=data.mid(5);
+    int intOp=QString(data.mid(4,1)).data()->unicode();
 
-    QFile File("temp.data");
+    QFile File("temp.cipher");
     if(!File.open(QFile::WriteOnly | QFile::Text)){
         qDebug() << "cound not open file for writing";
         abort();
     }
     QTextStream out(&File);
-    out << ciper;
+    out << cipher;
     File.flush();
     File.close();
 
-    decrypt(ctx, err, "temp.data", outputFileName);
+
+    QString verifyResult;
+
+    qDebug() << "decryptV";
+
+    qDebug()<< "\n\n\n\n intOp:" << intOp;
+
+    if(intOp==3){
+        decrypt(ctx, err, "temp.cipher", outputFileName);
+    }
+    else{
+        verifyResult=decryptVerify(ctx, err, "temp.cipher", outputFileName);
+
+    }
+
+    qDebug() << "decryptVx";
+
 
     QFile outFile(outputFileName);
 
@@ -290,14 +492,24 @@ QByteArray MyThread::decryptData(QByteArray data, const char* outputFileName){
 
     decrypted.append(dataStream);
 
-    return decrypted;
+    if(intOp==7){
+        decrypted.append("@@");
+        decrypted.append(verifyResult.mid(1));
+
+        return decrypted;
+    }
+    else{
+        return decrypted;
+    }
+
+
 }
 
 
 void MyThread::addNewUser(QByteArray payload){
 
     int usernameLength=QString(payload).mid(0,1).data()->unicode();
-    QString username(payload.mid(5, usernameLength));
+    QString username=QString(payload.mid(5, usernameLength));
 
     // Import user's public key
     QByteArray publicKey=payload.mid(5+usernameLength);

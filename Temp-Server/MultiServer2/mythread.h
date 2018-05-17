@@ -14,7 +14,7 @@ class MyThread : public QThread
     Q_OBJECT
 public:
     explicit MyThread(QQueue<QByteArray> *queue, QList<QString> *usernameList,
-                      QList<QString> *userKeyList, int ID, QObject *parent = 0);
+                      QList<QString> *userKeyList, QList<QString> *loginUser, QList<QString> *loginRanNum, int ID, QObject *parent = 0);
     void run();
 
     QTcpSocket *socket;
@@ -43,6 +43,8 @@ private:
     QQueue<QByteArray> *queuePtr;
     QList<QString> *usernameList;
     QList<QString> *userKeyList;
+    QList<QString> *loginUser;
+    QList<QString> *loginRanNum;
 
     gpgme_ctx_t ctx;  // the context
     gpgme_error_t err; // errors

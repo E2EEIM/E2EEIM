@@ -37,7 +37,6 @@ public:
     ~SignIn();
 
 private slots:
-    void on_pushButton_clicked();
 
     void on_comboBox_selectServer_currentIndexChanged(const QString &arg1);
 
@@ -51,12 +50,30 @@ private slots:
 
     void on_pushButton_signUpAccountSignUp_clicked();
 
+    void on_tabWidget_mainTab_currentChanged(int index);
+
+    void on_comboBox_signIn_SelectAccount_currentIndexChanged(const QString &arg1);
+
+    void on_comboBox_signIn_selectServer_currentIndexChanged(const QString &arg1);
+
+    void on_lineEdit_signIn_serverAddress_textChanged(const QString &arg1);
+
+    void on_lineEdit_signIn_serverPort_textChanged(const QString &arg1);
+
+    void on_pushButton_signIn_serverConnect_clicked();
+
+    void on_pushButton_signIn_AccountSignIn_clicked();
+
+
 private:
     Ui::SignIn *ui;
     Connection *conn;
     Encryption *encryption;
     gpgme_key_t newUsersPrivateKey;
     gpgme_key_t newUsersPublicKey;
+    QString selectedAccount;
+    QStringList accountNameList;
+    QStringList accountKeyList;
 
 };
 

@@ -159,16 +159,57 @@ gpgme_import_result_t Encryption::importKey(const char *inFileName){
     return importResult;
 }
 
-gpgme_key_t Encryption::getKey(char *pattern, int isPrivateKey){
+gpgme_key_t Encryption::getKey(const char *pattern, int isPrivateKey){
+
+    gpgme_key_t targetKey;
     gpgme_key_t key;
-    err=gpgme_get_key(ctx, pattern, &key, isPrivateKey);
+
+    err = gpgme_op_keylist_start(ctx,pattern, isPrivateKey);
     detectError(err);
-    return key;
+
+    int nKeysFound=0;
+
+    while (!(err = gpgme_op_keylist_next(ctx, &key))) { // loop through the keys in the keyring
+        targetKey=key;
+        nKeysFound++;
+    }
+
+
+    return targetKey;
 }
 
 void Encryption::setServerKey(gpgme_key_t key){
     this->serverKey=key;
     printf("SET SERVER KEY SUCCESS!!\n");
+}
+
+QStringList Encryption::getE2eeimAccounts(){
+
+    gpgme_key_t key;
+    QStringList accounts;
+    int nKeysFound=0;
+
+    // start the keylist
+    err = gpgme_op_keylist_start (ctx, NULL, 1);
+    detectError(err);
+
+
+    while (!(err = gpgme_op_keylist_next (ctx, &key))) { // loop through the keys in the keyring
+
+        QString email=QString(key->uids->email);
+        if(email.split("@").at(1) == "e2eeim.chat"){
+            QString name=QString(key->uids->name);
+            QString fpr=QString(key->fpr);
+            accounts.append(name);
+            accounts.append(fpr);
+        }
+
+        gpgme_key_unref (key); // release the key reference
+        nKeysFound++;
+    }
+
+    return accounts;
+
 }
 
 void Encryption::encrypt(gpgme_ctx_t ctx, gpgme_error_t err, gpgme_key_t recv,
@@ -257,6 +298,7 @@ void Encryption::encryptSign(gpgme_key_t signKey, gpgme_key_t recpKey,
         detectError(err);
     }
 
+
     outputFile = fopen (outputFileName, "w+");
 
     // Rewind the "out" data object
@@ -270,6 +312,7 @@ void Encryption::encryptSign(gpgme_key_t signKey, gpgme_key_t recpKey,
         // Write the contents of "buf" to "outputFile"
         fwrite (buf, ret, 1, outputFile);
     }
+
 
     // Error handling
     if (ret < 0)
@@ -364,6 +407,7 @@ bool Encryption::decryptVerify(const char *inputFileName,
     if(decryptResult->wrong_key_usage){
         detectError(err);
     }
+
     verifyResult = gpgme_op_verify_result(ctx);
 
     outputFile = fopen (outputFileName, "w+");
@@ -400,6 +444,24 @@ bool Encryption::decryptVerify(const char *inputFileName,
     else{
        return false;
     }
+}
+
+void Encryption::setUserPubKey(gpgme_key_t pubKey){
+    UserPubKey = pubKey;
+}
+
+void Encryption::setUserPriKey(gpgme_key_t priKey){
+    UserPriKey = priKey;
+}
+
+gpgme_key_t Encryption::getServerPubKey(){
+    return serverKey;
+}
+
+void Encryption::deletePrivateKey(gpgme_key_t priKey){
+
+    err=gpgme_op_delete_ext(ctx, priKey, GPGME_DELETE_FORCE | GPGME_DELETE_FORCE);
+    detectError(err);
 }
 
 /*

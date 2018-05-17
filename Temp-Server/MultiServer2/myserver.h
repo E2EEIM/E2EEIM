@@ -11,7 +11,7 @@ class MyServer : public QTcpServer
 {
     Q_OBJECT
 public:
-    explicit MyServer(QQueue<QByteArray> &msg, QList<QString> &usernameList, QList<QString> &userKeyList, QObject *parent = nullptr);
+    explicit MyServer(QQueue<QByteArray> &msg, QList<QString> &usernameList, QList<QString> &userKeyList, QList<QString> &loginUser, QList<QString> &loginRanNum, QObject *parent = nullptr);
     void startServer();
 signals:
 
@@ -24,6 +24,8 @@ protected:
     QQueue<QByteArray> *queue;
     QList<QString> *usernameList;
     QList<QString> *userKeyList;
+    QList<QString> *loginUser;
+    QList<QString> *loginRanNum;
 };
 
 #endif // MYSERVER_H

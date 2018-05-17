@@ -69,3 +69,7 @@ osx{
     INCLUDEPATH += /usr/local/include
     LIBS += /usr/local/lib/libgpgme.11.dylib
 }
+
+extraclean.commands =  rm -f 2.payload 2payload.encrypted E2EEIM-Desktop.pro.user .qmake.stash servPubKey.key signUpResult.cipher signUpResult.txt userPublicKey.key signIn.payload signIn.epkg signInRan.cipher signInRan.txt signInResult.cipher signInResult.txt; rm -rf userData
+distclean.depends = extraclean
+QMAKE_EXTRA_TARGETS += distclean extraclean

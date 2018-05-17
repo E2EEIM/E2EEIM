@@ -22,7 +22,7 @@ class Encryption
 public:
     Encryption();
 
-    gpgme_key_t getKey(char *pattern, int isPrivateKey);
+    gpgme_key_t getKey(const char *pattern, int isPrivateKey);
     void setServerKey(gpgme_key_t key);
 
     void printKeys(gpgme_key_t key);
@@ -39,13 +39,23 @@ public:
     bool decryptVerify(const char *inputFileName,
                  const char *outputFileName);
 
+    void setUserPubKey(gpgme_key_t pubKey);
+    void setUserPriKey(gpgme_key_t priKey);
+
+    void deletePrivateKey(gpgme_key_t priKey);
+
+    gpgme_key_t getServerPubKey();
+
     gpgme_key_t serverKey = nullptr;
+    QStringList getE2eeimAccounts();
 
 private:
     gpgme_ctx_t ctx;
     gpgme_error_t err;
     QByteArray activeUserPubKey;
 
+    gpgme_key_t UserPubKey;
+    gpgme_key_t UserPriKey;
 
 };
 

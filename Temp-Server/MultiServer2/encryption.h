@@ -315,7 +315,7 @@ void decrypt(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFileName,
 
 }
 
-gpgme_verify_result_t decryptVerify(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFileName,
+QString decryptVerify(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFileName,
              const char *outputFileName){
 
     gpgme_decrypt_result_t decryptResult;
@@ -367,7 +367,19 @@ gpgme_verify_result_t decryptVerify(gpgme_ctx_t ctx, gpgme_error_t err, const ch
     // Release the "out" data object
     gpgme_data_release (out);
 
-    return verifyResult;
+    gpgme_signature_t sig=verifyResult->signatures;
+    QString result;
+    QString fpr=QString(sig->fpr);
+
+    if ((sig->summary & GPGME_SIGSUM_VALID)){
+       result="1"+fpr;
+    }
+    else{
+       result="0"+fpr;
+
+    }
+
+    return result;
 
 }
 
