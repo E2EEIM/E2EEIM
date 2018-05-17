@@ -23,6 +23,29 @@
 #include <QApplication>
 #include <QDebug>
 
+void closeMainWindow(){
+
+    //window.close();
+
+    qDebug() << "closeMainWindowxxxx";
+    Encryption encryption;
+    Connection connection(encryption);
+
+    QString activeUser="";
+    SignIn signIn(connection, encryption);
+    signIn.setModal(false);
+
+    if(signIn.exec() == QDialog::Accepted)
+    {
+        activeUser  = signIn.getActiveUser();
+    }
+
+    MainWindow w(activeUser);
+    w.setWindowTitle("E2EEIM-"+activeUser);
+    w.show();
+    qDebug() << "closeMainWindowyyyy";
+}
+
 int main(int argc, char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);    // High-DPI Scaling support
@@ -35,7 +58,7 @@ int main(int argc, char *argv[])
 
     QString activeUser="";
     SignIn signIn(connection, encryption);
-    signIn.setModal(true);
+    signIn.setModal(false);
 
     if(signIn.exec() == QDialog::Accepted)
     {
@@ -46,10 +69,15 @@ int main(int argc, char *argv[])
     w.setWindowTitle("E2EEIM-"+activeUser);
     w.show();
 
+    QObject::connect(&w, &MainWindow::closeWindow, closeMainWindow);
+
+
+
+
     if(activeUser==""){
       return 0;
     }
-
+    //w.deleteLater();
     return a.exec();
 
 }

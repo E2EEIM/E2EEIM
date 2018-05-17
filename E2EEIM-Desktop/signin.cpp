@@ -59,7 +59,7 @@ void SignIn::on_pushButton_clicked()
     //qDebug() << activeUser;
     if(activeUser!=""){
         conn->send("abcdefgh");
-        SignIn::accept(); 
+        SignIn::accept();
     }
     else{
         ui->label_signIn_keyFpr->setText("\nUsername can not be empty!");
@@ -107,7 +107,7 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         pubKey=in.readAll();
         File.close();
 
-        // Create 5*-> send sign up require.
+        // Create 5*-> send sign in require.
         QByteArray data;
         data.clear();
 
@@ -149,7 +149,7 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
 
         gpgme_key_t servPubKey=encryption->getServerPubKey();
 
-        encryption->encryptSign(newUsersPrivateKey, servPubKey, "signIn.payload", "signIn.epkg");
+        encryption->encryptSign(privateKey, servPubKey, "signIn.payload", "signIn.epkg");
 
         QFile File_EncryptedPayload("signIn.epkg");
         if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
@@ -218,7 +218,7 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
 
                 qDebug() << signInRan;
 
-                encryption->encryptSign(newUsersPrivateKey, servPubKey, "signInRan.txt", "signIn.epkg");
+                encryption->encryptSign(privateKey, servPubKey, "signInRan.txt", "signIn.epkg");
 
                 QFile File_EncryptedPayload("signIn.epkg");
                 if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){

@@ -18,6 +18,7 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "signin.h"
 
 using namespace std;
 
@@ -559,11 +560,17 @@ void MainWindow::textMenuChange(){
         settingWindow.exec();
         on_pushButton_Conversation_clicked();
     }
+    if(selected=="Sign Out"){
+        this->hide();
+        emit closeWindow();
+    }
     ui->comboBox->setCurrentIndex(0);
 }
 
 void MainWindow::cleanClose(){
     QCoreApplication::quit();
+    //emit closeWindow();
+    //this->close();
 }
 
 /*Enter key filter when user typing*/

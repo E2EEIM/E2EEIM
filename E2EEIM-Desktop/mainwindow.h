@@ -52,6 +52,9 @@ public:
     explicit MainWindow(QString activeUser,QWidget *parent = 0);
     ~MainWindow();
 
+signals:
+    void closeWindow();
+
 private slots:
     void on_pushButton_Contact_clicked();
 
