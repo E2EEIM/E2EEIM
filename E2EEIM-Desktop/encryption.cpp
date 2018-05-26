@@ -454,6 +454,13 @@ void Encryption::setUserPriKey(gpgme_key_t priKey){
     UserPriKey = priKey;
 }
 
+gpgme_key_t Encryption::getUserPubKey(){
+    return UserPubKey;
+}
+gpgme_key_t Encryption::getUserPriKey(){
+    return UserPriKey;
+}
+
 gpgme_key_t Encryption::getServerPubKey(){
     return serverKey;
 }

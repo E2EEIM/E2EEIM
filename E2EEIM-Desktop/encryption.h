@@ -42,14 +42,16 @@ public:
     void setUserPubKey(gpgme_key_t pubKey);
     void setUserPriKey(gpgme_key_t priKey);
 
+    gpgme_key_t getUserPubKey();
+    gpgme_key_t getUserPriKey();
+
     void deletePrivateKey(gpgme_key_t priKey);
 
     gpgme_key_t getServerPubKey();
-
-    gpgme_key_t serverKey = nullptr;
     QStringList getE2eeimAccounts();
 
 private:
+    gpgme_key_t serverKey;
     gpgme_ctx_t ctx;
     gpgme_error_t err;
     QByteArray activeUserPubKey;

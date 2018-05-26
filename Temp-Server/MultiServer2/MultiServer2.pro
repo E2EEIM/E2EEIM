@@ -25,7 +25,7 @@ HEADERS += \
     encryption.h
 
 win32{
-    INCLUDEPATH += "C:\Program Files (x86)\Gpg4win\include"
+    INCLUDEPATH += "C:\Program Files (x68)\Gpg4win\include"
     LIBS += "C:\Program Files (x86)\Gpg4win\lib\libgpgme.imp"
 }
 

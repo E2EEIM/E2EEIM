@@ -80,6 +80,9 @@ void Connection::connect(QString host, QString port){
                 serverKey = encryption->getKey(patt, 0);
                 encryption->setServerKey(serverKey);
 
+                serverAddr=host;
+                serverPort=port;
+
                 connectStatus=1; //connected;
             }
         }
@@ -107,6 +110,13 @@ void Connection::writeToFile(QByteArray data, QString filename){
 
 int Connection::getConnectionStatus(){
     return connectStatus;
+}
+
+QString Connection::getServerAddr(){
+    return serverAddr;
+}
+QString Connection::getServerPort(){
+    return serverPort;
 }
 
 void Connection::send(QByteArray data){

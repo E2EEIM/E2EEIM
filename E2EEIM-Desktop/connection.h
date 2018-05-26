@@ -36,6 +36,9 @@ public:
     int getConnectionStatus();
     QByteArray getRecentReceivedMsg();
 
+    QString getServerAddr();
+    QString getServerPort();
+
 signals:
 
 public slots:
@@ -46,6 +49,9 @@ private:
     Encryption *encryption;
     int connectStatus;
     QByteArray recentReceivedMsg;
+    QString serverAddr;
+    QString serverPort;
+
 };
 
 #endif // CONNECTION_H

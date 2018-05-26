@@ -301,8 +301,15 @@ void MyThread::dataFilter(QByteArray data){
             qDebug() << "int rNum:" << rNum;
             qDebug() << "QBy rNum:" << qb;
 
-            loginUser->append(username);
-            loginRanNum->append(QString(qb));
+            if(loginUser->indexOf(username)==(-1)){
+
+                loginUser->append(username);
+                loginRanNum->append(QString(qb));
+            }
+            else{
+                int idx=loginUser->indexOf(username);
+                loginRanNum->replace(idx, QString(qb));
+            }
 
             qDebug() << "loginUser:" << username;
             qDebug() << "loginRanNum:" << loginRanNum->at(

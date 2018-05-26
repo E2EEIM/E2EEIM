@@ -202,11 +202,14 @@ QStringList ReadConversation(QString Filename){
 }
 
 
-MainWindow::MainWindow(QString activeUser, QWidget *parent) : // /////////////////////////////////////////////////////////////
+MainWindow::MainWindow(Connection &conn, Encryption &encryption, QString activeUser, QWidget *parent) : // /////////////////////////////////////////////////////////////
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    this->conn=&conn;
+    this->encryption=&encryption;
 
     ACTIVE_USR = activeUser;
 
@@ -561,16 +564,45 @@ void MainWindow::textMenuChange(){
         on_pushButton_Conversation_clicked();
     }
     if(selected=="Sign Out"){
-        this->hide();
-        emit closeWindow();
+        signOut();
     }
     ui->comboBox->setCurrentIndex(0);
 }
 
+void MainWindow::signOut(){
+
+    qDebug() << "signOut";
+    this->setWindowTitle("E2EEIM");
+    this->hide();
+
+    QString activeUser="";
+    SignIn signIn(*conn, *encryption);
+    signIn.setModal(false);
+
+    connect(ui->comboBox, SIGNAL(currentTextChanged(QString)),
+                this, SLOT(textMenuChange()));
+
+
+
+    if(signIn.exec() == QDialog::Accepted)
+    {
+        activeUser  = signIn.getActiveUser();
+    }
+
+    this->servKey=encryption->getServerPubKey();
+    this->userPriKey=encryption->getUserPriKey();
+    this->userPubKey=encryption->getUserPubKey();
+
+    this->setWindowTitle("E2EEIM-"+activeUser);
+    this->show();
+
+}
+
 void MainWindow::cleanClose(){
-    QCoreApplication::quit();
-    //emit closeWindow();
-    //this->close();
+    qDebug() << "CLEAN CLOSE";
+    conn->letDisconnect();
+    //QCoreApplication::quit();
+    exit(0);
 }
 
 /*Enter key filter when user typing*/

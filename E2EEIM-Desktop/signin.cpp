@@ -42,8 +42,18 @@ SignIn::SignIn(Connection &conn, Encryption &encryption, QWidget *parent) :
     ui->label_signIn_serverErr->hide();
     ui->label_signUpConnectError->hide();
 
+    int connectionStatus=conn.getConnectionStatus();
 
-    on_tabWidget_mainTab_currentChanged(0);
+    qDebug() << "Connection status:" << connectionStatus;
+
+    if(connectionStatus==0){
+        ui->tabWidget_mainTab->setCurrentIndex(1);
+        on_tabWidget_mainTab_currentChanged(1);
+    }
+    else if(connectionStatus==1){
+        ui->tabWidget_mainTab->setCurrentIndex(0);
+        on_tabWidget_mainTab_currentChanged(0);
+    }
 
 }
 
@@ -280,6 +290,32 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
                     qDebug() << signInResult;
 
                     if(signInResult=="verify success!!!"){
+
+                        selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
+                        QString accountKey;
+
+
+                        int keyIndex=accountNameList.indexOf(selectedAccount);
+
+
+                        for(int i=0; i<accountKeyList.length(); i++){
+                            if(i==keyIndex){
+                                 accountKey=accountKeyList.at(i);
+                            }
+                        }
+
+                        ui->label_signIn_keyFpr->setText(accountKey);
+                        ui->label_signIn_keyFpr->setStyleSheet("color:#999999");
+
+                        QByteArray ba=accountKey.toLatin1();
+                        const char *patt=ba.data();
+
+                        gpgme_key_t privateKey = encryption->getKey(patt, 1);
+                        encryption->setUserPriKey(privateKey);
+
+                        gpgme_key_t publicKey = encryption->getKey(patt, 0);
+                        encryption->setUserPubKey(publicKey);
+
                         SignIn::accept();
                     }
                     else{
@@ -637,30 +673,26 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
 {
     if(index == 0){
         if(conn->getConnectionStatus()==1){
+
+            QString servAddr=conn->getServerAddr();
+            QString servPort=conn->getServerPort();
+
             qDebug() << conn->getConnectionStatus();
             ui->tabWidget_signIn->setTabEnabled(1, true);
             ui->tabWidget_signIn->setCurrentIndex(1);
             ui->label_signIn_serverErr->show();
-            ui->lineEdit_signIn_serverAddress->setText(
-                        ui->lineEdit_SignUpServerIP->text());
+            ui->label_signIn_serverErr->setText("Server:" +servAddr+":"+servPort+" connected");
+            ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
 
-            ui->lineEdit_signIn_serverPort->setText(
-                        ui->lineEdit_SignUpServerPort->text());
 
-            ui->label_signIn_serverErr->setText(
-                        ui->label_signUpAccountErrMsg->text());
+            ui->tabWidget_signUp->setTabEnabled(1, true);
+            ui->tabWidget_signUp->setCurrentIndex(1);
+            ui->label_signUpConnectError->show();
+            ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
+            ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
 
-            QString connectStatus=ui->label_signUpConnectError->text();
-            if(connectStatus == "Connected!"){
-                QString ip = ui->lineEdit_SignUpServerIP->text();
-                QString port = ui->lineEdit_SignUpServerPort->text();
-
-                connectStatus = ip + ":" + port + " " + connectStatus;
-            }
-
-            ui->label_signIn_serverErr->setText(connectStatus);
-
-            ui->label_signIn_serverErr->setStyleSheet("color:#66AA66");
+            ui->frame_signIn_serverForm->hide();
+            ui->frame_SignUpServerEnterNew->hide();
         }
 
         if(ui->tabWidget_signIn->currentIndex()==0 ||
@@ -672,7 +704,6 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
                 ui->comboBox_signIn_SelectAccount->clear();
                 accountNameList.clear();
                 accountKeyList.clear();
-
 
                 int i=0;
                 foreach (QString account, allAccounts) {
@@ -733,7 +764,7 @@ void SignIn::on_comboBox_signIn_SelectAccount_currentIndexChanged(const QString 
     encryption->setUserPriKey(privateKey);
 
     gpgme_key_t publicKey = encryption->getKey(patt, 0);
-    encryption->setUserPriKey(publicKey);
+    encryption->setUserPubKey(publicKey);
 
 }
 

@@ -17,34 +17,9 @@
 *******************************************************************************/
 
 #include "mainwindow.h"
-#include "signin.h"
-#include "connection.h"
-#include "encryption.h"
 #include <QApplication>
 #include <QDebug>
 
-void closeMainWindow(){
-
-    //window.close();
-
-    qDebug() << "closeMainWindowxxxx";
-    Encryption encryption;
-    Connection connection(encryption);
-
-    QString activeUser="";
-    SignIn signIn(connection, encryption);
-    signIn.setModal(false);
-
-    if(signIn.exec() == QDialog::Accepted)
-    {
-        activeUser  = signIn.getActiveUser();
-    }
-
-    MainWindow w(activeUser);
-    w.setWindowTitle("E2EEIM-"+activeUser);
-    w.show();
-    qDebug() << "closeMainWindowyyyy";
-}
 
 int main(int argc, char *argv[])
 {
@@ -56,8 +31,10 @@ int main(int argc, char *argv[])
     Encryption encryption;
     Connection connection(encryption);
 
+
     QString activeUser="";
     SignIn signIn(connection, encryption);
+
     signIn.setModal(false);
 
     if(signIn.exec() == QDialog::Accepted)
@@ -65,18 +42,15 @@ int main(int argc, char *argv[])
         activeUser  = signIn.getActiveUser();
     }
 
-    MainWindow w(activeUser);
+    MainWindow w(connection, encryption, activeUser);
+
     w.setWindowTitle("E2EEIM-"+activeUser);
     w.show();
-
-    QObject::connect(&w, &MainWindow::closeWindow, closeMainWindow);
-
-
-
 
     if(activeUser==""){
       return 0;
     }
+
     //w.deleteLater();
     return a.exec();
 

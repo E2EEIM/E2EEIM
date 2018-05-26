@@ -21,6 +21,9 @@
 
 #include <QMainWindow>
 #include <QListWidget>
+#include "signin.h"
+#include "connection.h"
+#include "encryption.h"
 #include "addcontact.h"
 #include "creategroup.h"
 #include "setting.h"
@@ -49,11 +52,11 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QString activeUser,QWidget *parent = 0);
+    explicit MainWindow(Connection &conn, Encryption &encryption,QString activeUser,QWidget *parent = 0);
     ~MainWindow();
 
 signals:
-    void closeWindow();
+    //void closeWindow();
 
 private slots:
     void on_pushButton_Contact_clicked();
@@ -70,6 +73,8 @@ private slots:
 
     void textMenuChange();
 
+    void signOut();
+
     void cleanClose();
 
     bool eventFilter(QObject *watched, QEvent *event);
@@ -79,6 +84,12 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    Connection *conn;
+    Encryption *encryption;
+
+    gpgme_key_t servKey;
+    gpgme_key_t userPriKey;
+    gpgme_key_t userPubKey;
 };
 
 #endif // MAINWINDOW_H
