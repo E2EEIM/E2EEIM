@@ -343,31 +343,6 @@ QString SignIn::getActiveUser(){
     return ACTIVE_USER;
 }
 
-void SignIn::on_comboBox_selectServer_currentIndexChanged(const QString &arg1)
-{
-    if(arg1=="Select server..."){
-        ui->pushButton_SignUpServerConnect->setEnabled(false);
-        ui->frame_SignUpServerEnterNew->hide();
-
-    }
-    if(arg1=="*New Server"){
-        QString ip=ui->lineEdit_SignUpServerIP->text();
-        QString port=ui->lineEdit_SignUpServerPort->text();
-
-        if(ip=="" || port==""){
-            ui->pushButton_SignUpServerConnect->setEnabled(false);
-        }
-        else{
-            ui->pushButton_SignUpServerConnect->setEnabled(true);
-        }
-    }
-    if(arg1!="*New Server"){
-        ui->frame_SignUpServerEnterNew->hide();
-    }
-    else{
-        ui->frame_SignUpServerEnterNew->show();
-    }
-}
 
 void SignIn::on_lineEdit_SignUpServerIP_textChanged(const QString &arg1)
 {
@@ -393,57 +368,117 @@ void SignIn::on_lineEdit_SignUpServerPort_textChanged(const QString &arg1)
 
 void SignIn::on_pushButton_SignUpServerConnect_clicked()
 {
-    ui->label_signUpConnectError->setText("");
-    ui->label_signUpConnectError->hide();
+    if(conn->getConnectionStatus()!=1){
+        ui->label_signUpConnectError->setText("");
+        ui->label_signUpConnectError->hide();
 
-    QString newIP=ui->lineEdit_SignUpServerIP->text();
-    QString newPort=ui->lineEdit_SignUpServerPort->text();
-    QString selectedServer=ui->comboBox_selectServer->currentText();
+        QString newIP=ui->lineEdit_SignUpServerIP->text();
+        QString newPort=ui->lineEdit_SignUpServerPort->text();
+        QString selectedServer=ui->comboBox_signUp_selectServer->currentText();
 
-    if(selectedServer!="Select server..." && selectedServer!="*New Server"){
-        qDebug() << selectedServer;
+        if(selectedServer!="Select server..." && selectedServer!="*New Server"){
+            qDebug() << selectedServer;
+        }
+        else{
+            if(selectedServer=="*New Server"){
+                qDebug()<<newIP<<", Port "<<newPort;
+                ui->label_signUpConnectError->setText("Waiting for connection");
+                ui->label_signUpConnectError->setStyleSheet("color:#333333");
+                ui->label_signUpConnectError->show();
+
+                QString loading[3]={"Waiting for connection.",
+                                    "Waiting for connection..",
+                                    "Waiting for connection..."};
+
+                for(int i=1; i<3; i++){
+                    ui->label_signUpConnectError->setText(loading[i]);
+                }
+
+                conn->connect(newIP, newPort);
+
+                if(conn->getConnectionStatus()==-1){
+                    ui->label_signUpConnectError->show();
+                    ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
+                    ui->label_signUpConnectError->setText("ERROR: Can not connect to server!");
+                }
+                if(conn->getConnectionStatus()==1){
+
+                    QString servAddr=conn->getServerAddr();
+                    QString servPort=conn->getServerPort();
+
+                    qDebug() << conn->getConnectionStatus();
+                    ui->tabWidget_signIn->setTabEnabled(1, true);
+                    ui->tabWidget_signIn->setCurrentIndex(1);
+                    ui->label_signIn_serverErr->show();
+                    ui->label_signIn_serverErr->setText("Server:" +servAddr+":"+servPort+" connected");
+                    ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+
+                    ui->tabWidget_signUp->setTabEnabled(1, true);
+                    ui->tabWidget_signUp->setCurrentIndex(1);
+                    ui->label_signUpConnectError->show();
+                    ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
+                    ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+                    ui->frame_signIn_serverForm->hide();
+                    ui->frame_SignUpServerEnterNew->hide();
+
+                    ui->pushButton_signIn_serverConnect->setText("Disconnect");
+                    ui->pushButton_SignUpServerConnect->setText("Disconnect");
+
+                    ui->pushButton_signIn_serverConnect->setEnabled(true);
+                    ui->pushButton_SignUpServerConnect->setEnabled(true);
+
+                    ui->comboBox_signIn_selectServer->setEnabled(false);
+                    ui->comboBox_signUp_selectServer->setEnabled(false);
+
+                    ui->tabWidget_signUp->setCurrentIndex(1);
+                }
+                if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
+                    ui->label_signUpConnectError->show();
+                    ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
+                    ui->label_signUpConnectError->setText("This server or this port not for E2EEIM");
+                }
+
+            }
+        }
+
+        ui->label_signUpConnectError->hide();
+        ui->label_signUpConnectError->show();
+        //ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
+
     }
     else{
-        if(selectedServer=="*New Server"){
-            qDebug()<<newIP<<", Port "<<newPort;
-            ui->label_signUpConnectError->setText("Waiting for connection");
-            ui->label_signUpConnectError->setStyleSheet("color:#333333");
-            ui->label_signUpConnectError->show();
+        conn->letDisconnect();
 
-            QString loading[3]={"Waiting for connection.",
-                                "Waiting for connection..",
-                                "Waiting for connection..."};
+        int connectStatus=conn->getConnectionStatus();
+        if(connectStatus!=1){
+            ui->comboBox_signIn_selectServer->setEnabled(true);
+            ui->comboBox_signUp_selectServer->setEnabled(true);
 
-            for(int i=1; i<3; i++){
-                ui->label_signUpConnectError->setText(loading[i]);
-            }
+            ui->label_signIn_serverErr->setText("");
+            ui->label_signUpConnectError->setText("");
 
-            conn->connect(newIP, newPort);
+            ui->pushButton_signIn_serverConnect->setText("Connect");
+            ui->pushButton_SignUpServerConnect->setText("Connect");
 
-            if(conn->getConnectionStatus()==-1){
-                ui->label_signUpConnectError->show();
-                ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
-                ui->label_signUpConnectError->setText("ERROR: Can not connect to server!");
-            }
-            if(conn->getConnectionStatus()==1){
-                ui->label_signUpConnectError->show();
-                ui->label_signUpConnectError->setStyleSheet("color:#66AA66");
-                ui->label_signUpConnectError->setText("Connected!");
+            ui->pushButton_signIn_serverConnect->setEnabled(false);
+            ui->pushButton_SignUpServerConnect->setEnabled(false);
 
-                ui->tabWidget_signUp->setCurrentIndex(1);
-            }
-            if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
-                ui->label_signUpConnectError->show();
-                ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
-                ui->label_signUpConnectError->setText("This server or this port not for E2EEIM");
-            }
+            ui->tabWidget_signIn->setTabEnabled(1,0);
+            ui->tabWidget_signUp->setTabEnabled(1,0);
+            ui->tabWidget_signUp->setTabEnabled(2,0);
 
+            ui->tabWidget_signIn->setCurrentIndex(0);
+            ui->tabWidget_signUp->setCurrentIndex(0);
+
+            ui->comboBox_signIn_selectServer->setCurrentIndex(0);
+            ui->comboBox_signUp_selectServer->setCurrentIndex(0);
         }
+        qDebug() << "Connection status:" << connectStatus;
+
     }
 
-    ui->label_signUpConnectError->hide();
-    ui->label_signUpConnectError->show();
-    //ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
 }
 
 void SignIn::on_tabWidget_signUp_currentChanged(int index)
@@ -671,33 +706,41 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
 
 void SignIn::on_tabWidget_mainTab_currentChanged(int index)
 {
+    if(conn->getConnectionStatus()==1){
+
+        QString servAddr=conn->getServerAddr();
+        QString servPort=conn->getServerPort();
+
+        qDebug() << conn->getConnectionStatus();
+        ui->tabWidget_signIn->setTabEnabled(1, true);
+        ui->tabWidget_signIn->setCurrentIndex(1);
+        ui->label_signIn_serverErr->show();
+        ui->label_signIn_serverErr->setText("Server:" +servAddr+":"+servPort+" connected");
+        ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+
+        ui->tabWidget_signUp->setTabEnabled(1, true);
+        ui->tabWidget_signUp->setCurrentIndex(1);
+        ui->label_signUpConnectError->show();
+        ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
+        ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+        ui->frame_signIn_serverForm->hide();
+        ui->frame_SignUpServerEnterNew->hide();
+
+        ui->pushButton_signIn_serverConnect->setText("Disconnect");
+        ui->pushButton_SignUpServerConnect->setText("Disconnect");
+
+        ui->pushButton_signIn_serverConnect->setEnabled(true);
+        ui->pushButton_SignUpServerConnect->setEnabled(true);
+
+        ui->comboBox_signIn_selectServer->setEnabled(false);
+        ui->comboBox_signUp_selectServer->setEnabled(false);
+    }
+
     if(index == 0){
-        if(conn->getConnectionStatus()==1){
-
-            QString servAddr=conn->getServerAddr();
-            QString servPort=conn->getServerPort();
-
-            qDebug() << conn->getConnectionStatus();
-            ui->tabWidget_signIn->setTabEnabled(1, true);
-            ui->tabWidget_signIn->setCurrentIndex(1);
-            ui->label_signIn_serverErr->show();
-            ui->label_signIn_serverErr->setText("Server:" +servAddr+":"+servPort+" connected");
-            ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
-
-
-            ui->tabWidget_signUp->setTabEnabled(1, true);
-            ui->tabWidget_signUp->setCurrentIndex(1);
-            ui->label_signUpConnectError->show();
-            ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
-            ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
-
-            ui->frame_signIn_serverForm->hide();
-            ui->frame_SignUpServerEnterNew->hide();
-        }
-
         if(ui->tabWidget_signIn->currentIndex()==0 ||
                 ui->tabWidget_signIn->currentIndex()==1){
-            qDebug() << "Sign In";
             QStringList allAccounts=encryption->getE2eeimAccounts();
 
             if(!allAccounts.isEmpty()){
@@ -722,17 +765,6 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
                 on_comboBox_signIn_SelectAccount_currentIndexChanged(selectedAccount);
             }
         }
-
-
-        else{
-            //ui->pushButton->setEnabled(false);
-
-        }
-
-
-    }
-    else{
-        qDebug() << "Sign Up";
     }
 }
 
@@ -819,59 +851,143 @@ void SignIn::on_lineEdit_signIn_serverPort_textChanged(const QString &arg1)
 
 void SignIn::on_pushButton_signIn_serverConnect_clicked()
 {
-    ui->label_signIn_serverErr->setText("");
-    ui->label_signIn_serverErr->hide();
+    if(conn->getConnectionStatus()!=1){
+        ui->label_signIn_serverErr->setText("");
+        ui->label_signIn_serverErr->hide();
 
-    QString newIP=ui->lineEdit_signIn_serverAddress->text();
-    QString newPort=ui->lineEdit_signIn_serverPort->text();
-    QString selectedServer=ui->comboBox_signIn_selectServer->currentText();
+        QString newIP=ui->lineEdit_signIn_serverAddress->text();
+        QString newPort=ui->lineEdit_signIn_serverPort->text();
+        QString selectedServer=ui->comboBox_signIn_selectServer->currentText();
 
-    if(selectedServer!="Select Server..." && selectedServer!="*New Server"){
-        qDebug() << selectedServer;
-    }
-    else{
-        if(selectedServer=="*New Server"){
-            qDebug()<<newIP<<", Port "<<newPort;
-            ui->label_signIn_serverErr->setText("Waiting for connection");
-            ui->label_signIn_serverErr->setStyleSheet("color:#333333");
-            ui->label_signIn_serverErr->show();
-
-            QString loading[3]={"Waiting for connection.",
-                                "Waiting for connection..",
-                                "Waiting for connection..."};
-
-            for(int i=1; i<3; i++){
-                ui->label_signIn_serverErr->setText(loading[i]);
-            }
-
-            conn->connect(newIP, newPort);
-
-            if(conn->getConnectionStatus()==-1){
-                ui->label_signIn_serverErr->show();
-                ui->label_signIn_serverErr->setStyleSheet("color:#FF6666");
-                ui->label_signIn_serverErr->setText("ERROR: Can not connect to server!");
-            }
-            if(conn->getConnectionStatus()==1){
-                ui->label_signIn_serverErr->show();
-                ui->label_signIn_serverErr->setStyleSheet("color:#66AA66");
-                ui->label_signIn_serverErr->setText("Connected!");
-
-                ui->tabWidget_signIn->setCurrentIndex(1);
-                ui->tabWidget_signIn->setTabEnabled(1, true);
-
-            }
-            if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
-                ui->label_signIn_serverErr->show();
-                ui->label_signIn_serverErr->setStyleSheet("color:#FF6666");
-                ui->label_signIn_serverErr->setText("This server or this port not for E2EEIM");
-            }
-
+        if(selectedServer!="Select Server..." && selectedServer!="*New Server"){
+            qDebug() << selectedServer;
         }
+        else{
+            if(selectedServer=="*New Server"){
+                qDebug()<<newIP<<", Port "<<newPort;
+                ui->label_signIn_serverErr->setText("Waiting for connection");
+                ui->label_signIn_serverErr->setStyleSheet("color:#333333");
+                ui->label_signIn_serverErr->show();
+
+                QString loading[3]={"Waiting for connection.",
+                                    "Waiting for connection..",
+                                    "Waiting for connection..."};
+
+                for(int i=1; i<3; i++){
+                    ui->label_signIn_serverErr->setText(loading[i]);
+                }
+
+                conn->connect(newIP, newPort);
+
+                if(conn->getConnectionStatus()==-1){
+                    ui->label_signIn_serverErr->show();
+                    ui->label_signIn_serverErr->setStyleSheet("color:#FF6666");
+                    ui->label_signIn_serverErr->setText("ERROR: Can not connect to server!");
+                }
+                if(conn->getConnectionStatus()==1){
+
+                    QString servAddr=conn->getServerAddr();
+                    QString servPort=conn->getServerPort();
+
+                    qDebug() << conn->getConnectionStatus();
+                    ui->tabWidget_signIn->setTabEnabled(1, true);
+                    ui->tabWidget_signIn->setCurrentIndex(1);
+                    ui->label_signIn_serverErr->show();
+                    ui->label_signIn_serverErr->setText("Server:" +servAddr+":"+servPort+" connected");
+                    ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+
+                    ui->tabWidget_signUp->setTabEnabled(1, true);
+                    ui->tabWidget_signUp->setCurrentIndex(1);
+                    ui->label_signUpConnectError->show();
+                    ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
+                    ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+                    ui->frame_signIn_serverForm->hide();
+                    ui->frame_SignUpServerEnterNew->hide();
+
+                    ui->pushButton_signIn_serverConnect->setText("Disconnect");
+                    ui->pushButton_SignUpServerConnect->setText("Disconnect");
+
+                    ui->pushButton_signIn_serverConnect->setEnabled(true);
+                    ui->pushButton_SignUpServerConnect->setEnabled(true);
+
+                    ui->comboBox_signIn_selectServer->setEnabled(false);
+                    ui->comboBox_signUp_selectServer->setEnabled(false);
+
+                }
+                if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
+                    ui->label_signIn_serverErr->show();
+                    ui->label_signIn_serverErr->setStyleSheet("color:#FF6666");
+                    ui->label_signIn_serverErr->setText("This server or this port not for E2EEIM");
+                }
+
+            }
+        }
+
+        ui->label_signIn_serverErr->hide();
+        ui->label_signIn_serverErr->show();
+        ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
+    }
+    else{ // User click disconnect
+        conn->letDisconnect();
+
+        int connectStatus=conn->getConnectionStatus();
+        if(connectStatus!=1){
+            ui->comboBox_signIn_selectServer->setEnabled(true);
+            ui->comboBox_signUp_selectServer->setEnabled(true);
+
+            ui->label_signIn_serverErr->setText("");
+            ui->label_signUpConnectError->setText("");
+
+            ui->pushButton_signIn_serverConnect->setText("Connect");
+            ui->pushButton_SignUpServerConnect->setText("Connect");
+
+            ui->pushButton_signIn_serverConnect->setEnabled(false);
+            ui->pushButton_SignUpServerConnect->setEnabled(false);
+
+            ui->tabWidget_signIn->setTabEnabled(1,0);
+            ui->tabWidget_signUp->setTabEnabled(1,0);
+            ui->tabWidget_signUp->setTabEnabled(2,0);
+
+            ui->tabWidget_signIn->setCurrentIndex(0);
+            ui->tabWidget_signUp->setCurrentIndex(0);
+
+            ui->comboBox_signIn_selectServer->setCurrentIndex(0);
+            ui->comboBox_signUp_selectServer->setCurrentIndex(0);
+        }
+        qDebug() << "Connection status:" << connectStatus;
+
     }
 
-    ui->label_signIn_serverErr->hide();
-    ui->label_signIn_serverErr->show();
-    ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
+
 }
 
 
+
+void SignIn::on_comboBox_signUp_selectServer_currentTextChanged(const QString &arg1)
+{
+    qDebug() << arg1;
+    if(arg1=="Select Server..."){
+        ui->pushButton_SignUpServerConnect->setEnabled(false);
+        ui->frame_SignUpServerEnterNew->hide();
+
+    }
+    if(arg1=="*New Server"){
+        QString ip=ui->lineEdit_SignUpServerIP->text();
+        QString port=ui->lineEdit_SignUpServerPort->text();
+
+        if(ip=="" || port==""){
+            ui->pushButton_SignUpServerConnect->setEnabled(false);
+        }
+        else{
+            ui->pushButton_SignUpServerConnect->setEnabled(true);
+        }
+    }
+    if(arg1!="*New Server"){
+        ui->frame_SignUpServerEnterNew->hide();
+    }
+    else{
+        ui->frame_SignUpServerEnterNew->show();
+    }
+}

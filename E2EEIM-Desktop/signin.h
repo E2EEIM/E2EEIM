@@ -38,8 +38,6 @@ public:
 
 private slots:
 
-    void on_comboBox_selectServer_currentIndexChanged(const QString &arg1);
-
     void on_lineEdit_SignUpServerIP_textChanged(const QString &arg1);
 
     void on_lineEdit_SignUpServerPort_textChanged(const QString &arg1);
@@ -64,6 +62,8 @@ private slots:
 
     void on_pushButton_signIn_AccountSignIn_clicked();
 
+
+    void on_comboBox_signUp_selectServer_currentTextChanged(const QString &arg1);
 
 private:
     Ui::SignIn *ui;

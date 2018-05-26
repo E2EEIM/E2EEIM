@@ -140,4 +140,5 @@ QByteArray Connection::getRecentReceivedMsg(){
 
 void Connection::letDisconnect(){
     socket->close();
+    connectStatus=0;
 }
