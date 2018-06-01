@@ -32,24 +32,8 @@ int main(int argc, char *argv[])
     Connection connection(encryption);
 
 
-    QString activeUser="";
-    SignIn signIn(connection, encryption);
-
-    signIn.setModal(false);
-
-    if(signIn.exec() == QDialog::Accepted)
-    {
-        activeUser  = signIn.getActiveUser();
-    }
-
-    MainWindow w(connection, encryption, activeUser);
-
-    w.setWindowTitle("E2EEIM-"+activeUser);
+    MainWindow w(connection, encryption);
     w.show();
-
-    if(activeUser==""){
-      return 0;
-    }
 
     //w.deleteLater();
     return a.exec();

@@ -394,7 +394,7 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
                     ui->label_signUpConnectError->setText(loading[i]);
                 }
 
-                conn->connect(newIP, newPort);
+                conn->connected(newIP, newPort);
 
                 if(conn->getConnectionStatus()==-1){
                     ui->label_signUpConnectError->show();
@@ -877,7 +877,7 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
                     ui->label_signIn_serverErr->setText(loading[i]);
                 }
 
-                conn->connect(newIP, newPort);
+                conn->connected(newIP, newPort);
 
                 if(conn->getConnectionStatus()==-1){
                     ui->label_signIn_serverErr->show();

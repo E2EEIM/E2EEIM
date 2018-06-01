@@ -39,6 +39,8 @@ osx{
     LIBS += /usr/local/lib/libgpgme.11.dylib
 }
 
-extraclean.commands =  rm -f serverPubKey.key temp.cipher signUp.pgp signUpResult.ciper temp.data temp.cipher signInVerify.pgp signInResult.cipher signIn.pgp rannum.cipher ; #gpg --delete-secret-keys server@e2eeim.chat; gpg --delete-keys server@e2eeim.chat;
+extraclean.commands =  rm -f serverPubKey.key temp.cipher signUp.pgp signUpResult.ciper \
+ temp.data temp.cipher signInVerify.pgp signInResult.cipher signIn.pgp rannum.cipher \
+addFriendCon.cipher searchUser.cipher username.keyword .qmake.stash; #gpg --delete-secret-keys server@e2eeim.chat; gpg --delete-keys server@e2eeim.chat;
 distclean.depends = extraclean
 QMAKE_EXTRA_TARGETS += distclean extraclean

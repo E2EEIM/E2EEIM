@@ -14,7 +14,8 @@ class MyThread : public QThread
     Q_OBJECT
 public:
     explicit MyThread(QQueue<QByteArray> *queue, QList<QString> *usernameList,
-                      QList<QString> *userKeyList, QList<QString> *loginUser, QList<QString> *loginRanNum, int ID, QObject *parent = 0);
+                      QList<QString> *userKeyList, QList<QString> *loginUser, QList<QString> *loginRanNum,
+                      QList<QString> *waitingTaskUser, QList<QString> *waitingTaskWork, int ID, QObject *parent = 0);
     void run();
 
     QTcpSocket *socket;
@@ -37,6 +38,9 @@ public slots:
 
     gpgme_key_t getKey(QString pattern);
 
+    void task();
+
+
 private:
     int socketDescriptor;
 
@@ -45,6 +49,8 @@ private:
     QList<QString> *userKeyList;
     QList<QString> *loginUser;
     QList<QString> *loginRanNum;
+    QList<QString> *waitingTaskUser;
+    QList<QString> *waitingTaskWork;
 
     gpgme_ctx_t ctx;  // the context
     gpgme_error_t err; // errors
@@ -52,8 +58,12 @@ private:
     gpgme_key_t senderKey;
     gpgme_key_t recipientKey;
     gpgme_key_t ServerKey = nullptr;
+    gpgme_key_t activeUserKey;
 
     QByteArray serverPubKey;
+
+    QString activeUser;
+
 };
 
 #endif // MYTHREAD_H

@@ -52,13 +52,21 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(Connection &conn, Encryption &encryption,QString activeUser,QWidget *parent = 0);
+    explicit MainWindow(Connection &conn, Encryption &encryption, QWidget *parent = 0);
     ~MainWindow();
 
 signals:
     //void closeWindow();
 
+public slots:
+    void receiveAddFriendRequest(QByteArray data);
+
 private slots:
+    QStringList ReadConversation(QString Filename);
+    QStringList getGroupMember(QString GroupName);
+
+    void initUserDataPath();
+
     void on_pushButton_Contact_clicked();
 
     void on_pushButton_Conversation_clicked();
@@ -86,6 +94,13 @@ private:
     Ui::MainWindow *ui;
     Connection *conn;
     Encryption *encryption;
+
+    QString currentMenu;
+    QString ACTIVE_USR;
+    QString conversationWith;
+
+    bool finishInitUserDataStatus;
+    bool anyNewContact;
 
     gpgme_key_t servKey;
     gpgme_key_t userPriKey;

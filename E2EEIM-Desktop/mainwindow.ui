@@ -469,6 +469,17 @@ background: #eeeeee;
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="styleSheet">
+           <string notr="true">QListWidget::item { 
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(0, 0, 0, 0), stop:1 rgba(255, 255, 255, 0)); 
+color: #555555;
+} 
+ 
+QListWidget::item:selected { 
+background: #DDDDDD; 
+color: #555555;
+}</string>
+          </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
           </property>
@@ -530,6 +541,70 @@ background: #eeeeee;
          </widget>
         </item>
         <item>
+         <widget class="QFrame" name="frame_addFriend_confirm">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QPushButton" name="pushButton_addFriend_decline">
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	border: 0;
+     background-color: #ececec;
+	color: #555555;
+	height: 40px;
+ }
+ QPushButton:!pressed {
+     background-color: #dddddd; 
+	color: #555555;   
+ }
+ QPushButton:!hover {
+     background-color: #ececec;
+	color: #555555;
+ }</string>
+             </property>
+             <property name="text">
+              <string>Not Now</string>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_addFriend_accept">
+             <property name="styleSheet">
+              <string notr="true">QPushButton {
+	border: 0;
+     background-color: #ececec;
+	color: #555555;
+	height: 40px;
+ }
+ QPushButton:!pressed {
+     background-color: #dddddd; 
+	color: #555555;   
+ }
+ QPushButton:!hover {
+     background-color: #ececec;
+	color: #555555;
+ }</string>
+             </property>
+             <property name="text">
+              <string>Accept</string>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
          <widget class="QListWidget" name="listWidget_Conversation">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -543,10 +618,12 @@ background: #fafafa;
 border: 2px solid white;
 border-radius: 20;
 padding: 15px;
+color: #555555;
 } 
  
 QListWidget::item:selected { 
-background: #999999; 
+background: #fafafa; 
+color: #555555;
 }</string>
           </property>
           <property name="frameShape">
@@ -654,12 +731,15 @@ background: rgb(245, 245, 245);
               <string notr="true">QPushButton {
 	border: 0;
      background-color: #ececec;
+	color: #555555;
  }
  QPushButton:!pressed {
-     background-color: #dddddd;     
+     background-color: #dddddd; 
+	color: #555555;   
  }
  QPushButton:!hover {
      background-color: #ececec;
+	color: #555555;
  }</string>
              </property>
              <property name="text">

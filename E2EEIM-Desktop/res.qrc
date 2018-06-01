@@ -20,5 +20,6 @@
         <file>icons/add_group.png</file>
         <file>icons/menu_text.png</file>
         <file>icons/E2EEIM.png</file>
+        <file>icons/newPerson.png</file>
     </qresource>
 </RCC>

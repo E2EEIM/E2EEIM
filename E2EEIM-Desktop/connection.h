@@ -30,18 +30,19 @@ class Connection : public QObject
     Q_OBJECT
 public:
     explicit Connection(Encryption &encryption, QObject *parent = nullptr);
-    void connect(QString host, QString port);
+    void connected(QString host, QString port);
     void send(QByteArray data);
     void letDisconnect();
     int getConnectionStatus();
     QByteArray getRecentReceivedMsg();
-
     QString getServerAddr();
     QString getServerPort();
 
 signals:
+    void receiveAddFriendrequest(QByteArray data);
 
 public slots:
+    void readyRead();
 
 private:
     void writeToFile(QByteArray data, QString filename);

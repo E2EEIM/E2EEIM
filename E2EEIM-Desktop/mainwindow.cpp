@@ -22,11 +22,88 @@
 
 using namespace std;
 
-QString currentMenu;
-QString ACTIVE_USR;
-QString conversationWith;
 
-QStringList getGroupMember(QString GroupName){
+
+MainWindow::MainWindow(Connection &conn, Encryption &encryption, QWidget *parent) : // /////////////////////////////////////////////////////////////
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+
+    this->conn=&conn;
+    this->encryption=&encryption;
+
+    connect(this->conn, SIGNAL(receiveAddFriendrequest(QByteArray)), this, SLOT(receiveAddFriendRequest(QByteArray)), Qt::QueuedConnection);
+
+    signOut();
+
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::initUserDataPath(){
+
+    qDebug() << "ACTIVE_USR" << ACTIVE_USR;
+    QString userDataPath("./userData");
+    QDir userData;
+    userData.mkdir(userDataPath);
+
+    QString activeUserDataPath("./userData/"+ACTIVE_USR);
+    QDir activeUserData;
+    activeUserData.mkdir(activeUserDataPath);
+
+    QString userConversationDir("./userData/"+ACTIVE_USR+"/conversation");
+    QDir userConversation;
+    userConversation.mkdir(userConversationDir);
+
+    /* Load conversation list*/
+    QDir conversationFile("./userData/"+ACTIVE_USR+"/conversation");
+    QStringList conversationList;
+    foreach(QFileInfo item, conversationFile.entryInfoList()){
+        if(item.isFile()){
+
+            conversationList.append(item.fileName());
+        }
+    }
+
+    /*Add conversation to list.*/
+    foreach(QString conversation, conversationList){
+        QListWidgetItem *item = new QListWidgetItem;
+        item->setIcon(QIcon(":/img/icons/person.png"));
+        item->setText(conversation);
+        ui->listWidget_Contact->addItem(item);
+    }
+
+
+    /*Connect WidgetListItem on click event*/
+    connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
+                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
+
+    /*Connect combobox on click event*/
+    connect(ui->comboBox, SIGNAL(currentTextChanged(QString)),
+                this, SLOT(textMenuChange()));
+
+    /*Filter Enter key press when user typing*/
+    ui->plainTextEdit->installEventFilter(this);
+
+    /*Set icon size in listWidget*/
+    ui->listWidget_Contact->setIconSize(QSize(50, 50));
+    ui->listWidget_Conversation->setIconSize(QSize(50, 50));
+    ui->listWidget_Conversation->scrollToBottom();
+
+    currentMenu = "conversation";
+
+    ui->frame_2->hide();
+    ui->frame_addFriend_confirm->hide();
+
+    finishInitUserDataStatus=true;
+
+}
+
+QStringList MainWindow::getGroupMember(QString GroupName){
     QFile File("./userData/"+ACTIVE_USR+"/groupList.txt");
     QStringList List;
     if(!File.exists()){
@@ -94,7 +171,7 @@ QStringList MainWindow::readTextLine(QString Filename){
    QString line;
     while( !in.atEnd())
     {
-        if(Filename=="userData/"+ACTIVE_USR+"/groupList.txt"){
+        if(Filename=="./userData/"+ACTIVE_USR+"/groupList.txt"){
             line=in.readLine();
             if(line.left(2)!="~~")
                 continue;
@@ -112,7 +189,7 @@ QStringList MainWindow::readTextLine(QString Filename){
 }
 
 
-QStringList ReadConversation(QString Filename){
+QStringList MainWindow::ReadConversation(QString Filename){
 
     int ACTIVE_USR_length;
     int conversationWith_length;
@@ -202,92 +279,6 @@ QStringList ReadConversation(QString Filename){
 }
 
 
-MainWindow::MainWindow(Connection &conn, Encryption &encryption, QString activeUser, QWidget *parent) : // /////////////////////////////////////////////////////////////
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
-{
-    ui->setupUi(this);
-
-    this->conn=&conn;
-    this->encryption=&encryption;
-
-    ACTIVE_USR = activeUser;
-
-    if(activeUser=="")
-        QCoreApplication::quit();
-
-    QString userDataPath("./userData");
-    QDir userData;
-    userData.mkdir(userDataPath);
-
-    QString activeUserDataPath("./userData/"+ACTIVE_USR);
-    QDir activeUserData;
-    activeUserData.mkdir(activeUserDataPath);
-
-    QString userConversationDir("./userData/"+ACTIVE_USR+"/conversation");
-    QDir userConversation;
-    userConversation.mkdir(userConversationDir);
-
-
-    /* Load conversation list*/
-    QDir conversationFile("./userData/"+ACTIVE_USR+"/conversation");
-    QStringList conversationList;
-    foreach(QFileInfo item, conversationFile.entryInfoList()){
-        if(item.isFile()){
-
-            conversationList.append(item.fileName());
-        }
-    }
-
-    /*Add conversation to list.*/
-    foreach(QString conversation, conversationList){
-        QListWidgetItem *item = new QListWidgetItem;
-        item->setIcon(QIcon(":/img/icons/person.png"));
-        item->setText(conversation);
-        ui->listWidget_Contact->addItem(item);
-    }
-
-
-    /*Connect WidgetListItem on click event*/
-    connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
-                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
-
-    /*Connect combobox on click event*/
-    connect(ui->comboBox, SIGNAL(currentTextChanged(QString)),
-                this, SLOT(textMenuChange()));
-
-    /*Filter Enter key press when user typing*/
-    ui->plainTextEdit->installEventFilter(this);
-
-    /*Set icon size in listWidget*/
-    ui->listWidget_Contact->setIconSize(QSize(50, 50));
-    ui->listWidget_Conversation->setIconSize(QSize(50, 50));
-    ui->listWidget_Conversation->scrollToBottom();
-
-    currentMenu = "conversation";
-
-    ui->frame_2->hide();
-
-    /*
-    ui->listWidget_Conversation->setStyleSheet(
-      "QListWidget::item {"
-      "border: 2px solid #eeeeee;"
-      "padding: 5px;"
-      "border-radius: 25px;"
-      "background-color: #eeeeee;"
-      "}"
-      "QListWidget::item:selected {"
-         "background-color: red;"
-      "}");
-       */
-
-}
-
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
 //click conversation icon
 void MainWindow::on_pushButton_Conversation_clicked()
 {
@@ -350,16 +341,25 @@ void MainWindow::on_pushButton_Contact_clicked()
 
 
     /*Add contact to contact list.*/
-    QString Filename = "userData/"+ACTIVE_USR+"/contactList.txt";
+    QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
     QStringList contactList=readTextLine(Filename);                 //Read user data from file.
+
+    anyNewContact=false;
+
     foreach(QString CONTACT, contactList){
-        if(CONTACT != ""){
+        if(CONTACT.at(0) != "@"){
             QListWidgetItem *contact = new QListWidgetItem;
             contact->setIcon(QIcon(":/img/icons/person.png"));
             contact->setText(CONTACT);
             ui->listWidget_Contact->addItem(contact);
-
-
+        }
+        else{
+            QListWidgetItem *contact = new QListWidgetItem;
+            contact->setIcon(QIcon(":/img/icons/newPerson.png"));
+            QString theContact="!"+CONTACT.mid(1);
+            contact->setText(theContact);
+            ui->listWidget_Contact->addItem(contact);
+            anyNewContact=true;
         }
     }
 
@@ -397,7 +397,7 @@ void MainWindow::on_pushButton_Group_clicked()
     ui->listWidget_Contact->clear();
 
     /*Add group to list.*/
-    QString Filename = "userData/"+ACTIVE_USR+"/groupList.txt";
+    QString Filename = "./userData/"+ACTIVE_USR+"/groupList.txt";
     QStringList contactList=readTextLine(Filename);                 //Read user data from file.
     foreach(QString GROUP, contactList){
         QListWidgetItem *group = new QListWidgetItem;
@@ -434,7 +434,7 @@ void MainWindow::on_pushButton_AddList_clicked()
     }
     else if(currentMenu=="contact"){
 
-        AddContact addcontact(this, ACTIVE_USR);
+        AddContact addcontact(*conn, *encryption, this, ACTIVE_USR);
         addcontact.setModal(false);
         addcontact.exec();
 
@@ -458,32 +458,50 @@ void MainWindow::on_pushButton_AddList_clicked()
 
 /*When user click item on contact list.*/
 void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
-    ui->label_ConversationWith->setText(item->text());
+    conversationWith=item->text();
+
+    ui->label_ConversationWith->setText(conversationWith);
     ui->listWidget_Conversation->clear();
-    conversationWith = ui->label_ConversationWith->text();
 
-    /*Load conversation*/
-    QString filename="./userData/"+ACTIVE_USR+"/conversation/"+item->text();
-    QStringList conversation=ReadConversation(filename);
+    if(conversationWith.at(0) != "!"){
 
-    /*Show conversation*/
-    foreach(QString msg, conversation){
-        QListWidgetItem *item = new QListWidgetItem;
-        if(msg.left(ACTIVE_USR.length()+1) == ACTIVE_USR+":"){
-            msg = msg.remove(ACTIVE_USR+": ");
-            item->setText(msg);
-            item->setTextAlignment(2);
+        ui->frame_addFriend_confirm->hide();
+        ui->listWidget_Conversation->show();
+        ui->frame->show();
+
+
+        /*Load conversation*/
+        QString filename="./userData/"+ACTIVE_USR+"/conversation/"+item->text();
+        QStringList conversation=ReadConversation(filename);
+
+        /*Show conversation*/
+        foreach(QString msg, conversation){
+            QListWidgetItem *item = new QListWidgetItem;
+            if(msg.left(ACTIVE_USR.length()+1) == ACTIVE_USR+":"){
+                msg = msg.remove(ACTIVE_USR+": ");
+                item->setText(msg);
+                item->setTextAlignment(2);
+            }
+            else{
+                msg = msg.remove(conversationWith+": ");
+                item->setIcon(QIcon(":/img/icons/person.png"));
+                item->setText(msg);
+            }
+
+            ui->listWidget_Conversation->addItem(item);
         }
-        else{
-            msg = msg.remove(conversationWith+": ");
-            item->setIcon(QIcon(":/img/icons/person.png"));
-            item->setText(msg);
-        }
 
-        ui->listWidget_Conversation->addItem(item);
+        ui->listWidget_Conversation->scrollToBottom();
+    }
+    else{
+
+        ui->listWidget_Conversation->hide();
+        ui->frame->hide();
+        ui->frame_addFriend_confirm->show();
+        ui->label_ConversationWith->setText(conversationWith.mid(1) +
+                                            " wants to be your friend");
     }
 
-    ui->listWidget_Conversation->scrollToBottom();
 }
 
 /*When user click SEND button*/
@@ -575,32 +593,50 @@ void MainWindow::signOut(){
     this->setWindowTitle("E2EEIM");
     this->hide();
 
-    QString activeUser="";
+    ACTIVE_USR = "";
+    finishInitUserDataStatus=false;
+
     SignIn signIn(*conn, *encryption);
     signIn.setModal(false);
 
     connect(ui->comboBox, SIGNAL(currentTextChanged(QString)),
                 this, SLOT(textMenuChange()));
 
-
-
     if(signIn.exec() == QDialog::Accepted)
     {
-        activeUser  = signIn.getActiveUser();
+        ACTIVE_USR = signIn.getActiveUser();
+        qDebug() <<"DEEP_DEBUG 0";
+
     }
 
-    this->servKey=encryption->getServerPubKey();
-    this->userPriKey=encryption->getUserPriKey();
-    this->userPubKey=encryption->getUserPubKey();
+    if(ACTIVE_USR != ""){
 
-    this->setWindowTitle("E2EEIM-"+activeUser);
-    this->show();
+        qDebug() <<"DEEP_DEBUG 1";
+
+        this->servKey=encryption->getServerPubKey();
+        this->userPriKey=encryption->getUserPriKey();
+        this->userPubKey=encryption->getUserPubKey();
+
+        initUserDataPath();
+
+        this->setWindowTitle("E2EEIM-"+ACTIVE_USR);
+        this->show();
+
+        qDebug() <<"DEEP_DEBUG 2";
+
+    }
+    else{
+        this->setWindowTitle("E2EEIM");
+        cleanClose();
+    }
 
 }
 
 void MainWindow::cleanClose(){
     qDebug() << "CLEAN CLOSE";
-    conn->letDisconnect();
+    if(conn->getConnectionStatus()==1){
+        conn->letDisconnect();
+    }
     //QCoreApplication::quit();
     exit(0);
 }
@@ -633,6 +669,105 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
     }
     return false;
 
+}
+
+void MainWindow::receiveAddFriendRequest(QByteArray data){
+
+    qDebug() << "************************RECEIVE ADD FIREND REQUEST**********************";
+    //qDebug() << data;
+
+    qDebug() <<"DEEP_DEBUG 3";
+
+    QString username;
+
+    if(finishInitUserDataStatus==false){
+        initUserDataPath();
+    }
+
+    //Decrypt Payload
+    QFile File_Result("temp.cipher");
+    if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
+        qDebug() << "Cound not open file for writing";
+        abort();
+    }
+    QTextStream ts(&File_Result);
+    ts << data.mid(5);
+
+    File_Result.flush();
+    File_Result.close();
+
+    bool isValid=encryption->decryptVerify("temp.cipher", "temp.txt");
+
+    qDebug() <<"DEEP_DEBUG 4";
+
+    if(isValid==false){
+        //ui->label_signIn_keyFpr->setStyleSheet("color:#FF6666");
+        //ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
+    }
+    else{
+        QFile File_result("temp.txt");
+        if(!File_result.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "Cound not open file for Read";
+            abort();
+        }
+        QTextStream in(&File_result);
+        QString qs;
+        qs=in.readAll();
+        File_result.close();
+
+        qDebug() << qs;
+        username=qs;
+    }
+
+    username="@"+username;
+
+    QString ContactName=username;
+
+    bool isDuplicate=false;
+
+
+    QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
+    QStringList contactList=readTextLine(Filename);
+    foreach(QString CONTACT, contactList){
+        if(ContactName==CONTACT){
+            isDuplicate=true;
+        }
+    }
+
+    if(isDuplicate==false){
+        QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
+
+        if(ContactName != ""){
+            QFile File(Filename);
+            if(!File.exists()){
+                if(!File.open(QFile::WriteOnly | QFile::Text)){
+                    qDebug() << "x7";
+                    qDebug() << "cound not open file for writing";
+                    exit(1);
+                }
+                QTextStream out(&File);
+                out << "";
+
+             File.flush();
+                File.close();
+            }
+            if(File.exists()){
+
+                if(!File.open(QFile::Append | QFile::Text)){
+                      qDebug() << "cound not open file for writing";
+                      exit(1);
+                }
+                  QTextStream out(&File);
+                  out << ContactName+"\n";
+
+                  File.flush();
+                  File.close();
+               }
+
+        }
+        anyNewContact=true;
+        ui->pushButton_Contact->setIcon(QIcon(":/img/icons/menu_group.png"));
+    }
 }
 
 

@@ -2,7 +2,8 @@
 
 MyServer::MyServer(QQueue<QByteArray> &msg,QList<QString> &usernameList,
                    QList<QString> &userKeyList,QList<QString> &loginUser,
-                   QList<QString> &loginRanNum, QObject *parent) :
+                   QList<QString> &loginRanNum,QList<QString> &waitingTaskUser,
+                   QList<QString> &waitingTaskWork, QObject *parent) :
     QTcpServer(parent)
 {
     queue=&msg;
@@ -10,6 +11,8 @@ MyServer::MyServer(QQueue<QByteArray> &msg,QList<QString> &usernameList,
     this->userKeyList=&userKeyList;
     this->loginUser=&loginUser;
     this->loginRanNum=&loginRanNum;
+    this->waitingTaskUser=&waitingTaskUser;
+    this->waitingTaskWork=&waitingTaskWork;
 }
 
 void MyServer::startServer(){
@@ -31,7 +34,8 @@ void MyServer::incomingConnection(qintptr socketDescriptor){
     qDebug() << "sockfd No."<< socketDescriptor << "Connecting...";
     qDebug() << "Create thread for sockfd No." << socketDescriptor;
     MyThread *thread = new MyThread(queue, usernameList, userKeyList,
-                                    loginUser, loginRanNum, socketDescriptor, this);
+                                    loginUser, loginRanNum, waitingTaskUser, waitingTaskWork, socketDescriptor, this);
+
     //MyThread *thread = new MyThread(queue, usernameList, userKeyList, socketDescriptor, this);
 
     connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));

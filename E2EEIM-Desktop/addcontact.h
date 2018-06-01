@@ -20,6 +20,8 @@
 #define ADDCONTACT_H
 
 #include <QDialog>
+#include "connection.h"
+#include "encryption.h"
 
 namespace Ui {
 class AddContact;
@@ -30,14 +32,29 @@ class AddContact : public QDialog
     Q_OBJECT
 
 public:
-    explicit AddContact(QWidget *parent = 0, QString activeUser="");
+    explicit AddContact(Connection &conn, Encryption &encryption, QWidget *parent = 0, QString activeUser="");
     ~AddContact();
 
 private slots:
-    void on_pushButton_clicked();
+
+    void on_lineEdit_search_textChanged(const QString &arg1);
+
+    void on_pushButton_search_clicked();
+
+    void on_pushButton_sendAddFriendRequest_clicked();
 
 private:
     Ui::AddContact *ui;
+
+    Connection *conn;
+    Encryption *encryption;
+    gpgme_key_t servKey;
+    gpgme_key_t userPriKey;
+    gpgme_key_t userPubKey;
+
+    QString ACTIVE_USER;
+    QString foundUser;
+
 };
 
 #endif // ADDCONTACT_H

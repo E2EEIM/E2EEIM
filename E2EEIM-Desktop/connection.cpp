@@ -23,9 +23,10 @@ Connection::Connection(Encryption &encryption, QObject *parent) : QObject(parent
 
     this->encryption=&encryption;
 
+
 }
 
-void Connection::connect(QString host, QString port){
+void Connection::connected(QString host, QString port){
 
     //Create data package
     QByteArray data;
@@ -52,40 +53,18 @@ void Connection::connect(QString host, QString port){
     //Send require connection
     connectStatus=0;
     socket = new QTcpSocket(this);
+
+    connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
+
     socket->connectToHost(host, port.toInt());
     qDebug() << "Waiting for connection";
     if(socket->waitForConnected(3000)){
         qDebug() << "Connected!";
         send(data);
         socket->waitForReadyRead(20000);
-        QByteArray data = socket->readAll();
-        if(data.size() < 5){
-            connectStatus=2; //2 This server or this port not for E2EEIM.
-        }
-        else{
-            int operation=QString(data.mid(4,1)).data()->unicode();
 
-            if(operation==2){
-                //import server public key
-                writeToFile(data.mid(5), "servPubKey.key");
-
-                gpgme_import_result_t keyImportResult=encryption->importKey("servPubKey.key");
-
-                //Init server public key
-                QString fpr=QString(keyImportResult->imports->fpr);
-                QByteArray ba=fpr.toLatin1();
-                const char *patt=ba.data();
-
-                gpgme_key_t serverKey;
-                serverKey = encryption->getKey(patt, 0);
-                encryption->setServerKey(serverKey);
-
-                serverAddr=host;
-                serverPort=port;
-
-                connectStatus=1; //connected;
-            }
-        }
+        serverAddr=host;
+        serverPort=port;
     }
     else{
         qDebug() << "Not Connected!";
@@ -123,14 +102,63 @@ void Connection::send(QByteArray data){
     QByteArray package=data;
     socket->write(package);
     socket->flush();
-    socket->waitForBytesWritten((1000));
+    socket->waitForBytesWritten((10000));
 
     int op=QString(data.mid(4,1)).data()->unicode();
 
-    if(op==3 || op==5 || op==7){
+    if(op==3 || op==5 || op==7 || op==9 || op==11){
         socket->waitForReadyRead();
-        QByteArray data = socket->readAll();
+    }
+
+}
+void Connection::readyRead(){
+
+    QByteArray data=socket->readAll();
+    int op=QString(data.mid(4,1)).data()->unicode();
+
+    qDebug() << "INT OPr:" << op;
+
+    if(op==2){
+
+        if(data.size() < 5){
+            connectStatus=2; //2 This server or this port not for E2EEIM.
+        }
+        else{
+            int operation=QString(data.mid(4,1)).data()->unicode();
+
+            if(operation==2){
+                //import server public key
+                writeToFile(data.mid(5), "servPubKey.key");
+
+                gpgme_import_result_t keyImportResult=encryption->importKey("servPubKey.key");
+
+                //Init server public key
+                QString fpr=QString(keyImportResult->imports->fpr);
+                QByteArray ba=fpr.toLatin1();
+                const char *patt=ba.data();
+
+                gpgme_key_t serverKey;
+                serverKey = encryption->getKey(patt, 0);
+                encryption->setServerKey(serverKey);
+
+                connectStatus=1; //connected;
+            }
+            else{
+                connectStatus=2; //2 This server or this port not for E2EEIM.
+            }
+        }
+    }
+
+    if(op==4 || op==6 || op==8 || op==10 || op==12){
         recentReceivedMsg=data;
+    }
+
+    if(op==13){
+        qDebug() << "It should emit";
+        emit receiveAddFriendrequest(data);
+    }
+    else{
+        qDebug() << "New data arrived!!!!!!!!!!";
     }
 
 }
