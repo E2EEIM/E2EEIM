@@ -7,7 +7,7 @@
 MyThread::MyThread(QQueue<QByteArray> *queue, QList<QString> *usernameList,
                    QList<QString> *userKeyList, QList<QString> *loginUser,
                    QList<QString> *loginRanNum, QList<QString> *waitingTaskUser,
-                   QList<QString> *waitingTaskWork, int ID, QObject *parent) :
+                   QList<QString> *waitingTaskWork, QList<QString> *addFriendRequestList, int ID, QObject *parent) :
     QThread(parent)
 {
 
@@ -18,6 +18,7 @@ MyThread::MyThread(QQueue<QByteArray> *queue, QList<QString> *usernameList,
     this->loginRanNum=loginRanNum;
     this->waitingTaskUser=waitingTaskUser;
     this->waitingTaskWork=waitingTaskWork;
+    this->addFriendRequestList=addFriendRequestList;
 
     this->socketDescriptor = ID;
 
@@ -137,47 +138,75 @@ void MyThread::task(){
     QString task;
     QString taskProtocol;
     while(waitingTaskUser->indexOf(activeUser)!=(-1)){
-        int idx=waitingTaskUser->indexOf(activeUser);
-        qDebug() << "for User:"<< activeUser;
-        qDebug() << "Task:" << waitingTaskWork->at(idx);
+        if(waitingTaskUser->indexOf(activeUser)!=(-1)){
+            int idx=waitingTaskUser->indexOf(activeUser);
+            qDebug() << "for User:"<< activeUser;
+            qDebug() << "Task:" << waitingTaskWork->at(idx);
 
-        task=waitingTaskWork->at(idx);
-        taskProtocol=task.mid(0,2);
+            task=waitingTaskWork->at(idx);
+            taskProtocol=task.mid(0,2);
 
-        if(taskProtocol=="13"){
-            qDebug() << "*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13";
+            if(taskProtocol=="13"){
+                qDebug() << "*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13";
 
-            QString sender=task.mid(2);
-            gpgme_key_t senderKey=getKey(sender);
-            QString senderUsername=QString(senderKey->uids->name);
+                QString sender=task.mid(2);
+                gpgme_key_t senderKey=getKey(sender);
+                QString senderUsername=QString(senderKey->uids->name);
 
-            QByteArray data;
-            data.append(senderUsername);
+                QByteArray data;
+                data.append(senderUsername);
 
-            QByteArray payload=encryptToClient(data, activeUser, "addFriendCon.cipher");
+                QByteArray payload=encryptToClient(data, activeUser, "addFriendCon.cipher");
 
-            data.clear();
-            data.append(payload);
+                data.clear();
+                data.append(payload);
 
-            data.insert(0, (char)13);
+                data.insert(0, (char)13);
 
-            qDebug() << "data:" << data; // ////////////////////////////////
+                qDebug() << "data:" << data; // ////////////////////////////////
 
-            //Insert size of(operation + payload) in front of byte array (data[0]).
-            int dataSize=data.size();
-            QByteArray dataSizeByte;
-            QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
-            ds << dataSize;
-            data.insert(0, dataSizeByte);
+                //Insert size of(operation + payload) in front of byte array (data[0]).
+                int dataSize=data.size();
+                QByteArray dataSizeByte;
+                QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+                ds << dataSize;
+                data.insert(0, dataSizeByte);
 
-            send(data);
+                send(data);
 
-            break;
+                waitingTaskUser->removeAt(idx);
+                waitingTaskWork->removeAt(idx);
 
+            }
+            if(taskProtocol=="15"){
+                qDebug() << "*15*15*15*15*15*15*15*15*15*15*15*15*15*15*15*15*15";
+
+                QString payload=task.mid(2);
+
+                QByteArray data;
+                data.append(payload);
+
+                data.insert(0, (char)15);
+
+                //Insert size of(operation + payload) in front of byte array (data[0]).
+                int dataSize=data.size();
+                QByteArray dataSizeByte;
+                QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+                ds << dataSize;
+                data.insert(0, dataSizeByte);
+
+                send(data);
+
+                waitingTaskUser->removeAt(idx);
+                waitingTaskWork->removeAt(idx);
+
+
+            }
 
         }
 
     }
+
 }
 
 void MyThread::dataFilter(QByteArray data){
@@ -185,7 +214,7 @@ void MyThread::dataFilter(QByteArray data){
     //QString dataQString(data);
     bool ok;
     int intOp=QString(data.mid(4,1)).data()->unicode();
-    qDebug() << "intOp:"<< intOp;
+    qDebug() << "intOp_f:"<< intOp;
 
 
     if(intOp==1){
@@ -534,7 +563,7 @@ void MyThread::dataFilter(QByteArray data){
     }
     if(intOp==11){
         qDebug() << "*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11";
-        qDebug() << "*11-> RECEIVED Search username request";
+        qDebug() << "*11-> RECEIVED add friend request";
         printf("+----------------------+----------------------+--------------------+\n");
         printf("|  data Size (4 byte)  | Operation (1 byte)   | Encrypted(payload) |\n");
         printf("+----------------------+----------------------+--------------------+\n");
@@ -564,6 +593,14 @@ void MyThread::dataFilter(QByteArray data){
 
             waitingTaskUser->append(taskUser);
             waitingTaskWork->append(taskWork);
+
+            gpgme_key_t senderkey = getKey(sender);
+
+            sender=QString(senderkey->uids->name);
+
+            addFriendRequestList->append(sender+"@@"+keyword);
+
+            qDebug() << sender+"@@"+keyword;
         }
 
         QByteArray cipher=encryptToClient(payload, sender, "searchUser.cipher");
@@ -582,6 +619,114 @@ void MyThread::dataFilter(QByteArray data){
         data.insert(0, dataSizeByte);
 
         send(data);
+    }
+    if(intOp==14){
+        qDebug() << "*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14";
+        qDebug() << "*14-> RECEIVED add friend confirmation result";
+        printf("+----------------------+----------------------+--------------------+\n");
+        printf("|  data Size (4 byte)  | Operation (1 byte)   | Encrypted(payload) |\n");
+        printf("+----------------------+----------------------+--------------------+\n");
+
+        printDataDetail(data);
+        QByteArray payload=decryptData(data, "username.keyword");
+
+        QString dataQS=QString(payload);
+
+        QString keyword=dataQS.split("@@").first();
+        QString sender=dataQS.split("@@").last();
+
+        qDebug() << "keyword:" << keyword;
+        qDebug() << "sender:" << sender;
+
+        gpgme_key_t username_sendRequest = getKey(keyword);
+        gpgme_key_t username_sendConfirm = getKey(sender);
+
+        sender=QString(username_sendConfirm->uids->name);
+
+        QString addFriendRequestID=keyword+"@@"+sender;
+
+        if(addFriendRequestList->indexOf(addFriendRequestID)!=-1){
+
+            int idx=addFriendRequestID.indexOf(addFriendRequestID);
+
+            qDebug() << "username_sendRequest_key";
+            printKeys(username_sendRequest);
+            qDebug() << "username_sendConfirm_key";
+            printKeys(username_sendConfirm);
+
+           exportKey(ctx, username_sendRequest, err, "temp.key");
+
+           QFile outFile("temp.key");
+           if(!outFile.open(QFile::ReadOnly | QFile::Text)){
+               qDebug() << "cound not open file for writing";
+               abort();
+           }
+           QTextStream in(&outFile);
+           QString dataStream;
+           dataStream=in.readAll();
+           outFile.flush();
+           outFile.close();
+
+           QByteArray userReqKey;
+           userReqKey.append(dataStream);
+
+           encryptToClient(userReqKey, sender, "key.cipher");
+           QFile outFile3("key.cipher");
+           if(!outFile3.open(QFile::ReadOnly | QFile::Text)){
+               qDebug() << "cound not open file for writing";
+               abort();
+           }
+           QTextStream in3(&outFile3);
+           QString dataStream3;
+           dataStream3=in3.readAll();
+           outFile3.flush();
+           outFile3.close();
+
+           QByteArray qb;
+           qb.append(dataStream3);
+
+           waitingTaskUser->append(sender);
+           waitingTaskWork->append("15"+qb);
+
+           exportKey(ctx, username_sendConfirm, err, "temp.key");
+
+           QFile outFile2("temp.key");
+           if(!outFile2.open(QFile::ReadOnly | QFile::Text)){
+               qDebug() << "cound not open file for writing";
+               abort();
+           }
+           QTextStream in2(&outFile2);
+           QString dataStream2;
+           dataStream2=in2.readAll();
+           outFile2.flush();
+           outFile2.close();
+
+           QByteArray userConKey;
+           userConKey.append(dataStream2);
+
+           encryptToClient(userConKey, keyword, "key.cipher");
+           QFile outFile4("key.cipher");
+           if(!outFile4.open(QFile::ReadOnly | QFile::Text)){
+               qDebug() << "cound not open file for writing";
+               abort();
+           }
+           QTextStream in4(&outFile4);
+           QString dataStream4;
+           dataStream4=in4.readAll();
+           outFile4.flush();
+           outFile4.close();
+
+           QByteArray qb2;
+           qb2.append(dataStream4);
+
+           waitingTaskUser->append(keyword);
+           waitingTaskWork->append("15"+qb2);
+
+           addFriendRequestList->removeAt(idx);
+
+           task();
+
+        }
     }
 
 }
@@ -634,7 +779,6 @@ QByteArray MyThread::decryptData(QByteArray data, const char* outputFileName){
     }
     else{
         verifyResult=decryptVerify(ctx, err, "temp.cipher", outputFileName);
-
     }
 
     qDebug() << "decryptVx";
@@ -654,7 +798,7 @@ QByteArray MyThread::decryptData(QByteArray data, const char* outputFileName){
 
     decrypted.append(dataStream);
 
-    if(intOp==7 || intOp==9 || intOp==11){
+    if(intOp==7 || intOp==9 || intOp==11 || intOp==14){
         decrypted.append("@@");
         decrypted.append(verifyResult.mid(1));
 

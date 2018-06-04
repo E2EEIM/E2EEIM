@@ -74,7 +74,8 @@ extraclean.commands =  rm -f 2.payload 2payload.encrypted E2EEIM-Desktop.pro.use
 .qmake.stash servPubKey.key signUpResult.cipher signUpResult.txt userPublicKey.key \
 signIn.payload signIn.epkg signInRan.cipher signInRan.txt signInResult.cipher \
 signInResult.txt searchContact.keyword searchContact.cipher addContact.epkg \
-addContact.keyword searchUserResult.cipher searchUserResult.txt; rm -rf userData
+addContact.keyword searchUserResult.cipher searchUserResult.txt \
+temp.cipher temp.txt addFriendConfirm.keyword addFriendConfirm.cipher; rm -rf userData
 
 distclean.depends = extraclean
 QMAKE_EXTRA_TARGETS += distclean extraclean

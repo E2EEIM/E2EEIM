@@ -21,5 +21,7 @@
         <file>icons/menu_text.png</file>
         <file>icons/E2EEIM.png</file>
         <file>icons/newPerson.png</file>
+        <file>icons/menu_contact_normal_noti.png</file>
+        <file>icons/menu_contact_clicked_noti.png</file>
     </qresource>
 </RCC>

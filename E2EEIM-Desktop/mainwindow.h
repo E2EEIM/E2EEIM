@@ -60,10 +60,12 @@ signals:
 
 public slots:
     void receiveAddFriendRequest(QByteArray data);
+    void receiveNewPublicKey(QByteArray data);
 
 private slots:
     QStringList ReadConversation(QString Filename);
     QStringList getGroupMember(QString GroupName);
+    void removeFromListFile(QString filename, QString item);
 
     void initUserDataPath();
 
@@ -89,6 +91,10 @@ private slots:
 
     QStringList readTextLine(QString Filename);
 
+
+    void on_pushButton_addFriend_accept_clicked();
+
+    void on_pushButton_addFriend_decline_clicked();
 
 private:
     Ui::MainWindow *ui;

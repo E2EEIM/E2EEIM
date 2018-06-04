@@ -67,9 +67,13 @@ void AddContact::on_pushButton_search_clicked()
 
     qDebug() << keyword;
 
+    qDebug() << "DEEP_DEBUG_A";
+
     QByteArray payload;
 
     payload.append(keyword);
+
+    qDebug() << "DEEP_DEBUG_B";
 
     //Encrypt Payload
     QFile File_Payload("searchContact.keyword");
@@ -83,7 +87,11 @@ void AddContact::on_pushButton_search_clicked()
     File_Payload.flush();
     File_Payload.close();
 
+    qDebug() << "DEEP_DEBUG_C";
+
     encryption->encryptSign(userPriKey, servKey, "searchContact.keyword", "searchContact.cipher");
+
+    qDebug() << "DEEP_DEBUG_D";
 
     QFile File_EncryptedPayload("searchContact.cipher");
     if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
@@ -94,6 +102,8 @@ void AddContact::on_pushButton_search_clicked()
     QString cipher;
     cipher=in.readAll();
     File_EncryptedPayload.close();
+
+    qDebug() << "DEEP_DEBUG_E";
 
     payload.clear();
 
@@ -111,10 +121,20 @@ void AddContact::on_pushButton_search_clicked()
     ds2 << dataSize;
     data.insert(0, dataSizeByte);
 
+    qDebug() << "DEEP_DEBUG_F";
+
     conn->send(data);
+
+    qDebug() << "DEEP_DEBUG_G";
 
     data.clear();
     data=conn->getRecentReceivedMsg();
+
+    qDebug() << "DEEP_DEBUG_H";
+
+    if(data==""){
+        qDebug() << "DATA EMPTY!!!!!!";
+    }
 
     //Decrypt Payload
     QFile File_Result("searchUserResult.cipher");
@@ -127,6 +147,8 @@ void AddContact::on_pushButton_search_clicked()
 
     File_Result.flush();
     File_Result.close();
+
+    qDebug() << "DEEP_DEBUG_I";
 
     bool isValid=encryption->decryptVerify("searchUserResult.cipher", "searchUserResult.txt");
 
@@ -149,7 +171,7 @@ void AddContact::on_pushButton_search_clicked()
 
         if(result=="0"){
             qDebug() << "Username:" << keyword << "not found!";
-            ui->label_searchResult->setText("Username: "+keyword+"not found in this server!");
+            ui->label_searchResult->setText("Username: "+keyword+", not found in this server!");
             ui->label_searchResult->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#555555;}");
             ui->label_searchResult->show();
             ui->frame_account->hide();

@@ -85,6 +85,17 @@ void Connection::writeToFile(QByteArray data, QString filename){
         File.flush();
         File.close();
     }
+    else{
+        if(!File.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "cound not open file for writing";
+            abort();
+        }
+        QTextStream out(&File);
+        out << data;
+
+        File.flush();
+        File.close();
+    }
 }
 
 int Connection::getConnectionStatus(){
@@ -102,9 +113,13 @@ void Connection::send(QByteArray data){
     QByteArray package=data;
     socket->write(package);
     socket->flush();
-    socket->waitForBytesWritten((10000));
+    socket->waitForBytesWritten((1000));
 
     int op=QString(data.mid(4,1)).data()->unicode();
+
+    if(op == 9){
+       qDebug() << " OP 9 SENDED";
+    }
 
     if(op==3 || op==5 || op==7 || op==9 || op==11){
         socket->waitForReadyRead();
@@ -142,6 +157,7 @@ void Connection::readyRead(){
                 encryption->setServerKey(serverKey);
 
                 connectStatus=1; //connected;
+
             }
             else{
                 connectStatus=2; //2 This server or this port not for E2EEIM.
@@ -156,6 +172,10 @@ void Connection::readyRead(){
     if(op==13){
         qDebug() << "It should emit";
         emit receiveAddFriendrequest(data);
+    }
+    if(op==15){
+        qDebug() << "Receive new public key!!!";
+        emit receiveNewPublicKey(data);
     }
     else{
         qDebug() << "New data arrived!!!!!!!!!!";

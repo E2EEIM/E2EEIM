@@ -14,7 +14,7 @@ public:
     explicit MyServer(QQueue<QByteArray> &msg, QList<QString> &usernameList,
                       QList<QString> &userKeyList, QList<QString> &loginUser,
                       QList<QString> &loginRanNum, QList<QString> &waitingTaskUser,
-                      QList<QString> &waitingTaskWork, QObject *parent = nullptr);
+                      QList<QString> &waitingTaskWork,QList<QString> &addFriendRequestList, QObject *parent = nullptr);
     void startServer();
 signals:
 
@@ -31,6 +31,7 @@ protected:
     QList<QString> *loginRanNum;
     QList<QString> *waitingTaskUser;
     QList<QString> *waitingTaskWork;
+    QList<QString> *addFriendRequestList;
 };
 
 #endif // MYSERVER_H

@@ -23,6 +23,7 @@
 #include <QTcpSocket>
 #include <QDataStream>
 #include <QFile>
+#include <QDir>
 #include "encryption.h"
 
 class Connection : public QObject
@@ -40,6 +41,8 @@ public:
 
 signals:
     void receiveAddFriendrequest(QByteArray data);
+    void receiveNewPublicKey(QByteArray data);
+
 
 public slots:
     void readyRead();

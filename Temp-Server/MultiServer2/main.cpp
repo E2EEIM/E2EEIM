@@ -13,8 +13,9 @@ int main(int argc, char *argv[])
     QList<QString> loginRanNum;
     QList<QString> waitingTaskUser;
     QList<QString> waitingTaskWork;
+    QList<QString> addFriendRequestList;
 
-    MyServer Server(msg, usernameList, userKeyList, loginUser, loginRanNum, waitingTaskUser, waitingTaskWork);
+    MyServer Server(msg, usernameList, userKeyList, loginUser, loginRanNum, waitingTaskUser, waitingTaskWork, addFriendRequestList);
     Server.startServer();
 
     return a.exec();

@@ -1,9 +1,9 @@
 #include "myserver.h"
 
-MyServer::MyServer(QQueue<QByteArray> &msg,QList<QString> &usernameList,
-                   QList<QString> &userKeyList,QList<QString> &loginUser,
-                   QList<QString> &loginRanNum,QList<QString> &waitingTaskUser,
-                   QList<QString> &waitingTaskWork, QObject *parent) :
+MyServer::MyServer(QQueue<QByteArray> &msg, QList<QString> &usernameList,
+                   QList<QString> &userKeyList, QList<QString> &loginUser,
+                   QList<QString> &loginRanNum, QList<QString> &waitingTaskUser,
+                   QList<QString> &waitingTaskWork, QList<QString> &addFriendRequestList, QObject *parent) :
     QTcpServer(parent)
 {
     queue=&msg;
@@ -13,6 +13,7 @@ MyServer::MyServer(QQueue<QByteArray> &msg,QList<QString> &usernameList,
     this->loginRanNum=&loginRanNum;
     this->waitingTaskUser=&waitingTaskUser;
     this->waitingTaskWork=&waitingTaskWork;
+    this->addFriendRequestList=&addFriendRequestList;
 }
 
 void MyServer::startServer(){
@@ -34,7 +35,7 @@ void MyServer::incomingConnection(qintptr socketDescriptor){
     qDebug() << "sockfd No."<< socketDescriptor << "Connecting...";
     qDebug() << "Create thread for sockfd No." << socketDescriptor;
     MyThread *thread = new MyThread(queue, usernameList, userKeyList,
-                                    loginUser, loginRanNum, waitingTaskUser, waitingTaskWork, socketDescriptor, this);
+                                    loginUser, loginRanNum, waitingTaskUser, waitingTaskWork, addFriendRequestList, socketDescriptor, this);
 
     //MyThread *thread = new MyThread(queue, usernameList, userKeyList, socketDescriptor, this);
 
