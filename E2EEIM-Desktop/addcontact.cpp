@@ -24,11 +24,13 @@
 
 QString ACTIVE_USER2;
 
-AddContact::AddContact(Connection &conn, Encryption &encryption, QWidget *parent, QString activeUser) :
+AddContact::AddContact(Connection &conn, Encryption &encryption, QStringList &addFriendRequestList, QWidget *parent, QString activeUser) :
     QDialog(parent),
     ui(new Ui::AddContact)
 {
     ui->setupUi(this);
+
+    this->addFriendRequestList=&addFriendRequestList;
 
     this->conn=&conn;
     this->encryption=&encryption;
@@ -150,9 +152,9 @@ void AddContact::on_pushButton_search_clicked()
 
     qDebug() << "DEEP_DEBUG_I";
 
-    bool isValid=encryption->decryptVerify("searchUserResult.cipher", "searchUserResult.txt");
+    QString decryptResult=encryption->decryptVerify("searchUserResult.cipher", "searchUserResult.txt");
 
-    if(isValid==false){
+    if(decryptResult.mid(0,1)=="0"){
         ui->label_searchResult->setStyleSheet("qproperty-alignment: AlignCenter; color:#FF6666");
         ui->label_searchResult->setText("ERROR: Server signature not fully valid");
     }
@@ -263,9 +265,9 @@ void AddContact::on_pushButton_sendAddFriendRequest_clicked()
     File_Result.flush();
     File_Result.close();
 
-    bool isValid=encryption->decryptVerify("searchUserResult.cipher", "searchUserResult.txt");
+    QString decryptResult=encryption->decryptVerify("searchUserResult.cipher", "searchUserResult.txt");
 
-    if(isValid==false){
+    if(decryptResult.mid(0,1)=="0"){
         ui->label_searchResult->setStyleSheet("qproperty-alignment: AlignCenter; color:#FF6666");
         ui->label_searchResult->setText("ERROR: Server signature not fully valid");
     }
@@ -283,6 +285,7 @@ void AddContact::on_pushButton_sendAddFriendRequest_clicked()
         QString result=qs;
 
         if(result=="1"){
+            this->addFriendRequestList->append(foundUser);
             ui->pushButton_sendAddFriendRequest->setText("Add friend request sended");
             ui->pushButton_sendAddFriendRequest->setEnabled(false);
         }

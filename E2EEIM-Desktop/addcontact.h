@@ -32,7 +32,7 @@ class AddContact : public QDialog
     Q_OBJECT
 
 public:
-    explicit AddContact(Connection &conn, Encryption &encryption, QWidget *parent = 0, QString activeUser="");
+    explicit AddContact(Connection &conn, Encryption &encryption, QStringList &addFriendRequestList, QWidget *parent = 0, QString activeUser="");
     ~AddContact();
 
 private slots:
@@ -54,6 +54,7 @@ private:
 
     QString ACTIVE_USER;
     QString foundUser;
+    QStringList *addFriendRequestList;
 
 };
 

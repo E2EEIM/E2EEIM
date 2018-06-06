@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>818</width>
-    <height>520</height>
+    <width>800</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="palette">
@@ -343,7 +343,7 @@ QComboBox::down-arrow
      <widget class="QSplitter" name="splitter">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-        <horstretch>1</horstretch>
+        <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
@@ -356,9 +356,21 @@ QComboBox::down-arrow
       <widget class="QFrame" name="frame_Contact">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>1</horstretch>
+         <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="sizeIncrement">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="baseSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
        </property>
        <property name="styleSheet">
         <string notr="true">QFrame{
@@ -392,6 +404,18 @@ background: #eeeeee;
         </property>
         <item>
          <widget class="QFrame" name="frame_2">
+          <property name="sizeIncrement">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
           </property>
@@ -490,7 +514,7 @@ color: #555555;
       <widget class="QFrame" name="frame_Conversation">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>1</horstretch>
+         <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
@@ -535,14 +559,14 @@ color: #555555;
              </property>
              <property name="minimumSize">
               <size>
-               <width>200</width>
-               <height>200</height>
+               <width>150</width>
+               <height>150</height>
               </size>
              </property>
              <property name="maximumSize">
               <size>
-               <width>200</width>
-               <height>200</height>
+               <width>150</width>
+               <height>150</height>
               </size>
              </property>
              <property name="styleSheet">
@@ -566,8 +590,8 @@ color: #555555;
              </property>
              <property name="iconSize">
               <size>
-               <width>200</width>
-               <height>200</height>
+               <width>150</width>
+               <height>150</height>
               </size>
              </property>
              <property name="flat">
@@ -612,7 +636,32 @@ color: #555555;
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
             <widget class="QPushButton" name="pushButton_addFriend_decline">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>150</width>
+               <height>30</height>
+              </size>
+             </property>
              <property name="styleSheet">
               <string notr="true">QPushButton {
 	border: 0;
@@ -639,6 +688,18 @@ color: #555555;
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_addFriend_accept">
+             <property name="minimumSize">
+              <size>
+               <width>150</width>
+               <height>30</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>150</width>
+               <height>30</height>
+              </size>
+             </property>
              <property name="styleSheet">
               <string notr="true">QPushButton {
 	border: 0;
@@ -662,6 +723,19 @@ color: #555555;
               <bool>true</bool>
              </property>
             </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
           </layout>
          </widget>

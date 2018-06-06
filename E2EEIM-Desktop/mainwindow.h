@@ -104,6 +104,8 @@ private:
     QString currentMenu;
     QString ACTIVE_USR;
     QString conversationWith;
+    QStringList addFriendRequestList;
+    QStringList addFriendConfirmList;
 
     bool finishInitUserDataStatus;
     bool anyNewContact;

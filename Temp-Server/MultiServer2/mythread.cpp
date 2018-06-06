@@ -670,6 +670,12 @@ void MyThread::dataFilter(QByteArray data){
            QByteArray userReqKey;
            userReqKey.append(dataStream);
 
+           QString usernameOfRequest=QString(username_sendRequest->uids->name);
+           userReqKey.insert(0, usernameOfRequest);
+
+           char usernameSize=char(usernameOfRequest.size());
+           userReqKey.insert(0, usernameSize);
+
            encryptToClient(userReqKey, sender, "key.cipher");
            QFile outFile3("key.cipher");
            if(!outFile3.open(QFile::ReadOnly | QFile::Text)){
@@ -703,6 +709,12 @@ void MyThread::dataFilter(QByteArray data){
 
            QByteArray userConKey;
            userConKey.append(dataStream2);
+
+           QString usernameOfConfirm=QString(username_sendConfirm->uids->name);
+           userConKey.insert(0, usernameOfConfirm);
+
+           usernameSize=char(usernameOfConfirm.size());
+           userConKey.insert(0, usernameSize);
 
            encryptToClient(userConKey, keyword, "key.cipher");
            QFile outFile4("key.cipher");

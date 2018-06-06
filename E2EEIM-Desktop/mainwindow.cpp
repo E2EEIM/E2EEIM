@@ -60,6 +60,34 @@ void MainWindow::initUserDataPath(){
     QDir userConversation;
     userConversation.mkdir(userConversationDir);
 
+    QFile File("./userData/"+ACTIVE_USR+"/addFriendRequestList.txt");
+    if(!File.exists()){
+        if(!File.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "cound not open file for writing";
+            abort();
+        }
+        QTextStream out(&File);
+        out << "";
+
+        File.flush();
+        File.close();
+    }
+
+    if(!File.open(QFile::ReadOnly | QFile::Text)){
+        qDebug() << "cound not open file for Read";
+        abort();
+    }
+
+    QTextStream in(&File);
+    QString line;
+    while(!in.atEnd())
+    {
+            line=in.readLine();
+            addFriendRequestList.append(line);
+    }
+
+
+
     /* Load conversation list*/
     QDir conversationFile("./userData/"+ACTIVE_USR+"/conversation");
     QStringList conversationList;
@@ -95,13 +123,14 @@ void MainWindow::initUserDataPath(){
     ui->listWidget_Conversation->setIconSize(QSize(50, 50));
     ui->listWidget_Conversation->scrollToBottom();
 
-    currentMenu = "conversation";
-
     ui->frame_2->hide();
     ui->frame_addFriend_confirm->hide();
     ui->frame_3->hide();
 
     finishInitUserDataStatus=true;
+
+    on_pushButton_Conversation_clicked();
+    currentMenu = "conversation";
 
 }
 
@@ -357,19 +386,29 @@ void MainWindow::on_pushButton_Contact_clicked()
     anyNewContact=false;
 
     foreach(QString CONTACT, contactList){
-        if(CONTACT.at(0) != "@"){
+        if(CONTACT.at(0) == "!"){
+            QListWidgetItem *contact = new QListWidgetItem;
+            contact->setIcon(QIcon(":/img/icons/newPerson.png"));
+            QString theContact=CONTACT;
+            contact->setText(theContact);
+            ui->listWidget_Contact->addItem(contact);
+            anyNewContact=true;
+
+        }
+        else if(CONTACT.at(0) == "@"){
+            QListWidgetItem *contact = new QListWidgetItem;
+            contact->setIcon(QIcon(":/img/icons/newPerson.png"));
+            QString theContact=CONTACT;
+            contact->setText(theContact);
+            ui->listWidget_Contact->addItem(contact);
+            anyNewContact=true;
+
+        }
+        else{
             QListWidgetItem *contact = new QListWidgetItem;
             contact->setIcon(QIcon(":/img/icons/person.png"));
             contact->setText(CONTACT);
             ui->listWidget_Contact->addItem(contact);
-        }
-        else{
-            QListWidgetItem *contact = new QListWidgetItem;
-            contact->setIcon(QIcon(":/img/icons/newPerson.png"));
-            QString theContact="!"+CONTACT.mid(1);
-            contact->setText(theContact);
-            ui->listWidget_Contact->addItem(contact);
-            anyNewContact=true;
         }
     }
 
@@ -449,12 +488,9 @@ void MainWindow::on_pushButton_Group_clicked()
 
 void MainWindow::on_pushButton_AddList_clicked()
 {
-    if(currentMenu=="conversation"){
+    if(currentMenu=="contact"){
 
-    }
-    else if(currentMenu=="contact"){
-
-        AddContact addcontact(*conn, *encryption, this, ACTIVE_USR);
+        AddContact addcontact(*conn, *encryption, addFriendRequestList, this, ACTIVE_USR);
         addcontact.setModal(false);
         addcontact.exec();
 
@@ -483,8 +519,30 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     ui->label_ConversationWith->setText(conversationWith);
     ui->listWidget_Conversation->clear();
 
-    if(conversationWith.at(0) != "!"){
+    if(conversationWith.at(0) == "!"){
+        ui->listWidget_Conversation->hide();
+        ui->frame->hide();
+        ui->pushButton_newFriend_picture->show();
+        ui->frame_addFriend_confirm->show();
+        ui->pushButton_addFriend_accept->setText("Accept");
+        ui->pushButton_addFriend_decline->show();
+        ui->frame_3->show();
+        ui->label_ConversationWith->setText(conversationWith.mid(1) +
+                                            " wants to be your friend.");
+    }
 
+    else if(conversationWith.at(0) == "@"){
+        ui->listWidget_Conversation->hide();
+        ui->frame->hide();
+        ui->pushButton_newFriend_picture->show();
+        ui->frame_addFriend_confirm->show();
+        ui->pushButton_addFriend_accept->setText("OK");
+        ui->pushButton_addFriend_decline->hide();
+        ui->frame_3->show();
+        ui->label_ConversationWith->setText("You and "+ conversationWith.mid(1) +
+                                            " are firends now!");
+    }
+    else{
         ui->pushButton_newFriend_picture->hide();
         ui->frame_addFriend_confirm->hide();
         ui->frame_3->hide();
@@ -514,16 +572,6 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         }
 
         ui->listWidget_Conversation->scrollToBottom();
-    }
-    else{
-
-        ui->listWidget_Conversation->hide();
-        ui->frame->hide();
-        ui->pushButton_newFriend_picture->show();
-        ui->frame_addFriend_confirm->show();
-        ui->frame_3->show();
-        ui->label_ConversationWith->setText(conversationWith.mid(1) +
-                                            " wants to be your friend.");
     }
 
 }
@@ -731,11 +779,11 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
     File_Result.flush();
     File_Result.close();
 
-    bool isValid=encryption->decryptVerify("temp.cipher", "temp.txt");
+    QString decryptResult=encryption->decryptVerify("temp.cipher", "temp.txt");
 
     qDebug() <<"DEEP_DEBUG 4";
 
-    if(isValid==false){
+    if(decryptResult.mid(0,1)=="0"){
         //ui->label_signIn_keyFpr->setStyleSheet("color:#FF6666");
         //ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
     }
@@ -754,7 +802,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
         username=qs;
     }
 
-    username="@"+username;
+    username="!"+username;
 
     QString ContactName=username;
 
@@ -812,8 +860,6 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
 
     qDebug() <<"DEEP_DEBUG A";
 
-    QString pubKey;
-
     if(finishInitUserDataStatus==false){
         initUserDataPath();
     }
@@ -830,72 +876,113 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
     File_Result.flush();
     File_Result.close();
 
-    bool isValid=encryption->decryptVerify("temp.cipher", "temp.txt");
+    QString decryptResult=encryption->decryptVerify("temp.cipher", "temp.txt");
 
     qDebug() <<"DEEP_DEBUG B";
 
-    if(isValid==true){
-        QFile File_result("temp.txt");
-        if(!File_result.open(QFile::ReadOnly | QFile::Text)){
+    if(decryptResult.mid(0,1)=="1"){
+
+
+
+
+        QFile File("temp.txt");
+        if(!File.open(QFile::ReadOnly | QFile::Text)){
             qDebug() << "Cound not open file for Read";
             abort();
         }
-        QTextStream in(&File_result);
+        QTextStream in(&File);
         QString qs;
         qs=in.readAll();
-        File_result.close();
+        File.close();
 
-        pubKey=qs;
+        QString payload;
+        payload=qs;
 
-        gpgme_import_result_t importResult=encryption->importKey("temp.txt");
+        int usernameLength=payload.mid(0,1).data()->unicode();
+        QString username=payload.mid(1, usernameLength);
+        QString pubKey=payload.mid(usernameLength+1);
 
-        if(importResult->imported==1 || importResult->unchanged==1){
-            QString fpr=QString(importResult->imports->fpr);
 
-            gpgme_key_t key=encryption->getKey(fpr.toLatin1().data(), 0);
+        if(addFriendRequestList.indexOf(username)!=(-1)||
+                addFriendConfirmList.indexOf(username)!=(-1)){
 
-            QString ContactName=QString(key->uids->name);
 
-            this->removeFromListFile("./userData/"+ACTIVE_USR+"/contactList.txt", "@"+ContactName);
-
-            QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
-
-            if(ContactName != ""){
-                QFile File(Filename);
-                if(!File.exists()){
-                    if(!File.open(QFile::WriteOnly | QFile::Text)){
-                        qDebug() << "cound not open file for writing";
-                        exit(1);
-                    }
-                    QTextStream out(&File);
-                    out << "";
-
-                 File.flush();
-                    File.close();
-                }
-                if(File.exists()){
-
-                    if(!File.open(QFile::Append | QFile::Text)){
-                          qDebug() << "cound not open file for writing";
-                          exit(1);
-                    }
-                      QTextStream out(&File);
-                      out << ContactName+"\n";
-
-                      File.flush();
-                      File.close();
-                   }
-
+            QFile File("temp.txt");
+            if(!File.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "Cound not open file temp.txt for writing";
+                exit(1);
             }
+            QTextStream out(&File);
+            out << pubKey;
 
-            if(ui->label_ConversationWith->text().mid(0, 12) == "Waiting for "){
-                ui->label_ConversationWith->setText("");
-                ui->pushButton_newFriend_picture->hide();
-                on_pushButton_Contact_clicked();
+            File.flush();
+            File.close();
 
+            gpgme_import_result_t importResult=encryption->importKey("temp.txt");
+
+            if(importResult->imported==1 || importResult->unchanged==1){
+                QString fpr=QString(importResult->imports->fpr);
+
+                gpgme_key_t key=encryption->getKey(fpr.toLatin1().data(), 0);
+
+                QString ContactName=QString(key->uids->name);
+
+                this->removeFromListFile("./userData/"+ACTIVE_USR+"/contactList.txt", "!"+ContactName);
+
+                QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
+
+                if(ContactName != ""){
+                    QFile File(Filename);
+                    if(!File.exists()){
+                        if(!File.open(QFile::WriteOnly | QFile::Text)){
+                            qDebug() << "cound not open file for writing";
+                            exit(1);
+                        }
+                        QTextStream out(&File);
+                        out << "";
+
+                     File.flush();
+                        File.close();
+                    }
+                    if(File.exists()){
+
+                        if(!File.open(QFile::Append | QFile::Text)){
+                              qDebug() << "cound not open file for writing";
+                              exit(1);
+                        }
+                          QTextStream out(&File);
+                          out << "@"+ContactName+"\n";
+
+                          File.flush();
+                          File.close();
+                       }
+
+                }
+
+                if(ui->label_ConversationWith->text().mid(0, 12) == "Waiting for "){
+                    ui->label_ConversationWith->setText("You and "+username+" are friends now!");
+                    ui->frame_addFriend_confirm->show();
+                    ui->pushButton_addFriend_decline->hide();
+                    ui->pushButton_addFriend_accept->setText("OK");
+                    on_pushButton_Contact_clicked();
+
+                }
+                anyNewContact=true;
+                if(currentMenu=="conversation"){
+                    on_pushButton_Contact_clicked();
+                    on_pushButton_Conversation_clicked();
+                }
+                if(currentMenu=="group"){
+                    on_pushButton_Contact_clicked();
+                    on_pushButton_Group_clicked();
+                }
+                else{
+                    on_pushButton_Contact_clicked();
+                }
             }
 
         }
+
     }
 
 
@@ -905,107 +992,102 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
 
 void MainWindow::on_pushButton_addFriend_accept_clicked()
 {
-    QString username=conversationWith.mid(1);
+    if(ui->pushButton_addFriend_accept->text()=="OK"){
+        ui->frame_addFriend_confirm->hide();
+        ui->pushButton_addFriend_accept->setText("Accept");
+        ui->pushButton_addFriend_decline->show();
+        ui->frame_addFriend_confirm->hide();
+        ui->frame_3->hide();
 
-    QByteArray payload;
-    payload.append(username);
+        conversationWith=conversationWith.mid(1);
+        ui->label_ConversationWith->setText(conversationWith);
+        ui->listWidget_Conversation->show();
+        ui->frame->show();
 
-    //Encrypt Payload
-    QFile File_Payload("addFriendConfirm.keyword");
-    if(!File_Payload.open(QFile::WriteOnly | QFile::Text)){
-        qDebug() << "Cound not open file searchContact.keyword for writing";
-        exit(1);
+        QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
+        this->removeFromListFile(Filename, "!"+conversationWith);
+        this->removeFromListFile(Filename, "@"+conversationWith);
+
+        QFile File(Filename);
+        if(!File.open(QFile::Append | QFile::Text)){
+              qDebug() << "cound not open file for writing";
+              exit(1);
+        }
+        QTextStream out2(&File);
+        out2 << conversationWith+"\n";
+
+        File.flush();
+        File.close();
+
+        on_pushButton_Contact_clicked();
+
     }
-    QTextStream out(&File_Payload);
-    out << payload;
+    else{
+        QString username=conversationWith.mid(1);
 
-    File_Payload.flush();
-    File_Payload.close();
+        QByteArray payload;
+        payload.append(username);
 
-    encryption->printKeys(userPriKey);
+        //Encrypt Payload
+        QFile File_Payload("addFriendConfirm.keyword");
+        if(!File_Payload.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "Cound not open file searchContact.keyword for writing";
+            exit(1);
+        }
+        QTextStream out(&File_Payload);
+        out << payload;
 
-    encryption->encryptSign(userPriKey, servKey, "addFriendConfirm.keyword", "addFriendConfirm.cipher");
+        File_Payload.flush();
+        File_Payload.close();
 
-    QFile File_EncryptedPayload("addFriendConfirm.cipher");
-    if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
-        qDebug() << "Cound not open file for Read";
-        abort();
+        encryption->printKeys(userPriKey);
+
+        encryption->encryptSign(userPriKey, servKey, "addFriendConfirm.keyword", "addFriendConfirm.cipher");
+
+        QFile File_EncryptedPayload("addFriendConfirm.cipher");
+        if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "Cound not open file for Read";
+            abort();
+        }
+        QTextStream in(&File_EncryptedPayload);
+        QString cipher;
+        cipher=in.readAll();
+        File_EncryptedPayload.close();
+
+        payload.clear();
+
+        QByteArray data;
+
+        data.append(cipher);
+
+        // Insert operation in front of byte array (data[0]).
+        data.insert(0, (char)14);
+
+        //Insert size of(operation + payload) in front of byte array (data[0]).
+        int dataSize=data.size();
+        QByteArray dataSizeByte;
+        QDataStream ds2(&dataSizeByte, QIODevice::WriteOnly);
+        ds2 << dataSize;
+        data.insert(0, dataSizeByte);
+
+        conn->send(data);
+
+        addFriendConfirmList.append(username);
+
+        ui->label_ConversationWith->setText("Waiting for "+username+"'s public key from server...");
+
+        ui->frame_addFriend_confirm->hide();
+
     }
-    QTextStream in(&File_EncryptedPayload);
-    QString cipher;
-    cipher=in.readAll();
-    File_EncryptedPayload.close();
 
-    payload.clear();
-
-    QByteArray data;
-
-    data.append(cipher);
-
-    // Insert operation in front of byte array (data[0]).
-    data.insert(0, (char)14);
-
-    //Insert size of(operation + payload) in front of byte array (data[0]).
-    int dataSize=data.size();
-    QByteArray dataSizeByte;
-    QDataStream ds2(&dataSizeByte, QIODevice::WriteOnly);
-    ds2 << dataSize;
-    data.insert(0, dataSizeByte);
-
-    conn->send(data);
-
-    ui->label_ConversationWith->setText("Waiting for "+username+"'s public key from server...");
-
-    ui->frame_addFriend_confirm->hide();
 
 }
 
 void MainWindow::on_pushButton_addFriend_decline_clicked()
 {
     QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
-    QStringList contactList=readTextLine(Filename);
-    QStringList newContactList;
-    foreach(QString contact, contactList){
-        if(contact!="@"+conversationWith.mid(1)){
-            newContactList.append(contact);
-        }
-    }
 
-    QFile File(Filename);
-    if(!File.exists()){
-        if(!File.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "cound not open file for writing";
-            exit(1);
-        }
-        QTextStream out(&File);
-        out << "";
-
-     File.flush();
-     File.close();
-    }
-    if(File.exists()){
-
-        if(!File.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "cound not open file for writing";
-            exit(1);
-        }
-        QTextStream out(&File);
-        out << "";
-        File.flush();
-        File.close();
-
-        if(!File.open(QFile::Append | QFile::Text)){
-              qDebug() << "cound not open file for writing";
-              exit(1);
-        }
-        QTextStream out2(&File);
-        foreach(QString contact, newContactList){
-            out2 << contact+"\n";
-        }
-
-        File.flush();
-        File.close();
-    }
+    this->removeFromListFile(Filename, conversationWith);
 
     on_pushButton_Contact_clicked();
     ui->frame_addFriend_confirm->hide();

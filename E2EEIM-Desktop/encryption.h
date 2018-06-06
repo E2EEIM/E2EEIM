@@ -36,7 +36,7 @@ public:
                      const char *inputFileName,const char *outputFileName);
     void decrypt(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFileName,
                  const char *outputFileName);
-    bool decryptVerify(const char *inputFileName,
+    QString decryptVerify(const char *inputFileName,
                  const char *outputFileName);
 
     void setUserPubKey(gpgme_key_t pubKey);

@@ -383,7 +383,7 @@ void Encryption::decrypt(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFi
 
 }
 
-bool Encryption::decryptVerify(const char *inputFileName,
+QString Encryption::decryptVerify(const char *inputFileName,
              const char *outputFileName){
 
     gpgme_decrypt_result_t decryptResult;
@@ -437,13 +437,18 @@ bool Encryption::decryptVerify(const char *inputFileName,
     gpgme_data_release (out);
 
     gpgme_signature_t sig=verifyResult->signatures;
+    QString result;
+    QString fpr=QString(sig->fpr);
 
     if ((sig->summary & GPGME_SIGSUM_VALID)){
-       return true;
+       result="1"+fpr;
     }
     else{
-       return false;
+       result="0"+fpr;
+
     }
+
+    return result;
 }
 
 void Encryption::setUserPubKey(gpgme_key_t pubKey){

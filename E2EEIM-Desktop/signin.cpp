@@ -209,9 +209,9 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
             File_Result.close();
 
 
-            bool isValid=encryption->decryptVerify("signInRan.cipher", "signInRan.txt");
+            QString decryptResult=encryption->decryptVerify("signInRan.cipher", "signInRan.txt");
 
-            if(isValid==false){
+            if(decryptResult.mid(0,1)=="0"){
                 ui->label_signIn_keyFpr->setStyleSheet("color:#FF6666");
                 ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
             }
@@ -270,9 +270,9 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
                 File_Result.flush();
                 File_Result.close();
 
-                bool isValid=encryption->decryptVerify("signInResult.cipher", "signInResult.txt");
+                QString decryptResult=encryption->decryptVerify("signInResult.cipher", "signInResult.txt");
 
-                if(isValid==false){
+                if(decryptResult.mid(0,1)=="0"){
                     ui->label_signIn_keyFpr->setStyleSheet("color:#FF6666");
                     ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
                 }
@@ -663,9 +663,9 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         File_Result.close();
 
 
-        bool isValid=encryption->decryptVerify("signUpResult.cipher", "signUpResult.txt");
+        QString decryptResult=encryption->decryptVerify("signUpResult.cipher", "signUpResult.txt");
 
-        if(isValid==false){
+        if(decryptResult.mid(0,1)=="0"){
             ui->label_signUpFinishg->setText("ERROR: Server signature not fully valid");
         }
         else{
