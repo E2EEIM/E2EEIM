@@ -61,6 +61,7 @@ signals:
 public slots:
     void receiveAddFriendRequest(QByteArray data);
     void receiveNewPublicKey(QByteArray data);
+    void disconnectFromServer();
 
 private slots:
     QStringList ReadConversation(QString Filename);

@@ -55,6 +55,7 @@ void Connection::connected(QString host, QString port){
     socket = new QTcpSocket(this);
 
     connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
+    connect(socket, SIGNAL(disconnected()), this, SLOT(letDisconnect()));
 
     socket->connectToHost(host, port.toInt());
     qDebug() << "Waiting for connection";
@@ -188,5 +189,6 @@ QByteArray Connection::getRecentReceivedMsg(){
 
 void Connection::letDisconnect(){
     socket->close();
-    connectStatus=0;
+    connectStatus=-2;
+    emit disconnectFromServer();
 }

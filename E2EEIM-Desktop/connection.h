@@ -33,7 +33,6 @@ public:
     explicit Connection(Encryption &encryption, QObject *parent = nullptr);
     void connected(QString host, QString port);
     void send(QByteArray data);
-    void letDisconnect();
     int getConnectionStatus();
     QByteArray getRecentReceivedMsg();
     QString getServerAddr();
@@ -42,10 +41,12 @@ public:
 signals:
     void receiveAddFriendrequest(QByteArray data);
     void receiveNewPublicKey(QByteArray data);
+    void disconnectFromServer();
 
 
 public slots:
     void readyRead();
+    void letDisconnect();
 
 private:
     void writeToFile(QByteArray data, QString filename);

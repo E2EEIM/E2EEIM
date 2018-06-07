@@ -36,6 +36,9 @@ public:
     QString getActiveUser();
     ~SignIn();
 
+public slots:
+    void disconnectFromServer();
+
 private slots:
 
     void on_lineEdit_SignUpServerIP_textChanged(const QString &arg1);

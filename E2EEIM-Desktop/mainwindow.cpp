@@ -35,6 +35,7 @@ MainWindow::MainWindow(Connection &conn, Encryption &encryption, QWidget *parent
 
     connect(this->conn, SIGNAL(receiveAddFriendrequest(QByteArray)), this, SLOT(receiveAddFriendRequest(QByteArray)), Qt::QueuedConnection);
     connect(this->conn, SIGNAL(receiveNewPublicKey(QByteArray)), this, SLOT(receiveNewPublicKey(QByteArray)), Qt::QueuedConnection);
+    connect(this->conn, SIGNAL(disconnectFromServer()), this, SLOT(disconnectFromServer()), Qt::QueuedConnection);
 
     signOut();
 
@@ -688,13 +689,11 @@ void MainWindow::signOut(){
     if(signIn.exec() == QDialog::Accepted)
     {
         ACTIVE_USR = signIn.getActiveUser();
-        qDebug() <<"DEEP_DEBUG 0";
-
     }
 
     if(ACTIVE_USR != ""){
 
-        qDebug() <<"DEEP_DEBUG 1";
+        this->setEnabled(true);
 
         this->servKey=encryption->getServerPubKey();
         this->userPriKey=encryption->getUserPriKey();
@@ -704,8 +703,6 @@ void MainWindow::signOut(){
 
         this->setWindowTitle("E2EEIM-"+ACTIVE_USR);
         this->show();
-
-        qDebug() <<"DEEP_DEBUG 2";
 
     }
     else{
@@ -1142,4 +1139,14 @@ void MainWindow::removeFromListFile(QString filename, QString item){
         File.close();
     }
 
+}
+
+void MainWindow::disconnectFromServer(){
+    qDebug() << "DISCONNECT FROM SERVER";
+
+    if(this->windowTitle()!="E2EEIM"){
+        this->setWindowTitle("E2EEIM DISCONNECT FROM SERVER!!");
+        this->setDisabled(true);
+        signOut();
+    }
 }

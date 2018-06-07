@@ -28,6 +28,8 @@ SignIn::SignIn(Connection &conn, Encryption &encryption, QWidget *parent) :
     this->conn=&conn;
     this->encryption=&encryption;
 
+    connect(this->conn, SIGNAL(disconnectFromServer()), this, SLOT(disconnectFromServer()), Qt::QueuedConnection);
+
     ui->tabWidget_signIn->setTabEnabled(1, false);
 
     ui->tabWidget_signUp->setTabEnabled(1, false);
@@ -53,6 +55,16 @@ SignIn::SignIn(Connection &conn, Encryption &encryption, QWidget *parent) :
     else if(connectionStatus==1){
         ui->tabWidget_mainTab->setCurrentIndex(0);
         on_tabWidget_mainTab_currentChanged(0);
+    }
+    else if(connectionStatus==-2){
+        ui->tabWidget_signIn->setTabEnabled(1, false);
+        ui->tabWidget_signUp->setTabEnabled(1, false);
+        ui->tabWidget_signUp->setTabEnabled(2, false);
+
+        ui->tabWidget_signIn->setCurrentIndex(0);
+        on_tabWidget_mainTab_currentChanged(0);
+
+
     }
 
 }
@@ -192,7 +204,7 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         //qDebug() << data;
 
         if(data.mid(5)=="USER NOT FOUND IN THIS SERVER!"){
-            ui->label_signIn_keyFpr->setStyleSheet("color:#FF6666");
+            ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
             ui->label_signIn_keyFpr->setText("Error: This account not found in this server!");
 
         }
@@ -212,7 +224,7 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
             QString decryptResult=encryption->decryptVerify("signInRan.cipher", "signInRan.txt");
 
             if(decryptResult.mid(0,1)=="0"){
-                ui->label_signIn_keyFpr->setStyleSheet("color:#FF6666");
+                ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
                 ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
             }
             else{
@@ -273,7 +285,7 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
                 QString decryptResult=encryption->decryptVerify("signInResult.cipher", "signInResult.txt");
 
                 if(decryptResult.mid(0,1)=="0"){
-                    ui->label_signIn_keyFpr->setStyleSheet("color:#FF6666");
+                    ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
                     ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
                 }
                 else{
@@ -349,6 +361,11 @@ void SignIn::on_lineEdit_SignUpServerIP_textChanged(const QString &arg1)
     QString port=ui->lineEdit_SignUpServerPort->text();
     if(arg1!="" && port!=""){
         ui->pushButton_SignUpServerConnect->setEnabled(true);
+
+        ui->pushButton_signIn_AccountSignIn->setDefault(false);
+        ui->pushButton_signIn_serverConnect->setDefault(false);
+        ui->pushButton_signUpAccountSignUp->setDefault(false);
+        ui->pushButton_SignUpServerConnect->setDefault(true);
     }
     else{
         ui->pushButton_SignUpServerConnect->setEnabled(false);
@@ -360,6 +377,11 @@ void SignIn::on_lineEdit_SignUpServerPort_textChanged(const QString &arg1)
     QString ip=ui->lineEdit_SignUpServerIP->text();
     if(ip!="" && arg1!=""){
         ui->pushButton_SignUpServerConnect->setEnabled(true);
+
+        ui->pushButton_signIn_AccountSignIn->setDefault(false);
+        ui->pushButton_signIn_serverConnect->setDefault(false);
+        ui->pushButton_signUpAccountSignUp->setDefault(false);
+        ui->pushButton_SignUpServerConnect->setDefault(true);
     }
     else{
         ui->pushButton_SignUpServerConnect->setEnabled(false);
@@ -371,6 +393,11 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
     if(conn->getConnectionStatus()!=1){
         ui->label_signUpConnectError->setText("");
         ui->label_signUpConnectError->hide();
+
+        if(conn->getConnectionStatus()==-2){
+            ui->comboBox_signIn_selectServer->setCurrentText("*New Server");
+            ui->comboBox_signUp_selectServer->setCurrentText("*New Server");
+        }
 
         QString newIP=ui->lineEdit_SignUpServerIP->text();
         QString newPort=ui->lineEdit_SignUpServerPort->text();
@@ -398,7 +425,7 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
 
                 if(conn->getConnectionStatus()==-1){
                     ui->label_signUpConnectError->show();
-                    ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
+                    ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
                     ui->label_signUpConnectError->setText("ERROR: Can not connect to server!");
                 }
                 if(conn->getConnectionStatus()==1){
@@ -436,7 +463,7 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
                 }
                 if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
                     ui->label_signUpConnectError->show();
-                    ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
+                    ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
                     ui->label_signUpConnectError->setText("This server or this port not for E2EEIM");
                 }
 
@@ -445,7 +472,7 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
 
         ui->label_signUpConnectError->hide();
         ui->label_signUpConnectError->show();
-        //ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
+        //ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
 
     }
     else{
@@ -484,11 +511,20 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
 void SignIn::on_tabWidget_signUp_currentChanged(int index)
 {
     if(index==0){
+        ui->pushButton_signIn_AccountSignIn->setDefault(false);
+        ui->pushButton_signIn_serverConnect->setDefault(false);
+        ui->pushButton_signUpAccountSignUp->setDefault(false);
+        ui->pushButton_SignUpServerConnect->setDefault(true);
     }
     else if(index==1){
         ui->tabWidget_signUp->setTabEnabled(1, true);
-        ui->label_signUpAccountErrMsg->setStyleSheet("color:#ff6666");
+        ui->label_signUpAccountErrMsg->setStyleSheet("color:#AA6666");
         ui->label_signUpAccountErrMsg->setText("");
+
+        ui->pushButton_signIn_AccountSignIn->setDefault(false);
+        ui->pushButton_signIn_serverConnect->setDefault(false);
+        ui->pushButton_signUpAccountSignUp->setDefault(true);
+        ui->pushButton_SignUpServerConnect->setDefault(false);
     }
 }
 
@@ -502,6 +538,46 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
     if(username==""){
         errMsg+="\n-Username can not be empty!";
     }
+    else{
+        if(username.mid(0,1) == "." || username.mid(0,1) == "-" || username.mid(0,1) == "_"){
+            errMsg+="\n-Username first character must be letters(a-z, A-Z) or numbers(0-9)!";
+        }
+        if(username.length() > 16){
+            errMsg+="\n-Username can't be longer then 16 character!";
+        }
+        else if(username.length() < 4){
+            errMsg+="\n-Username must be longer then 4 character!";
+        }
+        else{
+            for(int i=0; i < username.length()-1; i++){
+                int unicode=username.mid(i,1).data()->unicode();
+
+                if(unicode<45){
+                    errMsg+="\n-Username only letters(a-z, A-Z), numbers(0-9),\n  hyphen(-), underscore(_), periods(.) are allowed!";
+                    break;
+                }
+                if(unicode>122){
+                    errMsg+="\n-Username only letters(a-z, A-Z), numbers(0-9),\n  hyphen(-), underscore(_), periods(.) are allowed!";
+                    break;
+                }
+                if(unicode==47||unicode==96){
+                    errMsg+="\n-Username only letters(a-z, A-Z), numbers(0-9),\n  hyphen(-), underscore(_), periods(.) are allowed!";
+                    break;
+                }
+                if(unicode > 57 && unicode < 65){
+                    errMsg+="\n-Username only letters(a-z, A-Z), numbers(0-9),\n  hyphen(-), underscore(_), periods(.) are allowed!";
+                    break;
+                }
+                if(unicode > 90 && unicode < 94){
+                    errMsg+="\n-Username only letters(a-z, A-Z), numbers(0-9),\n  hyphen(-), underscore(_), periods(.) are allowed!";
+                    break;
+                }
+            }
+
+        }
+
+    }
+
     if(passphrase==""){
         errMsg+="\n-Passphrase can not be empty!";
     }
@@ -518,6 +594,9 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         ui->tabWidget_signUp->setTabEnabled(2, true);
 
         ui->label_signUpFinishg->setText("Generating Key Pair...");
+        ui->label_signUpAccountErrMsg->setText("Generating Key Pair, please wait...");
+        ui->label_signUpAccountErrMsg->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+        ui->label_signUpAccountErrMsg->show();
 
 
         for(int i=10000000; i>0; i--){
@@ -644,7 +723,9 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
 
         ui->label_signUpFinishg->setText("Sending sign up request...");
 
-        conn->send(data);
+        if(conn->getConnectionStatus()==1){
+            conn->send(data);
+        }
 
         // Get sign up result message
         data.clear();
@@ -737,6 +818,44 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
         ui->comboBox_signIn_selectServer->setEnabled(false);
         ui->comboBox_signUp_selectServer->setEnabled(false);
     }
+    if(conn->getConnectionStatus()==-2){
+
+            QString servAddr=conn->getServerAddr();
+            QString servPort=conn->getServerPort();
+
+            qDebug() << conn->getConnectionStatus();
+            ui->tabWidget_signIn->setTabEnabled(1, false);
+            ui->tabWidget_signIn->setCurrentIndex(0);
+            ui->label_signIn_serverErr->show();
+            ui->label_signIn_serverErr->setText("Disconnect from server!! \nServer:" +servAddr+":"+servPort);
+            ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#AA6666;}");
+
+
+            ui->tabWidget_signUp->setTabEnabled(1, false);
+            ui->tabWidget_signUp->setCurrentIndex(0);
+            ui->label_signUpConnectError->show();
+            ui->label_signUpConnectError->setText("Disconnect from server!! \nServer:" +servAddr+":"+servPort);
+            ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#AA6666;}");
+
+            ui->frame_signIn_serverForm->show();
+            ui->frame_SignUpServerEnterNew->show();
+
+            ui->lineEdit_signIn_serverAddress->setText(servAddr);
+            ui->lineEdit_signIn_serverPort->setText(servPort);
+
+            ui->lineEdit_SignUpServerIP->setText(servAddr);
+            ui->lineEdit_SignUpServerPort->setText(servPort);
+
+            ui->pushButton_signIn_serverConnect->setText("Connect");
+            ui->pushButton_SignUpServerConnect->setText("Connect");
+
+            ui->pushButton_signIn_serverConnect->setEnabled(true);
+            ui->pushButton_SignUpServerConnect->setEnabled(true);
+
+            ui->comboBox_signIn_selectServer->setEnabled(true);
+            ui->comboBox_signUp_selectServer->setEnabled(true);
+        }
+
 
     if(index == 0){
         if(ui->tabWidget_signIn->currentIndex()==0 ||
@@ -763,6 +882,20 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
 
                 selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
                 on_comboBox_signIn_SelectAccount_currentIndexChanged(selectedAccount);
+            }
+
+            if(ui->tabWidget_signIn->currentIndex()==0){
+                ui->pushButton_signIn_AccountSignIn->setDefault(false);
+                ui->pushButton_signIn_serverConnect->setDefault(true);
+                ui->pushButton_signUpAccountSignUp->setDefault(false);
+                ui->pushButton_SignUpServerConnect->setDefault(false);
+
+            }
+            if(ui->tabWidget_signIn->currentIndex()==1){
+                ui->pushButton_signIn_AccountSignIn->setDefault(true);
+                ui->pushButton_signIn_serverConnect->setDefault(false);
+                ui->pushButton_signUpAccountSignUp->setDefault(false);
+                ui->pushButton_SignUpServerConnect->setDefault(false);
             }
         }
     }
@@ -798,6 +931,11 @@ void SignIn::on_comboBox_signIn_SelectAccount_currentIndexChanged(const QString 
     gpgme_key_t publicKey = encryption->getKey(patt, 0);
     encryption->setUserPubKey(publicKey);
 
+    ui->pushButton_signIn_AccountSignIn->setDefault(true);
+    ui->pushButton_signIn_serverConnect->setDefault(false);
+    ui->pushButton_signUpAccountSignUp->setDefault(false);
+    ui->pushButton_SignUpServerConnect->setDefault(false);
+
 }
 
 void SignIn::on_comboBox_signIn_selectServer_currentIndexChanged(const QString &arg1)
@@ -816,6 +954,11 @@ void SignIn::on_comboBox_signIn_selectServer_currentIndexChanged(const QString &
         }
         else{
             ui->pushButton_signIn_serverConnect->setEnabled(true);
+
+            ui->pushButton_signIn_AccountSignIn->setDefault(false);
+            ui->pushButton_signIn_serverConnect->setDefault(true);
+            ui->pushButton_signUpAccountSignUp->setDefault(false);
+            ui->pushButton_SignUpServerConnect->setDefault(false);
         }
     }
     if(arg1!="*New Server"){
@@ -832,6 +975,11 @@ void SignIn::on_lineEdit_signIn_serverAddress_textChanged(const QString &arg1)
     QString port=ui->lineEdit_signIn_serverPort->text();
     if(arg1!="" && port!=""){
         ui->pushButton_signIn_serverConnect->setEnabled(true);
+
+        ui->pushButton_signIn_AccountSignIn->setDefault(false);
+        ui->pushButton_signIn_serverConnect->setDefault(true);
+        ui->pushButton_signUpAccountSignUp->setDefault(false);
+        ui->pushButton_SignUpServerConnect->setDefault(false);
     }
     else{
         ui->pushButton_signIn_serverConnect->setEnabled(false);
@@ -843,6 +991,11 @@ void SignIn::on_lineEdit_signIn_serverPort_textChanged(const QString &arg1)
     QString ip=ui->lineEdit_signIn_serverAddress->text();
     if(ip!="" && arg1!=""){
         ui->pushButton_signIn_serverConnect->setEnabled(true);
+
+        ui->pushButton_signIn_AccountSignIn->setDefault(false);
+        ui->pushButton_signIn_serverConnect->setDefault(true);
+        ui->pushButton_signUpAccountSignUp->setDefault(false);
+        ui->pushButton_SignUpServerConnect->setDefault(false);
     }
     else{
         ui->pushButton_signIn_serverConnect->setEnabled(false);
@@ -852,6 +1005,11 @@ void SignIn::on_lineEdit_signIn_serverPort_textChanged(const QString &arg1)
 void SignIn::on_pushButton_signIn_serverConnect_clicked()
 {
     if(conn->getConnectionStatus()!=1){
+
+        if(conn->getConnectionStatus()==-2){
+            ui->comboBox_signIn_selectServer->setCurrentText("*New Server");
+            ui->comboBox_signUp_selectServer->setCurrentText("*New Server");
+        }
         ui->label_signIn_serverErr->setText("");
         ui->label_signIn_serverErr->hide();
 
@@ -869,19 +1027,11 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
                 ui->label_signIn_serverErr->setStyleSheet("color:#333333");
                 ui->label_signIn_serverErr->show();
 
-                QString loading[3]={"Waiting for connection.",
-                                    "Waiting for connection..",
-                                    "Waiting for connection..."};
-
-                for(int i=1; i<3; i++){
-                    ui->label_signIn_serverErr->setText(loading[i]);
-                }
-
                 conn->connected(newIP, newPort);
 
                 if(conn->getConnectionStatus()==-1){
                     ui->label_signIn_serverErr->show();
-                    ui->label_signIn_serverErr->setStyleSheet("color:#FF6666");
+                    ui->label_signIn_serverErr->setStyleSheet("color:#AA6666");
                     ui->label_signIn_serverErr->setText("ERROR: Can not connect to server!");
                 }
                 if(conn->getConnectionStatus()==1){
@@ -918,7 +1068,7 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
                 }
                 if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
                     ui->label_signIn_serverErr->show();
-                    ui->label_signIn_serverErr->setStyleSheet("color:#FF6666");
+                    ui->label_signIn_serverErr->setStyleSheet("color:#AA6666");
                     ui->label_signIn_serverErr->setText("This server or this port not for E2EEIM");
                 }
 
@@ -927,7 +1077,7 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
 
         ui->label_signIn_serverErr->hide();
         ui->label_signIn_serverErr->show();
-        ui->label_signUpConnectError->setStyleSheet("color:#FF6666");
+        ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
     }
     else{ // User click disconnect
         conn->letDisconnect();
@@ -982,6 +1132,11 @@ void SignIn::on_comboBox_signUp_selectServer_currentTextChanged(const QString &a
         }
         else{
             ui->pushButton_SignUpServerConnect->setEnabled(true);
+
+            ui->pushButton_signIn_AccountSignIn->setDefault(false);
+            ui->pushButton_signIn_serverConnect->setDefault(false);
+            ui->pushButton_signUpAccountSignUp->setDefault(false);
+            ui->pushButton_SignUpServerConnect->setDefault(true);
         }
     }
     if(arg1!="*New Server"){
@@ -990,4 +1145,16 @@ void SignIn::on_comboBox_signUp_selectServer_currentTextChanged(const QString &a
     else{
         ui->frame_SignUpServerEnterNew->show();
     }
+}
+
+void SignIn::disconnectFromServer(){
+    qDebug() << "DISCONNECT FROM SERVER";
+    this->setWindowTitle("E2EEIM DISCONNECT FROM SERVER!!");
+
+    ui->tabWidget_signIn->setTabEnabled(1, false);
+    ui->tabWidget_signUp->setTabEnabled(1, false);
+    ui->tabWidget_signUp->setTabEnabled(2, false);
+
+    ui->tabWidget_signIn->setCurrentIndex(0);
+    on_tabWidget_mainTab_currentChanged(0);
 }
