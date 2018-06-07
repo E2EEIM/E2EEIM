@@ -355,10 +355,16 @@ QComboBox::down-arrow
       </property>
       <widget class="QFrame" name="frame_Contact">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>0</height>
+        </size>
        </property>
        <property name="sizeIncrement">
         <size>
@@ -513,7 +519,7 @@ color: #555555;
       </widget>
       <widget class="QFrame" name="frame_Conversation">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>

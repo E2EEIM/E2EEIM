@@ -22,7 +22,6 @@
 #include <QFile>
 #include <QTextStream>
 
-QString ACTIVE_USER2;
 
 AddContact::AddContact(Connection &conn, Encryption &encryption, QStringList &addFriendRequestList, QWidget *parent, QString activeUser) :
     QDialog(parent),
@@ -34,7 +33,6 @@ AddContact::AddContact(Connection &conn, Encryption &encryption, QStringList &ad
 
     this->conn=&conn;
     this->encryption=&encryption;
-    ACTIVE_USER2=activeUser;
 
     this->servKey=encryption.getServerPubKey();
     this->userPriKey=encryption.getUserPriKey();
@@ -66,16 +64,8 @@ void AddContact::on_lineEdit_search_textChanged(const QString &arg1)
 void AddContact::on_pushButton_search_clicked()
 {
     QString keyword=ui->lineEdit_search->text();
-
-    qDebug() << keyword;
-
-    qDebug() << "DEEP_DEBUG_A";
-
     QByteArray payload;
-
     payload.append(keyword);
-
-    qDebug() << "DEEP_DEBUG_B";
 
     //Encrypt Payload
     QFile File_Payload("searchContact.keyword");
@@ -89,11 +79,7 @@ void AddContact::on_pushButton_search_clicked()
     File_Payload.flush();
     File_Payload.close();
 
-    qDebug() << "DEEP_DEBUG_C";
-
     encryption->encryptSign(userPriKey, servKey, "searchContact.keyword", "searchContact.cipher");
-
-    qDebug() << "DEEP_DEBUG_D";
 
     QFile File_EncryptedPayload("searchContact.cipher");
     if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
@@ -104,8 +90,6 @@ void AddContact::on_pushButton_search_clicked()
     QString cipher;
     cipher=in.readAll();
     File_EncryptedPayload.close();
-
-    qDebug() << "DEEP_DEBUG_E";
 
     payload.clear();
 
@@ -123,20 +107,9 @@ void AddContact::on_pushButton_search_clicked()
     ds2 << dataSize;
     data.insert(0, dataSizeByte);
 
-    qDebug() << "DEEP_DEBUG_F";
-
     conn->send(data);
-
-    qDebug() << "DEEP_DEBUG_G";
-
     data.clear();
     data=conn->getRecentReceivedMsg();
-
-    qDebug() << "DEEP_DEBUG_H";
-
-    if(data==""){
-        qDebug() << "DATA EMPTY!!!!!!";
-    }
 
     //Decrypt Payload
     QFile File_Result("searchUserResult.cipher");
@@ -171,6 +144,52 @@ void AddContact::on_pushButton_search_clicked()
 
         QString result=qs;
 
+
+        QString Filename = "./userData/"+ACTIVE_USER+"/contactList.txt";
+        QStringList contactList;
+        QFile File(Filename);
+        if(!File.exists()){
+            if(!File.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "Cound not open file for writing";
+                exit(1);
+            }
+            QTextStream out(&File);
+            out << "";
+
+            File.flush();
+            File.close();
+        }
+        if(!File.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "Cound not open file for Read";
+            exit(1);
+        }
+
+        QTextStream in2(&File);
+        QString line;
+        while( !in2.atEnd())
+        {
+            line=in2.readLine();
+            contactList.append(line);
+        }
+
+
+        bool isFriend=false;
+        foreach(QString contact, contactList){
+            if(contact==keyword){
+                isFriend=true;
+                break;
+            }
+            if(contact=="!"+keyword){
+                isFriend=true;
+                break;
+            }
+            if(contact=="@"+keyword){
+                isFriend=true;
+                break;
+            }
+
+        }
+
         if(result=="0"){
             qDebug() << "Username:" << keyword << "not found!";
             ui->label_searchResult->setText("Username: "+keyword+", not found in this server!");
@@ -178,6 +197,32 @@ void AddContact::on_pushButton_search_clicked()
             ui->label_searchResult->show();
             ui->frame_account->hide();
 
+        }
+        else if(keyword==ACTIVE_USER){
+            QString status=result.split("\n").first();
+            QString username=result.split("\n").at(1);
+            QString key=result.split("\n").last();
+
+            ui->label_account_username->setText(username);
+            ui->label_account_key->setText(key);
+
+            ui->label_searchResult->hide();
+            ui->frame_account->show();
+            ui->pushButton_sendAddFriendRequest->setEnabled(false);
+            ui->pushButton_sendAddFriendRequest->setText("It's you!");
+        }
+        else if(isFriend==true){
+            QString status=result.split("\n").first();
+            QString username=result.split("\n").at(1);
+            QString key=result.split("\n").last();
+
+            ui->label_account_username->setText(username);
+            ui->label_account_key->setText(key);
+
+            ui->label_searchResult->hide();
+            ui->frame_account->show();
+            ui->pushButton_sendAddFriendRequest->setEnabled(false);
+            ui->pushButton_sendAddFriendRequest->setText("Friend");
         }
         else{
             QString status=result.split("\n").first();
@@ -193,7 +238,6 @@ void AddContact::on_pushButton_search_clicked()
             ui->pushButton_sendAddFriendRequest->setText("Add Friend");
 
             foundUser=username;
-
         }
     }
 
