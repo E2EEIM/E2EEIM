@@ -130,6 +130,10 @@ void MyThread::run(){
 
     qDebug() << "Client connected to sockfd No." << socketDescriptor;
 
+    timer = new QTimer();
+    connect(timer, SIGNAL(timeout()), this, SLOT(task()));
+    timer->start(100);
+
     exec();
 }
 

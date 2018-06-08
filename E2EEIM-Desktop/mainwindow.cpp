@@ -133,6 +133,11 @@ void MainWindow::initUserDataPath(){
     on_pushButton_Conversation_clicked();
     currentMenu = "conversation";
 
+    QList<int> currentSizes = ui->splitter->sizes();
+    currentSizes[0]=216;
+    currentSizes[1]=507;
+    ui->splitter->setSizes(currentSizes);
+
 }
 
 QStringList MainWindow::getGroupMember(QString GroupName){
@@ -344,8 +349,8 @@ void MainWindow::on_pushButton_Conversation_clicked()
     //Code below will show contact list when user click this chat buttom.
     QList<int> currentSizes = ui->splitter->sizes();
     if(currentSizes[0]==0){
-        currentSizes[0]=1;
-        currentSizes[1]=1;
+        currentSizes[0]=216;
+        currentSizes[1]=507;
         ui->splitter->setSizes(currentSizes);
     }
 
@@ -417,8 +422,8 @@ void MainWindow::on_pushButton_Contact_clicked()
     //Code below will show contact list when user click this concact buttom.
     QList<int> currentSizes = ui->splitter->sizes();
     if(currentSizes[0]==0){
-        currentSizes[0]=1;
-        currentSizes[1]=1;
+        currentSizes[0]=216;
+        currentSizes[1]=507;
         ui->splitter->setSizes(currentSizes);
     }
 
@@ -465,8 +470,8 @@ void MainWindow::on_pushButton_Group_clicked()
     //Code below will show contact list when user click this group buttom.
     QList<int> currentSizes = ui->splitter->sizes();
     if(currentSizes[0]==0){
-        currentSizes[0]=1;
-        currentSizes[1]=1;
+        currentSizes[0]=216;
+        currentSizes[1]=507;
         ui->splitter->setSizes(currentSizes);
     }
 

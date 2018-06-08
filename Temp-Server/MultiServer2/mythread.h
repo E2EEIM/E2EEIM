@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QQueue>
 #include <gpgme.h>
+#include <QTimer>
 
 class MyThread : public QThread
 {
@@ -65,6 +66,8 @@ private:
     QByteArray serverPubKey;
 
     QString activeUser;
+
+    QTimer *timer;
 
 };
 
