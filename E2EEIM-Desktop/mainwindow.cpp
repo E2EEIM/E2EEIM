@@ -48,6 +48,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::initUserDataPath(){
 
+    anyNewContact=false;
+
     qDebug() << "ACTIVE_USR" << ACTIVE_USR;
     QString userDataPath("./userData");
     QDir userData;

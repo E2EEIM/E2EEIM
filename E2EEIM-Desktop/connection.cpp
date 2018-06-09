@@ -22,6 +22,7 @@
 Connection::Connection(Encryption &encryption, QObject *parent) : QObject(parent){
 
     this->encryption=&encryption;
+    connectStatus=0;
 
 
 }
