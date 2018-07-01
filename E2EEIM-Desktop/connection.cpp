@@ -179,6 +179,10 @@ void Connection::readyRead(){
         qDebug() << "Receive new public key!!!";
         emit receiveNewPublicKey(data);
     }
+    if(op==18){
+        qDebug() << "Receive new message!!!!!!!!!!!!!!!!!!";
+        emit receiveNewMessage(data);
+    }
     else{
         qDebug() << "New data arrived!!!!!!!!!!";
     }

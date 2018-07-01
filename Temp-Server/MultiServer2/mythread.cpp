@@ -203,7 +203,30 @@ void MyThread::task(){
 
                 waitingTaskUser->removeAt(idx);
                 waitingTaskWork->removeAt(idx);
+            }
+            if(taskProtocol=="18"){
+                qDebug() << "*18*18*18*18*18*18*18*18*18*18*18*18*18*18*18*18*18";
 
+                QString cipher=task.mid(2);
+
+                QByteArray data;
+                data.append(cipher);
+                QByteArray payload=encryptToClient(data, activeUser, "addFriendCon.cipher");
+                data.clear();
+                data=payload;
+                data.insert(0, (char)18);
+
+                //Insert size of(operation + payload) in front of byte array (data[0]).
+                int dataSize=data.size();
+                QByteArray dataSizeByte;
+                QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+                ds << dataSize;
+                data.insert(0, dataSizeByte);
+
+                send(data);
+
+                waitingTaskUser->removeAt(idx);
+                waitingTaskWork->removeAt(idx);
 
             }
 
@@ -744,6 +767,34 @@ void MyThread::dataFilter(QByteArray data){
 
         }
     }
+    if(intOp==17){
+        qDebug() << "*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17";
+        qDebug() << "*17-> RECEIVED add friend confirmation result";
+        printf("+----------------------+----------------------+--------------------+\n");
+        printf("|  data Size (4 byte)  | Operation (1 byte)   | Encrypted(payload) |\n");
+        printf("+----------------------+----------------------+--------------------+\n");
+
+        printDataDetail(data);
+        QByteArray payload=decryptData(data, "msg.cipher");
+
+       qDebug() << payload;
+
+       qDebug() << "payload[0]:" << payload.mid(0,1);
+       qDebug() << "payload[1]:" << payload.mid(1,1);
+       if(payload.mid(0,1)=="1"){
+           int recipientUsernameSize=QString(payload.mid(1,1)).data()->unicode();
+           QString recipientUsername=QString(payload.mid(2, recipientUsernameSize));
+
+           qDebug() << "recipient:" << recipientUsername;
+           qDebug() << "message:" << payload.mid(recipientUsernameSize+2);
+
+
+           if(usernameList->indexOf(recipientUsername)!=(-1)){
+               waitingTaskUser->append(recipientUsername);
+               waitingTaskWork->append("18"+QString(payload.mid(recipientUsernameSize+2)));
+           }
+       }
+    }
 
 }
 
@@ -812,15 +863,25 @@ QByteArray MyThread::decryptData(QByteArray data, const char* outputFileName){
     outFile.flush();
     outFile.close();
 
-    decrypted.append(dataStream);
+
 
     if(intOp==7 || intOp==9 || intOp==11 || intOp==14){
+        decrypted.append(dataStream);
         decrypted.append("@@");
         decrypted.append(verifyResult.mid(1));
 
         return decrypted;
     }
+    else if(intOp==17){
+
+        decrypted.append(verifyResult.mid(0,1));
+        decrypted.append(dataStream);
+
+        return decrypted;
+
+    }
     else{
+        decrypted.append(dataStream);
         return decrypted;
     }
 

@@ -35,6 +35,8 @@ MainWindow::MainWindow(Connection &conn, Encryption &encryption, QWidget *parent
 
     connect(this->conn, SIGNAL(receiveAddFriendrequest(QByteArray)), this, SLOT(receiveAddFriendRequest(QByteArray)), Qt::QueuedConnection);
     connect(this->conn, SIGNAL(receiveNewPublicKey(QByteArray)), this, SLOT(receiveNewPublicKey(QByteArray)), Qt::QueuedConnection);
+    connect(this->conn, SIGNAL(receiveNewMessage(QByteArray)), this, SLOT(receiveNewMessage(QByteArray)), Qt::QueuedConnection);
+
     connect(this->conn, SIGNAL(disconnectFromServer()), this, SLOT(disconnectFromServer()), Qt::QueuedConnection);
 
     signOut();
@@ -63,10 +65,23 @@ void MainWindow::initUserDataPath(){
     QDir userConversation;
     userConversation.mkdir(userConversationDir);
 
+    QFile FileNewMessage("./userData/"+ACTIVE_USR+"/newMessage");
+    if(!FileNewMessage.exists()){
+        if(!FileNewMessage.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "could not open AU/newMessage file for writing";
+            abort();
+        }
+        QTextStream out(&FileNewMessage);
+        out << "";
+
+        FileNewMessage.flush();
+        FileNewMessage.close();
+    }
+
     QFile File("./userData/"+ACTIVE_USR+"/addFriendRequestList.txt");
     if(!File.exists()){
         if(!File.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "cound not open file for writing";
+            qDebug() << "could not open addFriendRequestList.txt file for writing";
             abort();
         }
         QTextStream out(&File);
@@ -77,7 +92,7 @@ void MainWindow::initUserDataPath(){
     }
 
     if(!File.open(QFile::ReadOnly | QFile::Text)){
-        qDebug() << "cound not open file for Read";
+        qDebug() << "could not open addFriendRequestList.txt file for Read";
         abort();
     }
 
@@ -147,7 +162,7 @@ QStringList MainWindow::getGroupMember(QString GroupName){
     QStringList List;
     if(!File.exists()){
         if(!File.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "cound not open file for writing";
+            qDebug() << "Could not open groupList.txt file for writing";
             abort();
         }
         QTextStream out(&File);
@@ -158,7 +173,7 @@ QStringList MainWindow::getGroupMember(QString GroupName){
     }
 
     if(!File.open(QFile::ReadOnly | QFile::Text)){
-        qDebug() << "cound not open file for Read";
+        qDebug() << "Could not open file for Read";
         abort();
     }
 
@@ -191,7 +206,7 @@ QStringList MainWindow::readTextLine(QString Filename){
     QStringList List;
     if(!File.exists()){
         if(!File.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "cound not open file for writing";
+            qDebug() << "Could not open "+Filename+" file for writing";
             abort();
         }
         QTextStream out(&File);
@@ -202,7 +217,7 @@ QStringList MainWindow::readTextLine(QString Filename){
     }
 
     if(!File.open(QFile::ReadOnly | QFile::Text)){
-        qDebug() << "cound not open file for Read";
+        qDebug() << "Could not open file for Read";
         abort();
     }
 
@@ -240,7 +255,7 @@ QStringList MainWindow::ReadConversation(QString Filename){
     QStringList List;
     if(!File.exists()){
         if(!File.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "Cound not open file for writing";
+            qDebug() << "Could not open"+Filename+" file for writing";
             abort();
         }
         QTextStream out(&File);
@@ -252,7 +267,7 @@ QStringList MainWindow::ReadConversation(QString Filename){
 
 
     if(!File.open(QFile::ReadOnly | QFile::Text)){
-        qDebug() << "Cound not open file for Read";
+        qDebug() << "Could not open " +Filename+ " file for Read";
         abort();
     }
 
@@ -328,39 +343,89 @@ void MainWindow::on_pushButton_Conversation_clicked()
 
     //clear current display list
     ui->listWidget_Contact->clear();
+    anyNewMessage=false;
 
-    /* Load conversation list*/
-    QDir conversationFile("./userData/"+ACTIVE_USR+"/conversation");
-    QStringList conversationList;
-    foreach(QFileInfo item, conversationFile.entryInfoList()){
-        if(item.isFile()){
+    if(ACTIVE_USR!=""){
 
-            conversationList.append(item.fileName());
+        qDebug() << "---------------NM_4a";
+
+        QString Filename = "./userData/"+ACTIVE_USR+"/newMessage";
+        newMessageList=readTextLine(Filename);                 //Read user data from file.
+
+        qDebug() << "---------------NM_4b";
+
+        QStringList notiItemList;
+        QStringList normalItemList;
+
+        /* Load conversation list*/
+        QDir conversationFile("./userData/"+ACTIVE_USR+"/conversation");
+        QStringList conversationList;
+        foreach(QFileInfo item, conversationFile.entryInfoList()){
+            if(item.isFile()){
+
+                qDebug() << "---------------NM_4b1";
+
+                conversationList.append(item.fileName());
+                bool newMsgInThis=false;
+                foreach (QString newMessage, newMessageList) {
+                    if(item.fileName()==newMessage){
+                        notiItemList.append(item.fileName());
+                        newMsgInThis=true;
+                        anyNewMessage=true;
+                        qDebug() << "---------------NM_4b2x";
+                    }
+                }
+                if(newMsgInThis==false){
+                    normalItemList.append(item.fileName());
+                    qDebug() << "---------------NM_4b2y";
+                }
+            }
         }
+
+        qDebug() << "---------------NM_4c";
+
+        /*Add conversation to list.*/
+        foreach(QString conversation, notiItemList){
+            QListWidgetItem *item = new QListWidgetItem;
+            item->setIcon(QIcon(":/img/icons/newPerson.png"));
+            item->setText(conversation);
+            ui->listWidget_Contact->addItem(item);
+            anyNewMessage=true;
+
+            qDebug() << "---------------NM_4dx";
+        }
+        foreach(QString conversation, normalItemList){
+            QListWidgetItem *item = new QListWidgetItem;
+            item->setIcon(QIcon(":/img/icons/person.png"));
+            item->setText(conversation);
+            ui->listWidget_Contact->addItem(item);
+            qDebug() << "---------------NM_4dy";
+        }
+
+        //In case user move splitter hide contacts list and don't know how to show it again.
+        //Code below will show contact list when user click this chat buttom.
+        QList<int> currentSizes = ui->splitter->sizes();
+        if(currentSizes[0]==0){
+            currentSizes[0]=216;
+            currentSizes[1]=507;
+            ui->splitter->setSizes(currentSizes);
+        }
+
     }
 
-    /*Add conversation to list.*/
-    foreach(QString conversation, conversationList){
-        QListWidgetItem *item = new QListWidgetItem;
-        item->setIcon(QIcon(":/img/icons/person.png"));
-        item->setText(conversation);
-        ui->listWidget_Contact->addItem(item);
-    }
 
-    //In case user move splitter hide contacts list and don't know how to show it again.
-    //Code below will show contact list when user click this chat buttom.
-    QList<int> currentSizes = ui->splitter->sizes();
-    if(currentSizes[0]==0){
-        currentSizes[0]=216;
-        currentSizes[1]=507;
-        ui->splitter->setSizes(currentSizes);
-    }
 
     //show add new conversation icon
     ui->pushButton_AddList->setIcon((QIcon(":img/icons/add_conversation.png")));
 
     //show current clicked icon
-    ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_chat_clicked.png"));
+    if(anyNewMessage==true){
+        ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_conversation_noti_clicked.png"));
+    }
+    else{
+        ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_chat_clicked.png"));
+    }
+
     if(anyNewContact==true){
         ui->pushButton_Contact->setIcon(QIcon(":/img/icons/menu_contact_normal_noti.png"));
     }
@@ -371,8 +436,6 @@ void MainWindow::on_pushButton_Conversation_clicked()
     ui->pushButton_Conversation->setIconSize(QSize(70,70));
     ui->pushButton_Contact->setIconSize(QSize(70,70));
     ui->pushButton_Group->setIconSize(QSize(70,70));
-
-
 }
 
 //click concatact icon
@@ -435,7 +498,12 @@ void MainWindow::on_pushButton_Contact_clicked()
 
 
     //show current clicked icon
-    ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_chat.png"));
+    if(anyNewMessage==true){
+        ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_conversation_noti_normal.png"));
+    }
+    else{
+        ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_chat.png"));
+    }
     if(anyNewContact==true){
         ui->pushButton_Contact->setIcon(QIcon(":/img/icons/menu_contact_clicked_noti.png"));
     }
@@ -481,7 +549,12 @@ void MainWindow::on_pushButton_Group_clicked()
     ui->pushButton_AddList->setIcon((QIcon(":img/icons/add_group.png")));
 
     //show current clicked icon
-    ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_chat.png"));
+    if(anyNewMessage==true){
+        ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_conversation_noti_normal.png"));
+    }
+    else{
+        ui->pushButton_Conversation->setIcon(QIcon(":/img/icons/menu_chat.png"));
+    }
     if(anyNewContact==true){
         ui->pushButton_Contact->setIcon(QIcon(":/img/icons/menu_contact_normal_noti.png"));
     }
@@ -548,7 +621,7 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         ui->pushButton_addFriend_decline->hide();
         ui->frame_3->show();
         ui->label_ConversationWith->setText("You and "+ conversationWith.mid(1) +
-                                            " are firends now!");
+                                            " are friends now!");
     }
     else{
         ui->pushButton_newFriend_picture->hide();
@@ -582,6 +655,23 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         ui->listWidget_Conversation->scrollToBottom();
     }
 
+
+    //Clear notification when users click notification item.
+    QString Filename = "./userData/"+ACTIVE_USR+"/newMessage";
+    newMessageList=readTextLine(Filename);
+
+    bool messageFormUnreadUser=false;
+    foreach (QString newMessage, newMessageList) {
+        if(newMessage==conversationWith){
+            messageFormUnreadUser=true;
+            break;
+        }
+    }
+
+    if(messageFormUnreadUser==true && currentMenu=="conversation"){
+        removeFromListFile(Filename, conversationWith);
+        on_pushButton_Conversation_clicked();
+    }
 }
 
 /*When user click SEND button*/
@@ -598,7 +688,7 @@ void MainWindow::on_pushButton_SEND_clicked()
         QFile File(Filename);
         if(!File.exists()){
             if(!File.open(QFile::WriteOnly | QFile::Text)){
-                qDebug() << "cound not open file for writing";
+                qDebug() << "could not open "+ Filename +" file for writing";
                 abort();
             }
             QTextStream out(&File);
@@ -609,7 +699,7 @@ void MainWindow::on_pushButton_SEND_clicked()
         }
         if(File.exists()){
             if(!File.open(QFile::Append | QFile::Text)){
-                qDebug() << "cound not open file for writing";
+                qDebug() << "could not open"+ Filename+" file for writing";
                 abort();
             }
 
@@ -620,6 +710,121 @@ void MainWindow::on_pushButton_SEND_clicked()
             File.flush();
             File.close();
         }
+
+        // Send message
+
+        Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.txt";
+        QFile rawFile(Filename);
+        if(!rawFile.exists()){
+            if(!rawFile.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "could not open"+Filename+" file for writing";
+                abort();
+            }
+            QTextStream out(&rawFile);
+            out << "";
+
+            rawFile.flush();
+            rawFile.close();
+        }
+        if(rawFile.exists()){
+            if(!rawFile.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "could not open file"+ Filename +" for writing";
+                abort();
+            }
+
+            QTextStream out(&rawFile);
+            out << msg;
+
+            rawFile.flush();
+            rawFile.close();
+        }
+
+        QByteArray qb = conversationWith.toLatin1();
+        const char *recipient = qb.data();
+
+
+        gpgme_key_t recipientKey=encryption->getKey(recipient, 0);
+
+        qb=Filename.toLatin1();
+        const char *inputFileName=qb.data();
+
+        Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.cipher";
+        qb=Filename.toLatin1();
+        const char *outPutFileName=qb.data();
+
+
+        encryption->encryptSign(userPriKey, recipientKey, inputFileName, outPutFileName);
+
+        QFile File_cipher("./userData/"+ACTIVE_USR+"/msgToEncrypt.cipher");
+        if(!File_cipher.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "could not open file for Read";
+            abort();
+        }
+        QTextStream in(&File_cipher);
+        QString cipher;
+        cipher=in.readAll();
+        File_cipher.close();
+
+        char recvUsernameSize=char(conversationWith.size());
+
+        QByteArray msgToServer;
+        msgToServer.append(cipher);
+        msgToServer.insert(0, conversationWith);
+        msgToServer.insert(0, recvUsernameSize);
+
+        Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.txt";
+        if(rawFile.exists()){
+            if(!rawFile.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "could not open "+Filename+" file for writing";
+                abort();
+            }
+
+            QTextStream out(&rawFile);
+            out << msgToServer;
+
+            rawFile.flush();
+            rawFile.close();
+
+        }
+
+
+        Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.txt";
+        QByteArray qb2=Filename.toLatin1();
+        inputFileName=qb2.data();
+
+
+        Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.cipher";
+        QByteArray qb3=Filename.toLatin1();
+        outPutFileName=qb3.data();
+
+        encryption->encryptSign(userPriKey, servKey, inputFileName, outPutFileName);
+
+        QFile qf("./userData/"+ACTIVE_USR+"/msgToEncrypt.cipher");
+        if(!qf.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "could not open msgToEncrypt.cipher file for Read";
+            abort();
+        }
+        QTextStream pl(&qf);
+        QString qs;
+        qs=pl.readAll();
+        qf.close();
+
+        QString payload=qs;
+
+        QByteArray data;
+        data.append(payload);
+
+        // Insert operation in front of byte array (data[0]).
+        data.insert(0, (char)17);
+
+        //Insert size of(operation + payload) in front of byte array (data[0]).
+        int dataSize=data.size();
+        QByteArray dataSizeByte;
+        QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+        ds << dataSize;
+        data.insert(0, dataSizeByte);
+
+        conn->send(data);
 
         /*Load conversation*/
         QString filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
@@ -760,7 +965,7 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 
 void MainWindow::receiveAddFriendRequest(QByteArray data){
 
-    qDebug() << "************************RECEIVE ADD FIREND REQUEST**********************";
+    qDebug() << "************************RECEIVE ADD FRIEND REQUEST**********************";
     //qDebug() << data;
 
     qDebug() <<"DEEP_DEBUG 3";
@@ -774,7 +979,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
     //Decrypt Payload
     QFile File_Result("temp.cipher");
     if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
-        qDebug() << "Cound not open file for writing";
+        qDebug() << "could not open temp.cipher file for writing";
         abort();
     }
     QTextStream ts(&File_Result);
@@ -794,7 +999,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
     else{
         QFile File_result("temp.txt");
         if(!File_result.open(QFile::ReadOnly | QFile::Text)){
-            qDebug() << "Cound not open file for Read";
+            qDebug() << "Could not open file for Read";
             abort();
         }
         QTextStream in(&File_result);
@@ -828,7 +1033,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
             QFile File(Filename);
             if(!File.exists()){
                 if(!File.open(QFile::WriteOnly | QFile::Text)){
-                    qDebug() << "cound not open file for writing";
+                    qDebug() << "could not open"+Filename+" file for writing";
                     exit(1);
                 }
                 QTextStream out(&File);
@@ -840,7 +1045,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
             if(File.exists()){
 
                 if(!File.open(QFile::Append | QFile::Text)){
-                      qDebug() << "cound not open file for writing";
+                      qDebug() << "could not open"+ Filename+ " file for writing";
                       exit(1);
                 }
                   QTextStream out(&File);
@@ -871,7 +1076,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
     //Decrypt Payload
     QFile File_Result("temp.cipher");
     if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
-        qDebug() << "Cound not open file for writing";
+        qDebug() << "could not open temp.cipher file for writing";
         abort();
     }
     QTextStream ts(&File_Result);
@@ -891,7 +1096,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
 
         QFile File("temp.txt");
         if(!File.open(QFile::ReadOnly | QFile::Text)){
-            qDebug() << "Cound not open file for Read";
+            qDebug() << "Could not open file for Read";
             abort();
         }
         QTextStream in(&File);
@@ -913,7 +1118,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
 
             QFile File("temp.txt");
             if(!File.open(QFile::WriteOnly | QFile::Text)){
-                qDebug() << "Cound not open file temp.txt for writing";
+                qDebug() << "Could not open file temp.txt for writing";
                 exit(1);
             }
             QTextStream out(&File);
@@ -939,7 +1144,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
                     QFile File(Filename);
                     if(!File.exists()){
                         if(!File.open(QFile::WriteOnly | QFile::Text)){
-                            qDebug() << "cound not open file for writing";
+                            qDebug() << "Could not open" +Filename+ " file for writing";
                             exit(1);
                         }
                         QTextStream out(&File);
@@ -951,7 +1156,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
                     if(File.exists()){
 
                         if(!File.open(QFile::Append | QFile::Text)){
-                              qDebug() << "cound not open file for writing";
+                              qDebug() << "Could not open"+Filename+" file for writing";
                               exit(1);
                         }
                           QTextStream out(&File);
@@ -976,7 +1181,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
                     on_pushButton_Contact_clicked();
                     on_pushButton_Conversation_clicked();
                 }
-                if(currentMenu=="group"){
+                else if(currentMenu=="group"){
                     on_pushButton_Contact_clicked();
                     on_pushButton_Group_clicked();
                 }
@@ -989,6 +1194,269 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
 
     }
 
+
+}
+
+void MainWindow::receiveNewMessage(QByteArray data){
+    qDebug() << "RECEVIE NEW MESSAGE!!!!!!!!!!!!!";
+
+    if(finishInitUserDataStatus==false){
+        initUserDataPath();
+    }
+
+    //Decrypt Payload
+    QFile FileCipher("./userData/"+ACTIVE_USR+"/msg.cipher");
+    if(!FileCipher.exists()){
+        if(!FileCipher.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "Could not open msg.cipher file for writing";
+            abort();
+        }
+        QTextStream out(&FileCipher);
+        out << "";
+
+        FileCipher.flush();
+        FileCipher.close();
+    }
+    QFile FileMsg("./userData/"+ACTIVE_USR+"/msg");
+    if(!FileMsg.exists()){
+        if(!FileMsg.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "Could not open msg file for writing";
+            abort();
+        }
+        QTextStream out(&FileMsg);
+        out << "";
+
+        FileMsg.flush();
+        FileMsg.close();
+    }
+
+
+    if(!FileCipher.open(QFile::WriteOnly | QFile::Text)){
+        qDebug() << "Could not open msg.cipher file for writing";
+        abort();
+    }
+    QTextStream ts(&FileCipher);
+    ts << data.mid(5);
+
+    FileCipher.flush();
+    FileCipher.close();
+
+    QString Filename;
+    Filename="./userData/"+ACTIVE_USR+"/msg.cipher";
+    QByteArray qb2=Filename.toLatin1();
+    const char *inputFileName=qb2.data();
+
+
+    Filename="./userData/"+ACTIVE_USR+"/msg";
+    QByteArray qb3=Filename.toLatin1();
+    const char *outPutFileName=qb3.data();
+
+
+    QString decryptResult=encryption->decryptVerify(inputFileName, outPutFileName);
+
+    if(decryptResult.mid(0,1)=="1"){
+        QFile File(Filename);
+        if(!File.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "Could not open file for Read";
+            abort();
+        }
+        QTextStream in(&File);
+        QString qs;
+        qs=in.readAll();
+        File.close();
+
+        QString payload;
+        payload=qs;
+
+        if(!FileCipher.open((QFile::WriteOnly | QFile::Text))){
+            qDebug() << "Could not open file for Read";
+            abort();
+        }
+
+        QTextStream out(&FileCipher);
+        out << payload;
+
+        FileCipher.flush();
+        FileCipher.close();
+
+        Filename="./userData/"+ACTIVE_USR+"/msg.cipher";
+        QByteArray qb2=Filename.toLatin1();
+        const char *inputFileName=qb2.data();
+
+
+        Filename="./userData/"+ACTIVE_USR+"/msg";
+        QByteArray qb3=Filename.toLatin1();
+        const char *outPutFileName=qb3.data();
+
+
+        QString decryptResult=encryption->decryptVerify(inputFileName, outPutFileName);
+
+        if(decryptResult.mid(0,1)=="1"){
+            QFile File(Filename);
+            if(!File.open(QFile::ReadOnly | QFile::Text)){
+                qDebug() << "Could not open file for Read";
+                abort();
+            }
+            QTextStream in(&File);
+            QString qs;
+            qs=in.readAll();
+            File.close();
+
+            QString payload;
+            payload=qs;
+
+            qDebug() << "decrypResult:" << decryptResult;
+            qDebug() << "payload:" << payload;
+
+            QString msg=payload;
+
+            QByteArray qb=decryptResult.mid(1).toLatin1();
+            const char *fpr=qb.data();
+            gpgme_key_t senderKey=encryption->getKey(fpr, 0);
+
+            QString senderUsername=QString(senderKey->uids->name);
+
+            qDebug() << "---------------NM_0";
+
+            if(msg.split(":").first()==senderUsername){
+
+                qDebug() << "---------------NM_1";
+
+                QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
+                QStringList contactList=readTextLine(Filename);
+
+                foreach (QString item, contactList) {
+                    if(senderUsername==item || "@"+senderUsername==item){
+
+                        qDebug() << "---------------NM_2";
+
+                        QFile File("./userData/"+ACTIVE_USR+"/conversation/"+senderUsername);
+                        if(!File.exists()){
+                            if(!File.open(QFile::WriteOnly | QFile::Text)){
+                                qDebug() << "could not open conversation/+senderUsername file for writing";
+                                abort();
+                            }
+                            QTextStream out(&File);
+                            out << msg;
+
+                            File.flush();
+                            File.close();
+                        }
+                        else{
+                            if(!File.open(QFile::Append | QFile::Text)){
+                                  qDebug() << "could not open conversation/+senderUsername file for writing";
+                                  exit(1);
+                            }
+                            QTextStream out(&File);
+                            out << msg;
+
+                            File.flush();
+                            File.close();
+
+                        }
+
+
+                        QString Filename = "./userData/"+ACTIVE_USR+"/newMessage";
+                        newMessageList=readTextLine(Filename);
+
+
+                        bool messageFormUnreadUser=false;
+                        foreach (QString newMessage, newMessageList) {
+                            if(newMessage==senderUsername){
+                                messageFormUnreadUser=true;
+                                break;
+                            }
+                        }
+
+                        if(messageFormUnreadUser==false){
+
+                            QFile FileNewMessage("./userData/"+ACTIVE_USR+"/newMessage");
+                            if(!FileNewMessage.exists()){
+                                if(!FileNewMessage.open(QFile::WriteOnly | QFile::Text)){
+                                    qDebug() << "could not open AU/newMessage file for writing";
+                                    exit(1);
+                                }
+                                QTextStream out(&FileNewMessage);
+                                out << senderUsername+"\n";
+
+                                FileNewMessage.flush();
+                                FileNewMessage.close();
+
+                                anyNewMessage=true;
+                                break;
+                            }
+                            else{
+                                if(!FileNewMessage.open(QFile::Append | QFile::Text)){
+                                      qDebug() << "could not open AU/newMessage file for writing";
+                                      exit(1);
+                                }
+                                QTextStream out(&FileNewMessage);
+                                out << senderUsername+"\n";
+
+                                FileNewMessage.flush();
+                                FileNewMessage.close();
+
+                                anyNewMessage=true;
+                                break;
+
+                            }
+                        }
+                    }
+                }
+
+                qDebug() << "---------------NM_3";
+
+                if(anyNewMessage==true){
+
+                    if(currentMenu=="contact"){
+                        qDebug() << "---------------NM_4";
+                        on_pushButton_Conversation_clicked();
+                        on_pushButton_Contact_clicked();
+                    }
+                    else if(currentMenu=="group"){
+                        qDebug() << "---------------NM_4";
+                        on_pushButton_Conversation_clicked();
+                        on_pushButton_Group_clicked();
+                    }
+                    else{
+                        qDebug() << "---------------NM_4";
+                        on_pushButton_Conversation_clicked();
+                    }
+
+                    if(conversationWith==senderUsername){
+
+                        qDebug() << "---------------NM_5";
+
+                        /*Load conversation*/
+                        QString filename="./userData/"+ACTIVE_USR+"/conversation/"+senderUsername;
+                        QStringList conversation=ReadConversation(filename);
+
+                        /*Show conversation*/
+                        ui->listWidget_Conversation->clear();
+                        foreach(QString msg, conversation){
+                            QListWidgetItem *item = new QListWidgetItem;
+                            if(msg.left(ACTIVE_USR.length()+1) == ACTIVE_USR+":"){
+                                msg = msg.remove(ACTIVE_USR+": ");
+                                item->setText(msg);
+                                item->setTextAlignment(2);
+                            }
+                            else{
+                                msg = msg.remove(conversationWith+": ");
+                                item->setIcon(QIcon(":/img/icons/person.png"));
+                                item->setText(msg);
+                            }
+
+                            ui->listWidget_Conversation->addItem(item);
+                        }
+
+                        ui->listWidget_Conversation->scrollToBottom();
+                    }
+                }
+
+            }
+        }
+
+    }
 
 }
 
@@ -1014,7 +1482,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
 
         QFile File(Filename);
         if(!File.open(QFile::Append | QFile::Text)){
-              qDebug() << "cound not open file for writing";
+              qDebug() << "Could not open file " +Filename+ " for writing";
               exit(1);
         }
         QTextStream out2(&File);
@@ -1024,6 +1492,36 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
         File.close();
 
         on_pushButton_Contact_clicked();
+
+        Filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
+        QFile file_newFriend(Filename);
+        if(file_newFriend.exists()){
+
+            /*Load conversation*/
+            QString filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
+            QStringList conversation=ReadConversation(filename);
+
+            /*Show conversation*/
+            ui->listWidget_Conversation->clear();
+            foreach(QString msg, conversation){
+                QListWidgetItem *item = new QListWidgetItem;
+                if(msg.left(ACTIVE_USR.length()+1) == ACTIVE_USR+":"){
+                    msg = msg.remove(ACTIVE_USR+": ");
+                    item->setText(msg);
+                    item->setTextAlignment(2);
+                }
+                else{
+                    msg = msg.remove(conversationWith+": ");
+                    item->setIcon(QIcon(":/img/icons/person.png"));
+                    item->setText(msg);
+                }
+
+                ui->listWidget_Conversation->addItem(item);
+            }
+
+            ui->listWidget_Conversation->scrollToBottom();
+
+        }
 
     }
     else{
@@ -1035,7 +1533,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
         //Encrypt Payload
         QFile File_Payload("addFriendConfirm.keyword");
         if(!File_Payload.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "Cound not open file searchContact.keyword for writing";
+            qDebug() << "Could not open file searchContact.keyword for writing";
             exit(1);
         }
         QTextStream out(&File_Payload);
@@ -1050,7 +1548,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
 
         QFile File_EncryptedPayload("addFriendConfirm.cipher");
         if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
-            qDebug() << "Cound not open file for Read";
+            qDebug() << "Could not open file for Read";
             abort();
         }
         QTextStream in(&File_EncryptedPayload);
@@ -1113,7 +1611,7 @@ void MainWindow::removeFromListFile(QString filename, QString item){
     QFile File(filename);
     if(!File.exists()){
         if(!File.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "cound not open file for writing";
+            qDebug() << "could not open "+filename+ "file for writing";
             exit(1);
         }
         QTextStream out(&File);
@@ -1125,7 +1623,7 @@ void MainWindow::removeFromListFile(QString filename, QString item){
     if(File.exists()){
 
         if(!File.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "cound not open file for writing";
+            qDebug() << "Could not open "+filename+" file for writing";
             exit(1);
         }
         QTextStream out(&File);
@@ -1134,7 +1632,7 @@ void MainWindow::removeFromListFile(QString filename, QString item){
         File.close();
 
         if(!File.open(QFile::Append | QFile::Text)){
-              qDebug() << "cound not open file for writing";
+              qDebug() << "Could not open"+filename+"file for writing";
               exit(1);
         }
         QTextStream out2(&File);

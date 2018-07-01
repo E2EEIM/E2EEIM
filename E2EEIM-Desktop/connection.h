@@ -41,6 +41,7 @@ public:
 signals:
     void receiveAddFriendrequest(QByteArray data);
     void receiveNewPublicKey(QByteArray data);
+    void receiveNewMessage(QByteArray data);
     void disconnectFromServer();
 
 

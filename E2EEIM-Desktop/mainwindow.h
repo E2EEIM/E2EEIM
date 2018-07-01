@@ -61,6 +61,7 @@ signals:
 public slots:
     void receiveAddFriendRequest(QByteArray data);
     void receiveNewPublicKey(QByteArray data);
+    void receiveNewMessage(QByteArray data);
     void disconnectFromServer();
 
 private slots:
@@ -107,9 +108,11 @@ private:
     QString conversationWith;
     QStringList addFriendRequestList;
     QStringList addFriendConfirmList;
+    QStringList newMessageList;
 
     bool finishInitUserDataStatus;
     bool anyNewContact;
+    bool anyNewMessage;
 
     gpgme_key_t servKey;
     gpgme_key_t userPriKey;
