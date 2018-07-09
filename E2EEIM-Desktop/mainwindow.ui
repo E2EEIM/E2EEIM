@@ -759,7 +759,7 @@ color: #555555;
 background: #fafafa; 
 border: 2px solid white;
 border-radius: 20;
-padding: 15px;
+padding: 10px;
 color: #555555;
 } 
  

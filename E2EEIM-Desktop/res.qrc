@@ -25,5 +25,9 @@
         <file>icons/menu_contact_clicked_noti.png</file>
         <file>icons/menu_conversation_noti_clicked.png</file>
         <file>icons/menu_conversation_noti_normal.png</file>
+        <file>icons/groupItem_noti.png</file>
+        <file>icons/groupItem.png</file>
+        <file>icons/menu_group_noti_clicked.png</file>
+        <file>icons/menu_group_noti_normal.png</file>
     </qresource>
 </RCC>

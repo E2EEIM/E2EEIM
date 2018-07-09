@@ -27,7 +27,7 @@
 #include "addcontact.h"
 #include "creategroup.h"
 #include "setting.h"
-#include <qlayout.h>
+//#include <qlayout.h>
 #include <algorithm>
 #include <string>
 #include <QDesktopWidget>
@@ -93,6 +93,8 @@ private slots:
 
     QStringList readTextLine(QString Filename);
 
+    void sendToPerson(QString recipientName, QString message);
+
 
     void on_pushButton_addFriend_accept_clicked();
 
@@ -103,6 +105,7 @@ private:
     Connection *conn;
     Encryption *encryption;
 
+    QString sendTo;
     QString currentMenu;
     QString ACTIVE_USR;
     QString conversationWith;
@@ -113,6 +116,7 @@ private:
     bool finishInitUserDataStatus;
     bool anyNewContact;
     bool anyNewMessage;
+    bool anyNewGroup;
 
     gpgme_key_t servKey;
     gpgme_key_t userPriKey;

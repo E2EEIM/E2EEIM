@@ -29,6 +29,7 @@ public:
     int listKeys(gpgme_ctx_t ctx, gpgme_error_t err, gpgme_key_t key, int onlyPrivateFlag);
     gpgme_genkey_result_t genKey(const char *parms);
     void exportKey(gpgme_key_t key, const char *outputFileName);
+    void exportMultiKey(gpgme_key_t keys[], const char *outputFileName);
     gpgme_import_result_t importKey(const char *inFileName);
     void encrypt(gpgme_ctx_t ctx, gpgme_error_t err, gpgme_key_t recv,
                  const char *inputFileName, const char *outputFileName);

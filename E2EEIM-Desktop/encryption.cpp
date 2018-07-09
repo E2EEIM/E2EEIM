@@ -136,6 +136,56 @@ void Encryption::exportKey(gpgme_key_t key, const char *outputFileName){
 
     gpgme_data_release (out);
 }
+void Encryption::exportMultiKey(gpgme_key_t keys[], const char *outputFileName){
+
+
+    printKeys(keys[0]);
+    gpgme_data_t out;
+    FILE *outputFile;
+    //gpgme_key_t keys[2]={NULL, NULL};
+    //keys[0]=key;
+    int ret;
+    int BUF_SIZE = 512;
+    char buf[BUF_SIZE + 1];
+
+
+    err = gpgme_data_new(&out);
+    detectError(err);
+
+
+    err = gpgme_op_export_keys(ctx, keys, 0, out);
+    detectError(err);
+
+
+    fflush (NULL);
+    // Open the output file
+    outputFile = fopen (outputFileName, "w+");
+
+
+    // Rewind the "out" data object
+    ret = gpgme_data_seek (out, 0, SEEK_SET);
+    // Error handling
+    if (ret)
+        detectError (gpgme_err_code_from_errno (errno));
+
+
+    // Read the contents of "out" and place it into buf
+    while ((ret = gpgme_data_read (out, buf, BUF_SIZE)) > 0) {
+        // Write the contents of "buf" to "outputFile"
+        fwrite (buf, ret, 1, outputFile);
+    }
+
+
+    // Error handling
+    if (ret < 0)
+        detectError (gpgme_err_code_from_errno (errno));
+
+    // Close "outputFile"
+    fclose(outputFile);
+
+
+    gpgme_data_release (out);
+}
 
 gpgme_import_result_t Encryption::importKey(const char *inFileName){
 

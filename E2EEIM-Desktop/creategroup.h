@@ -26,6 +26,8 @@
 #include <QStringList>
 #include <QString>
 #include <QList>
+#include "encryption.h"
+#include "connection.h"
 
 namespace Ui {
 class CreateGroup;
@@ -36,7 +38,7 @@ class CreateGroup : public QDialog
     Q_OBJECT
 
 public:
-    explicit CreateGroup(QWidget *parent = 0, QString activeUser="");
+    explicit CreateGroup(Connection &conn, Encryption &encryption, QString activeUser, QWidget *parent = 0);
     ~CreateGroup();
 
 private slots:
@@ -44,6 +46,10 @@ private slots:
 
 private:
     Ui::CreateGroup *ui;
+
+    Connection *conn;
+    Encryption *encryption;
+    QString ACTIVE_USER;
 };
 
 #endif // CREATEGROUP_H
