@@ -72,6 +72,7 @@ void MainWindow::initUserDataPath(){
             abort();
         }
         QTextStream out(&FileNewMessage);
+        out.setCodec("UTF-8");
         out << "";
 
         FileNewMessage.flush();
@@ -85,6 +86,7 @@ void MainWindow::initUserDataPath(){
             abort();
         }
         QTextStream out(&File);
+        out.setCodec("UTF-8");
         out << "";
 
         File.flush();
@@ -97,6 +99,7 @@ void MainWindow::initUserDataPath(){
     }
 
     QTextStream in(&File);
+    in.setCodec("UTF-8");
     QString line;
     while(!in.atEnd())
     {
@@ -127,7 +130,7 @@ void MainWindow::initUserDataPath(){
 
     /*Connect WidgetListItem on click event*/
     connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
-                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
+                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)), Qt::QueuedConnection);
 
     /*Connect combobox on click event*/
     connect(ui->comboBox, SIGNAL(currentTextChanged(QString)),
@@ -149,7 +152,10 @@ void MainWindow::initUserDataPath(){
     anyNewContact=false;
     anyNewGroup=false;
 
+    removeNotiFlag=false;
+
     finishInitUserDataStatus=true;
+    qDebug() << "[[[[[[[[[[[[[[[[[[[[[[[[[[[[ FINISH INIT USER DATA PATH]]]]]]]]]]]]]]]]]]]]]]]]]";
 
     on_pushButton_Conversation_clicked();
     currentMenu = "conversation";
@@ -170,6 +176,7 @@ QStringList MainWindow::getGroupMember(QString GroupName){
             abort();
         }
         QTextStream out(&File);
+        out.setCodec("UTF-8");
         out << "";
 
         File.flush();
@@ -183,6 +190,7 @@ QStringList MainWindow::getGroupMember(QString GroupName){
 
 
     QTextStream in(&File);
+    in.setCodec("UTF-8");
     QString line;
     short flagLoad=0;
     while(!in.atEnd())
@@ -214,6 +222,7 @@ QStringList MainWindow::readTextLine(QString Filename){
             abort();
         }
         QTextStream out(&File);
+        out.setCodec("UTF-8");
         out << "";
 
         File.flush();
@@ -226,6 +235,7 @@ QStringList MainWindow::readTextLine(QString Filename){
     }
 
     QTextStream in(&File);
+    in.setCodec("UTF-8");
    QString line;
     while( !in.atEnd())
     {
@@ -263,6 +273,7 @@ QStringList MainWindow::ReadConversation(QString Filename){
             abort();
         }
         QTextStream out(&File);
+        out.setCodec("UTF-8");
         out << "";
 
         File.flush();
@@ -276,6 +287,7 @@ QStringList MainWindow::ReadConversation(QString Filename){
     }
 
     QTextStream in(&File);
+    in.setCodec("UTF-8");
     QString line;
     QString tmp="[-STaRT-]";
 
@@ -424,7 +436,7 @@ void MainWindow::on_pushButton_Conversation_clicked()
         QList<int> currentSizes = ui->splitter->sizes();
         if(currentSizes[0]==0){
             currentSizes[0]=216;
-            currentSizes[1]=507;
+            //currentSizes[1]=507;
             ui->splitter->setSizes(currentSizes);
         }
 
@@ -641,11 +653,16 @@ void MainWindow::on_pushButton_AddList_clicked()
 /*When user click item on contact list.*/
 void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
 
-    qDebug() << "----------------------lc_0";
+    if(removeNotiFlag==false){
+        qDebug() << "-----removeNotiFlag=false";
+        conversationWith=item->text();
+    }
+    else{
+        qDebug() << "-----removeNotiFlag=true";
+        removeNotiFlag=false;
+    }
 
-    qDebug() << "---------- item->text():" << item->text();
-
-    conversationWith=item->text();
+    qDebug() << "---------- conversationWith:" << conversationWith;
 
     ui->label_ConversationWith->setText(conversationWith);
     ui->listWidget_Conversation->clear();
@@ -714,7 +731,7 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         qDebug() << "----------------------lc_1d2";
 
         /*Load conversation*/
-        QString filename="./userData/"+ACTIVE_USR+"/conversation/"+item->text();
+        QString filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
         QStringList conversation=ReadConversation(filename);
 
         qDebug() << "----------------------lc_1d3";
@@ -746,7 +763,10 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     QString Filename = "./userData/"+ACTIVE_USR+"/newMessage";
     newMessageList=readTextLine(Filename);
 
+    qDebug() << "---------DN_1";
+
     bool messageFormUnreadUser=false;
+    qDebug() << "---------DN_2";
     foreach (QString newMessage, newMessageList) {
         if(newMessage==conversationWith){
             messageFormUnreadUser=true;
@@ -754,9 +774,15 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         }
     }
 
+    qDebug() << "---------DN_3";
+
     if(messageFormUnreadUser==true && currentMenu=="conversation"){
+        qDebug() << "---------DN_4";
         removeFromListFile(Filename, conversationWith);
+        qDebug() << "---------DN_5";
+        removeNotiFlag=true;
         on_pushButton_Conversation_clicked();
+        qDebug() << "---------DN_6";
     }
 }
 
@@ -766,16 +792,12 @@ void MainWindow::on_pushButton_SEND_clicked()
     QString conversationWith = ui->label_ConversationWith->text();
     QString msg = ui->plainTextEdit->toPlainText();
 
-    bool isSendToPerson=false;
-    bool isSendToGroup=false;
-
     qDebug() << "-----CONVERSATION_WITH:"<< conversationWith;
 
     QStringList groupList=readTextLine("./userData/"+ACTIVE_USR+"/groupList.txt");
     foreach(QString item, groupList){
         qDebug() << "------G_"+item;
         if("~~"+conversationWith+"~~"==item){
-            isSendToGroup=true;
             sendTo="group";
             break;
         }
@@ -785,7 +807,6 @@ void MainWindow::on_pushButton_SEND_clicked()
     foreach(QString item, contactList){
         qDebug() << "------P_"+item;
         if(conversationWith==item){
-            isSendToPerson=true;
             sendTo="person";
             break;
         }
@@ -803,6 +824,7 @@ void MainWindow::on_pushButton_SEND_clicked()
                 abort();
             }
             QTextStream out(&File);
+            out.setCodec("UTF-8");
             out << "";
 
             File.flush();
@@ -819,6 +841,7 @@ void MainWindow::on_pushButton_SEND_clicked()
 
 
             QTextStream out(&File);
+            out.setCodec("UTF-8");
             out << msg;
 
             File.flush();
@@ -907,6 +930,7 @@ void MainWindow::on_pushButton_SEND_clicked()
                 abort();
             }
             QTextStream in(&File_cipher);
+            in.setCodec("UTF-8");
             QString cipher;
             cipher=in.readAll();
             File_cipher.close();
@@ -1011,6 +1035,7 @@ void MainWindow::sendToPerson(QString recipientName, QString message){
             abort();
         }
         QTextStream out(&rawFile);
+        out.setCodec("UTF-8");
         out << "";
 
         rawFile.flush();
@@ -1024,6 +1049,7 @@ void MainWindow::sendToPerson(QString recipientName, QString message){
         }
 
         QTextStream out(&rawFile);
+        out.setCodec("UTF-8");
         out << message;
 
         rawFile.flush();
@@ -1050,6 +1076,7 @@ void MainWindow::sendToPerson(QString recipientName, QString message){
             abort();
         }
         QTextStream out(&cipherFile);
+        out.setCodec("UTF-8");
         out << "";
 
         cipherFile.flush();
@@ -1064,6 +1091,7 @@ void MainWindow::sendToPerson(QString recipientName, QString message){
         abort();
     }
     QTextStream in(&File_cipher);
+    in.setCodec("UTF-8");
     QString cipher;
     cipher=in.readAll();
     File_cipher.close();
@@ -1083,6 +1111,7 @@ void MainWindow::sendToPerson(QString recipientName, QString message){
         }
 
         QTextStream out(&rawFile);
+        out.setCodec("UTF-8");
         out << msgToServer;
 
         rawFile.flush();
@@ -1145,7 +1174,8 @@ void MainWindow::textMenuChange(){
         on_pushButton_Conversation_clicked();
     }
     if(selected=="Sign Out"){
-        signOut();
+        disconnectFromServer();
+
     }
     ui->comboBox->setCurrentIndex(0);
 }
@@ -1281,6 +1311,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
             abort();
         }
         QTextStream in(&File_result);
+        in.setCodec("UTF-8");
         QString qs;
         qs=in.readAll();
         File_result.close();
@@ -1315,6 +1346,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
                     exit(1);
                 }
                 QTextStream out(&File);
+                out.setCodec("UTF-8");
                 out << "";
 
              File.flush();
@@ -1327,6 +1359,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
                       exit(1);
                 }
                   QTextStream out(&File);
+                  out.setCodec("UTF-8");
                   out << ContactName+"\n";
 
                   File.flush();
@@ -1375,6 +1408,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
             abort();
         }
         QTextStream in(&File);
+        in.setCodec("UTF-8");
         QString qs;
         qs=in.readAll();
         File.close();
@@ -1397,6 +1431,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
                 exit(1);
             }
             QTextStream out(&File);
+            out.setCodec("UTF-8");
             out << pubKey;
 
             File.flush();
@@ -1423,6 +1458,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
                             exit(1);
                         }
                         QTextStream out(&File);
+                        out.setCodec("UTF-8");
                         out << "";
 
                      File.flush();
@@ -1435,6 +1471,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
                               exit(1);
                         }
                           QTextStream out(&File);
+                          out.setCodec("UTF-8");
                           out << "@"+ContactName+"\n";
 
                           File.flush();
@@ -1487,6 +1524,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
             abort();
         }
         QTextStream out(&FileCipher);
+        out.setCodec("UTF-8");
         out << "";
 
         FileCipher.flush();
@@ -1499,6 +1537,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
             abort();
         }
         QTextStream out(&FileMsg);
+        out.setCodec("UTF-8");
         out << "";
 
         FileMsg.flush();
@@ -1536,6 +1575,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
             abort();
         }
         QTextStream in(&File);
+        in.setCodec("UTF-8");
         QString qs;
         qs=in.readAll();
         File.close();
@@ -1549,6 +1589,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
         }
 
         QTextStream out(&FileCipher);
+        out.setCodec("UTF-8");
         out << payload;
 
         FileCipher.flush();
@@ -1573,6 +1614,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                 abort();
             }
             QTextStream in(&File);
+            in.setCodec("UTF-8");
             QString qs;
             qs=in.readAll();
             File.close();
@@ -1613,6 +1655,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                                 abort();
                             }
                             QTextStream out(&File);
+                            out.setCodec("UTF-8");
                             out << msg;
 
                             File.flush();
@@ -1624,6 +1667,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                                   exit(1);
                             }
                             QTextStream out(&File);
+                            out.setCodec("UTF-8");
                             out << msg;
 
                             File.flush();
@@ -1653,6 +1697,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                                     exit(1);
                                 }
                                 QTextStream out(&FileNewMessage);
+                                out.setCodec("UTF-8");
                                 out << senderUsername+"\n";
 
                                 FileNewMessage.flush();
@@ -1667,6 +1712,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                                       exit(1);
                                 }
                                 QTextStream out(&FileNewMessage);
+                                out.setCodec("UTF-8");
                                 out << senderUsername+"\n";
 
                                 FileNewMessage.flush();
@@ -1740,6 +1786,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                         abort();
                     }
                     QTextStream out(&groupInviteFile);
+                    out.setCodec("UTF-8");
                     out << "";
 
                     groupInviteFile.flush();
@@ -1751,6 +1798,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                         abort();
                     }
                     QTextStream out(&groupInviteFile);
+                    out.setCodec("UTF-8");
                     out << msg;
 
                     groupInviteFile.flush();
@@ -1789,6 +1837,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                         abort();
                     }
                     QTextStream out(&groupListFile);
+                    out.setCodec("UTF-8");
                     out << "";
 
                     groupListFile.flush();
@@ -1800,6 +1849,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                         abort();
                     }
                     QTextStream out(&groupListFile);
+                    out.setCodec("UTF-8");
                     out << "~+"+groupName+"~+\n";
                     foreach (QString item, member) {
                        out << item+"\n";
@@ -1816,6 +1866,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                         abort();
                     }
                     QTextStream out(&groupKeyFile);
+                    out.setCodec("UTF-8");
                     out << "";
 
                     groupKeyFile.flush();
@@ -1827,6 +1878,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                         abort();
                     }
                     QTextStream out(&groupKeyFile);
+                    out.setCodec("UTF-8");
                     out << groupPubKey;
 
                     groupKeyFile.flush();
@@ -1870,6 +1922,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                                 abort();
                             }
                             QTextStream out(&File);
+                            out.setCodec("UTF-8");
                             out << msg.split("~~").at(2);
 
                             File.flush();
@@ -1881,6 +1934,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                                   exit(1);
                             }
                             QTextStream out(&File);
+                            out.setCodec("UTF-8");
                             out << msg.split("~~").at(2);
 
                             File.flush();
@@ -1910,6 +1964,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                                     exit(1);
                                 }
                                 QTextStream out(&FileNewMessage);
+                                out.setCodec("UTF-8");
                                 out << groupName+"\n";
 
                                 FileNewMessage.flush();
@@ -1924,6 +1979,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
                                       exit(1);
                                 }
                                 QTextStream out(&FileNewMessage);
+                                out.setCodec("UTF-8");
                                 out << groupName+"\n";
 
                                 FileNewMessage.flush();
@@ -2022,6 +2078,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
               exit(1);
         }
         QTextStream out2(&File);
+        out2.setCodec("UTF-8");
         out2 << conversationWith+"\n";
 
         File.flush();
@@ -2074,6 +2131,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
             exit(1);
         }
         QTextStream out(&File_Payload);
+        out.setCodec("UTF-8");
         out << payload;
 
         File_Payload.flush();
@@ -2089,6 +2147,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
             abort();
         }
         QTextStream in(&File_EncryptedPayload);
+        in.setCodec("UTF-8");
         QString cipher;
         cipher=in.readAll();
         File_EncryptedPayload.close();
@@ -2138,6 +2197,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
         }
 
         QTextStream in(&FileGroupList);
+        in.setCodec("UTF-8");
         QString line;
         while(!in.atEnd())
         {
@@ -2163,6 +2223,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
             exit(1);
         }
         QTextStream out(&File);
+        out.setCodec("UTF-8");
         out << newList;
         File.flush();
         File.close();
@@ -2227,13 +2288,21 @@ void MainWindow::on_pushButton_addFriend_decline_clicked()
 }
 
 void MainWindow::removeFromListFile(QString filename, QString item){
+
+    qDebug() << "---------DN_4a";
+
     QStringList list=readTextLine(filename);
+
+    qDebug() << "---------DN_4b";
     QStringList newList;
+
+    qDebug() << "---------DN_4d";
     foreach (QString listItem, list) {
         if(listItem != item){
             newList.append(listItem);
         }
     }
+    qDebug() << "---------DN_4e";
 
 
     QFile File(filename);
@@ -2243,6 +2312,7 @@ void MainWindow::removeFromListFile(QString filename, QString item){
             exit(1);
         }
         QTextStream out(&File);
+        out.setCodec("UTF-8");
         out << "";
 
      File.flush();
@@ -2255,6 +2325,7 @@ void MainWindow::removeFromListFile(QString filename, QString item){
             exit(1);
         }
         QTextStream out(&File);
+        out.setCodec("UTF-8");
         out << "";
         File.flush();
         File.close();
@@ -2264,6 +2335,7 @@ void MainWindow::removeFromListFile(QString filename, QString item){
               exit(1);
         }
         QTextStream out2(&File);
+        out2.setCodec("UTF-8");
         foreach(QString listItem, newList){
             out2 << listItem+"\n";
         }
@@ -2271,11 +2343,16 @@ void MainWindow::removeFromListFile(QString filename, QString item){
         File.flush();
         File.close();
     }
+    qDebug() << "---------DN_4F";
 
 }
 
 void MainWindow::disconnectFromServer(){
     qDebug() << "DISCONNECT FROM SERVER";
+
+    if(conn->getConnectionStatus()==1){
+        conn->letDisconnect();
+    }
 
     if(this->windowTitle()!="E2EEIM"){
         this->setWindowTitle("E2EEIM DISCONNECT FROM SERVER!!");

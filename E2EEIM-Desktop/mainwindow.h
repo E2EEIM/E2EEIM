@@ -105,6 +105,7 @@ private:
     Connection *conn;
     Encryption *encryption;
 
+    QString removeNotiFlag;
     QString sendTo;
     QString currentMenu;
     QString ACTIVE_USR;

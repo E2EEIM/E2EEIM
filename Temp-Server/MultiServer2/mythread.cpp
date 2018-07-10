@@ -130,9 +130,13 @@ void MyThread::run(){
 
     qDebug() << "Client connected to sockfd No." << socketDescriptor;
 
-    timer = new QTimer();
-    connect(timer, SIGNAL(timeout()), this, SLOT(task()));
-    timer->start(100);
+    if(currentThread()==this){
+        timer = new QTimer();
+        connect(timer, SIGNAL(timeout()), this, SLOT(task()));
+        timer->start(100);
+    }
+
+    qDebug() << "xxxxxxxx";
 
     exec();
 }
@@ -142,93 +146,84 @@ void MyThread::task(){
     QString task;
     QString taskProtocol;
     while(waitingTaskUser->indexOf(activeUser)!=(-1)){
-        if(waitingTaskUser->indexOf(activeUser)!=(-1)){
-            int idx=waitingTaskUser->indexOf(activeUser);
-            qDebug() << "for User:"<< activeUser;
-            qDebug() << "Task:" << waitingTaskWork->at(idx);
 
-            task=waitingTaskWork->at(idx);
-            taskProtocol=task.mid(0,2);
+        task=waitingTaskWork->at(waitingTaskUser->indexOf(activeUser));
+        taskProtocol=task.mid(0,2);
 
-            if(taskProtocol=="13"){
-                qDebug() << "*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13";
+        if(taskProtocol=="13"){
+            qDebug() << "*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13";
 
-                QString sender=task.mid(2);
-                gpgme_key_t senderKey=getKey(sender);
-                QString senderUsername=QString(senderKey->uids->name);
+            QString sender=task.mid(2);
+            gpgme_key_t senderKey=getKey(sender);
+            QString senderUsername=QString(senderKey->uids->name);
 
-                QByteArray data;
-                data.append(senderUsername);
+            QByteArray data;
+            data.append(senderUsername);
 
-                QByteArray payload=encryptToClient(data, activeUser, "addFriendCon.cipher");
+            QByteArray payload=encryptToClient(data, activeUser, "addFriendCon.cipher");
 
-                data.clear();
-                data.append(payload);
+            data.clear();
+            data.append(payload);
 
-                data.insert(0, (char)13);
+            data.insert(0, (char)13);
 
-                qDebug() << "data:" << data; // ////////////////////////////////
 
-                //Insert size of(operation + payload) in front of byte array (data[0]).
-                int dataSize=data.size();
-                QByteArray dataSizeByte;
-                QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
-                ds << dataSize;
-                data.insert(0, dataSizeByte);
+            //Insert size of(operation + payload) in front of byte array (data[0]).
+            int dataSize=data.size();
+            QByteArray dataSizeByte;
+            QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+            ds << dataSize;
+            data.insert(0, dataSizeByte);
 
-                send(data);
+            send(data);
 
-                waitingTaskUser->removeAt(idx);
-                waitingTaskWork->removeAt(idx);
+            waitingTaskWork->removeAt(waitingTaskUser->indexOf(activeUser));
+            waitingTaskUser->removeAt(waitingTaskUser->indexOf(activeUser));
+        }
+        if(taskProtocol=="15"){
 
-            }
-            if(taskProtocol=="15"){
-                qDebug() << "*15*15*15*15*15*15*15*15*15*15*15*15*15*15*15*15*15";
+            QString payload=task.mid(2);
 
-                QString payload=task.mid(2);
+            QByteArray data;
+            data.append(payload);
 
-                QByteArray data;
-                data.append(payload);
+            data.insert(0, (char)15);
 
-                data.insert(0, (char)15);
+            //Insert size of(operation + payload) in front of byte array (data[0]).
+            int dataSize=data.size();
+            QByteArray dataSizeByte;
+            QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+            ds << dataSize;
+            data.insert(0, dataSizeByte);
 
-                //Insert size of(operation + payload) in front of byte array (data[0]).
-                int dataSize=data.size();
-                QByteArray dataSizeByte;
-                QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
-                ds << dataSize;
-                data.insert(0, dataSizeByte);
+            send(data);
 
-                send(data);
+            waitingTaskWork->removeAt(waitingTaskUser->indexOf(activeUser));
+            waitingTaskUser->removeAt(waitingTaskUser->indexOf(activeUser));
 
-                waitingTaskUser->removeAt(idx);
-                waitingTaskWork->removeAt(idx);
-            }
-            if(taskProtocol=="18"){
-                qDebug() << "*18*18*18*18*18*18*18*18*18*18*18*18*18*18*18*18*18";
+        }
+        if(taskProtocol=="18"){
 
-                QString cipher=task.mid(2);
+            QString cipher=task.mid(2);
 
-                QByteArray data;
-                data.append(cipher);
-                QByteArray payload=encryptToClient(data, activeUser, "addFriendCon.cipher");
-                data.clear();
-                data=payload;
-                data.insert(0, (char)18);
+            QByteArray data;
+            data.append(cipher);
+            QByteArray payload=encryptToClient(data, activeUser, "addFriendCon.cipher");
+            data.clear();
+            data=payload;
+            data.insert(0, (char)18);
 
-                //Insert size of(operation + payload) in front of byte array (data[0]).
-                int dataSize=data.size();
-                QByteArray dataSizeByte;
-                QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
-                ds << dataSize;
-                data.insert(0, dataSizeByte);
+            //Insert size of(operation + payload) in front of byte array (data[0]).
+            int dataSize=data.size();
+            QByteArray dataSizeByte;
+            QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
+            ds << dataSize;
+            data.insert(0, dataSizeByte);
 
-                send(data);
+            send(data);
 
-                waitingTaskUser->removeAt(idx);
-                waitingTaskWork->removeAt(idx);
-
-            }
+            waitingTaskWork->removeAt(waitingTaskUser->indexOf(activeUser));
+            waitingTaskUser->removeAt(waitingTaskUser->indexOf(activeUser));
 
         }
 
@@ -241,18 +236,11 @@ void MyThread::dataFilter(QByteArray data){
     //QString dataQString(data);
     bool ok;
     int intOp=QString(data.mid(4,1)).data()->unicode();
-    qDebug() << "intOp_f:"<< intOp;
 
 
     if(intOp==1){
-        qDebug() << "*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1*1";
-        qDebug() << "*1-> RECEIVED Client require connection";
-        printf("+----------------------+----------------------+-----------------+\n");
-        printf("|  data Size (4 byte)  |  Operation (1 byte)  |Payload (0 byte) |\n");
-        printf("+----------------------+----------------------+-----------------+\n");
 
-        printDataDetail(data);
-        qDebug() << "\n\n\n\n\n";
+        //printDataDetail(data);
 
         //Create <-*2 package for reply
         data.clear();
@@ -274,53 +262,24 @@ void MyThread::dataFilter(QByteArray data){
 
     }
     if(intOp==3){
-        qDebug() << "*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3*3";
-        qDebug() << "*3-> RECEIVED Client sign up request\n";
-        printf("                 1 byte            4 byte           <255      ~4000\n");
-        printf("          +------------------+------------------+----------+-----------+\n");
-        printf("payload = |  Username Length | UsrPubKey Length | Username | UsrPubKey |\n");
-        printf("          +------------------+------------------+----------+-----------+\n");
-        printf("\n");
-        printf("+---------------------+-------------+----------------------------------+\n");
-        printf("|  data Size (4 byte) | OP (1 byte) |          encrypted(payload)      |\n");
-        printf("+---------------------+-------------+----------------------------------+\n");
 
-        printDataDetail(data);
+        //printDataDetail(data);
 
         //decrypt data to get payload
         QByteArray payload=decryptData(data, "signUp.pgp");
 
-        qDebug() << "\n-DECRYPTED PAYLOAD-";
-        qDebug() << "HEAD:" << QString(payload).mid(0, 20);
         int usernameLength=QString(payload).mid(0,1).data()->unicode();
 
         QString username=QString(payload).mid(5, usernameLength);
 
-        /*
-        int userPublicKeyLength;
-        QDataStream ds(payload.mid(1,4));
-        ds >> userPublicKeyLength;
-        */
         int userPublicKeyLength;
         userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
-
-        qDebug() << "Username length:"<< usernameLength;
-        qDebug() << "Username:" << username;
-        qDebug() << "User's public key Length:" << userPublicKeyLength;
-        qDebug() << "User's public key:"<< "[remove next line's //(comment) to see user's public key]";
-        //qDebug() << "User's public key:"<< payload.mid(5+usernameLength);
 
 
         QString result;
 
         if(usernameList->indexOf(username)==(-1)){
-
-            qDebug() << "\n-ADD NEW USER TO LIST-";
             addNewUser(payload);
-            qDebug() << "Username:"<< username;
-            qDebug() << "User's KeyID:" << userKeyList->at(usernameList->indexOf(username));
-
-            qDebug() << "\n\n\n\n\n";
 
             result="Sign up success, "+username+" ready for sign in!";
 
@@ -341,7 +300,6 @@ void MyThread::dataFilter(QByteArray data){
         signUpResult.append(result);
         QString userSubkey=userKeyList->at(usernameList->indexOf(username));
 
-        qDebug() << "-SIGN UP RESULT ENCRYPTING-";
         QByteArray ciper=encryptToClient(signUpResult, userSubkey, "signUpResult.ciper");
 
         //-Append server's encrypted sign up result message to Byte Array
@@ -362,23 +320,12 @@ void MyThread::dataFilter(QByteArray data){
     }
 
     if(intOp==5){
-        qDebug() << "*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5*5";
-        qDebug() << "*5-> RECEIVED Client sign in request\n";
-        printf("                 1 byte            4 byte           <255      ~4000\n");
-        printf("          +------------------+------------------+----------+-----------+\n");
-        printf("payload = |  Username Length | UsrPubKey Length | Username | UsrPubKey |\n");
-        printf("          +------------------+------------------+----------+-----------+\n");
-        printf("\n");
-        printf("+---------------------+-------------+----------------------------------+\n");
-        printf("|  data Size (4 byte) | OP (1 byte) |          encrypted(payload)      |\n");
-        printf("+---------------------+-------------+----------------------------------+\n");
 
-        printDataDetail(data);
+        //printDataDetail(data);
 
         //decrypt data to get payload
         QByteArray payload=decryptData(data, "signIn.pgp");
 
-        qDebug() << "\n-DECRYPTED PAYLOAD-";
         int usernameLength=QString(payload).mid(0,1).data()->unicode();
 
         QString username(payload.mid(5, usernameLength));
@@ -386,15 +333,7 @@ void MyThread::dataFilter(QByteArray data){
         int userPublicKeyLength;
         userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
 
-        qDebug() << "Username length:"<< usernameLength;
-        qDebug() << "Username:" << username;
-        qDebug() << "User's public key Length:" << userPublicKeyLength;
-        qDebug() << "User's public key:"<< "[remove next line's //(comment) to see user's public key]";
-        //qDebug() << "User's public key:"<< payload.mid(5+usernameLength);
-
         if(usernameList->indexOf(username)!=(-1)){
-
-            qDebug() << "USER INDEX: " << usernameList->indexOf(username);
             gpgme_key_t userKey=getKey(userKeyList->at(usernameList->indexOf(username)));
 
             printKeys(userKey);
@@ -402,10 +341,6 @@ void MyThread::dataFilter(QByteArray data){
             int rNum = qrand();
             QByteArray qb;
             qb.setNum(rNum);
-
-
-            qDebug() << "int rNum:" << rNum;
-            qDebug() << "QBy rNum:" << qb;
 
             if(loginUser->indexOf(username)==(-1)){
 
@@ -416,10 +351,6 @@ void MyThread::dataFilter(QByteArray data){
                 int idx=loginUser->indexOf(username);
                 loginRanNum->replace(idx, QString(qb));
             }
-
-            qDebug() << "loginUser:" << username;
-            qDebug() << "loginRanNum:" << loginRanNum->at(
-                            loginUser->indexOf(username));
 
 
             QByteArray cipher=encryptToClient(qb, username, "rannum.cipher");
@@ -443,22 +374,15 @@ void MyThread::dataFilter(QByteArray data){
 
         }
         else{
-            qDebug() << "USER NOT FOUND IN THIS SERVER!!!!";
 
             QByteArray qb="USER NOT FOUND IN THIS SERVER!";
-
-            qDebug() << "qb:" << qb; // ////////////////////////////////
 
             //QByteArray cipher=encryptToClient(qb, username, "rannum.cipher");
             data.clear();
             data.append(qb);
 
-            //qDebug() << "cipher:" << cipher; // ////////////////////////////////
-
             // Insert operation in front of byte array (data[0]).
             data.insert(0, (char)6);
-
-            qDebug() << "data:" << data; // ////////////////////////////////
 
             //Insert size of(operation + payload) in front of byte array (data[0]).
             int dataSize=data.size();
@@ -467,8 +391,6 @@ void MyThread::dataFilter(QByteArray data){
             ds << dataSize;
             data.insert(0, dataSizeByte);
 
-            qDebug() << "data:" << data; // ////////////////////////////////
-
             send(data);
 
 
@@ -476,29 +398,18 @@ void MyThread::dataFilter(QByteArray data){
 
     }
     if(intOp==7){
-        qDebug() << "*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7*7";
-        qDebug() << "*7-> RECEIVED Sign in verification";
-        printf("+----------------------+----------------------+--------------------+\n");
-        printf("|  data Size (4 byte)  | Operation (1 byte)   | Encrypted(payload) |\n");
-        printf("+----------------------+----------------------+--------------------+\n");
 
-        printDataDetail(data);
+        //printDataDetail(data);
         QByteArray payload=decryptData(data, "signInVerify.pgp");
-
-        qDebug() << payload;
 
         QString dataQS=QString(payload);
 
         QString verifyNum=dataQS.split("@@").first();
         QString keyID=dataQS.split("@@").last();
 
-        qDebug() << "verifyNum:" << verifyNum;
-        qDebug() << "keyID:" << keyID;
-
         gpgme_key_t userKey=getKey(keyID);
 
         QString username=(userKey->uids->name);
-        qDebug() << "username:" << username;
 
         int userIndex=loginUser->indexOf(username);
 
@@ -512,8 +423,6 @@ void MyThread::dataFilter(QByteArray data){
         else{
             qb = "Server couldn't verify this account's private key belongs to you!";
         }
-
-        qDebug() << qb;
 
         QByteArray cipher=encryptToClient(qb, username, "signInResult.cipher");
 
@@ -539,22 +448,14 @@ void MyThread::dataFilter(QByteArray data){
 
     }
     if(intOp==9){
-        qDebug() << "*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9*9";
-        qDebug() << "*9-> RECEIVED Search username request";
-        printf("+----------------------+----------------------+--------------------+\n");
-        printf("|  data Size (4 byte)  | Operation (1 byte)   | Encrypted(payload) |\n");
-        printf("+----------------------+----------------------+--------------------+\n");
 
-        printDataDetail(data);
+        //printDataDetail(data);
         QByteArray payload=decryptData(data, "username.keyword");
 
         QString dataQS=QString(payload);
 
         QString keyword=dataQS.split("@@").first();
         QString sender=dataQS.split("@@").last();
-
-        qDebug() << "keyword:" << keyword;
-        qDebug() << "sender:" << sender;
 
         if(usernameList->indexOf(keyword)==(-1)){
             payload.clear();
@@ -589,22 +490,14 @@ void MyThread::dataFilter(QByteArray data){
 
     }
     if(intOp==11){
-        qDebug() << "*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11*11";
-        qDebug() << "*11-> RECEIVED add friend request";
-        printf("+----------------------+----------------------+--------------------+\n");
-        printf("|  data Size (4 byte)  | Operation (1 byte)   | Encrypted(payload) |\n");
-        printf("+----------------------+----------------------+--------------------+\n");
 
-        printDataDetail(data);
+        //printDataDetail(data);
         QByteArray payload=decryptData(data, "username.keyword");
 
         QString dataQS=QString(payload);
 
         QString keyword=dataQS.split("@@").first();
         QString sender=dataQS.split("@@").last();
-
-        qDebug() << "keyword:" << keyword;
-        qDebug() << "sender:" << sender;
 
         if(usernameList->indexOf(keyword)==(-1)){
             payload.clear();
@@ -627,7 +520,6 @@ void MyThread::dataFilter(QByteArray data){
 
             addFriendRequestList->append(sender+"@@"+keyword);
 
-            qDebug() << sender+"@@"+keyword;
         }
 
         QByteArray cipher=encryptToClient(payload, sender, "searchUser.cipher");
@@ -648,22 +540,14 @@ void MyThread::dataFilter(QByteArray data){
         send(data);
     }
     if(intOp==14){
-        qDebug() << "*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14*14";
-        qDebug() << "*14-> RECEIVED add friend confirmation result";
-        printf("+----------------------+----------------------+--------------------+\n");
-        printf("|  data Size (4 byte)  | Operation (1 byte)   | Encrypted(payload) |\n");
-        printf("+----------------------+----------------------+--------------------+\n");
 
-        printDataDetail(data);
+        //printDataDetail(data);
         QByteArray payload=decryptData(data, "username.keyword");
 
         QString dataQS=QString(payload);
 
         QString keyword=dataQS.split("@@").first();
         QString sender=dataQS.split("@@").last();
-
-        qDebug() << "keyword:" << keyword;
-        qDebug() << "sender:" << sender;
 
         gpgme_key_t username_sendRequest = getKey(keyword);
         gpgme_key_t username_sendConfirm = getKey(sender);
@@ -675,11 +559,6 @@ void MyThread::dataFilter(QByteArray data){
         if(addFriendRequestList->indexOf(addFriendRequestID)!=-1){
 
             int idx=addFriendRequestID.indexOf(addFriendRequestID);
-
-            qDebug() << "username_sendRequest_key";
-            printKeys(username_sendRequest);
-            qDebug() << "username_sendConfirm_key";
-            printKeys(username_sendConfirm);
 
            exportKey(ctx, username_sendRequest, err, "temp.key");
 
@@ -768,26 +647,13 @@ void MyThread::dataFilter(QByteArray data){
         }
     }
     if(intOp==17){
-        qDebug() << "*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17*17";
-        qDebug() << "*17-> RECEIVED add friend confirmation result";
-        printf("+----------------------+----------------------+--------------------+\n");
-        printf("|  data Size (4 byte)  | Operation (1 byte)   | Encrypted(payload) |\n");
-        printf("+----------------------+----------------------+--------------------+\n");
 
-        printDataDetail(data);
+        //printDataDetail(data);
         QByteArray payload=decryptData(data, "msg.cipher");
 
-       qDebug() << payload;
-
-       qDebug() << "payload[0]:" << payload.mid(0,1);
-       qDebug() << "payload[1]:" << payload.mid(1,1);
        if(payload.mid(0,1)=="1"){
            int recipientUsernameSize=QString(payload.mid(1,1)).data()->unicode();
            QString recipientUsername=QString(payload.mid(2, recipientUsernameSize));
-
-           qDebug() << "recipient:" << recipientUsername;
-           qDebug() << "message:" << payload.mid(recipientUsernameSize+2);
-
 
            if(usernameList->indexOf(recipientUsername)!=(-1)){
                waitingTaskUser->append(recipientUsername);
@@ -837,9 +703,6 @@ QByteArray MyThread::decryptData(QByteArray data, const char* outputFileName){
 
     QString verifyResult;
 
-    qDebug() << "decryptV";
-
-    qDebug()<< "\n\n\n\n intOp:" << intOp;
 
     if(intOp==3){
         decrypt(ctx, err, "temp.cipher", outputFileName);
@@ -847,8 +710,6 @@ QByteArray MyThread::decryptData(QByteArray data, const char* outputFileName){
     else{
         verifyResult=decryptVerify(ctx, err, "temp.cipher", outputFileName);
     }
-
-    qDebug() << "decryptVx";
 
 
     QFile outFile(outputFileName);
@@ -907,10 +768,7 @@ void MyThread::addNewUser(QByteArray payload){
     File.flush();
     File.close();
 
-    gpgme_import_result_t importKeyResult = importKey(ctx, err, "temp.data");
-    qDebug() <<"Import key, condered:"<< importKeyResult->considered;
-    qDebug() <<"Import key, imported:"<< importKeyResult->imported;
-    qDebug() <<"Import key, unchaged:"<< importKeyResult->unchanged;
+    importKey(ctx, err, "temp.data");
 
     //Get user's keyID
     gpgme_key_t userKey=getKey(username);
@@ -934,7 +792,6 @@ gpgme_key_t MyThread::getKey(QString pattern){
     }
 
     if(nKeysFound==0){
-        qDebug() << "nKeyFound:" << nKeysFound;
         abort();
     }
     return targetKey;
@@ -946,18 +803,12 @@ QByteArray MyThread::encryptToClient(QByteArray data, QString recipient, const c
     QByteArray encrypted;
     QFile File("temp.data");
     if(!File.open(QFile::WriteOnly | QFile::Text)){
-        qDebug() << "cound not open file for writing";
         abort();
     }
     QTextStream out(&File);
     out << data;
     File.flush();
     File.close();
-
-    qDebug() << "Signer's key...";
-    printKeys(ServerKey);
-    qDebug() << "Recipient's key...";
-    printKeys(recipientKey);
 
     gpgme_signers_add(ctx, ServerKey);
     encryptSign(ctx, err, recipientKey, "temp.data", outFileName);
@@ -984,40 +835,17 @@ QByteArray MyThread::encryptToClient(QByteArray data, QString recipient, const c
 
 void MyThread::send(QByteArray data){
 
+    qDebug() << "---------------------Send data to: " << activeUser;
+
     socket->write(data);
     socket->flush();
     socket->waitForBytesWritten(1000);
 
-    int intOp=QString(data.mid(4,1)).data()->unicode();
-
-    if(intOp==2){
-        qDebug() << "*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2*2";
-        qDebug() << "<-*2 SEND Server's public key";
-        printf("+--------------------+-------------+----------------------------------+\n");
-        printf("| data size (4 byte) | op (1 byte) |    payload (server public key)   |\n");
-        printf("+--------------------+-------------+----------------------------------+\n");
-
-        printDataDetail(data);
-        qDebug() << "\n\n\n\n\n";
-    }
-    else if(intOp==4){
-        qDebug() << "*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4*4";
-        qDebug() << "<-*4 SEND Sign up result";
-        printf("+--------------------+-------------+----------------------------------+\n");
-        printf("| data size (4 byte) | op (1 byte) |    encrypted(result message)     |\n");
-        printf("+--------------------+-------------+----------------------------------+\n");
-
-        printDataDetail(data);
-        qDebug() << "\n\n\n\n\n";
-    }
-
-
-
-
 }
 
 void MyThread::readyRead(){
-    qDebug() << "\nNew data arrived!";
+
+    qDebug() << "---------Receive data from: " << activeUser;
 
     QByteArray data = socket->readAll();
 
@@ -1028,7 +856,6 @@ void MyThread::readyRead(){
     unsigned int sizeOfPayloadAndOp=data.mid(4).size();
 
     if(sizeOfPayloadAndOp==dataSize){
-       qDebug() <<"(data SIZE == PAYLOAD + OP) -> NO LOSS!";
        dataFilter(data);
     }
 
