@@ -490,12 +490,11 @@ QString Encryption::decryptVerify(const char *inputFileName,
     QString result;
     QString fpr=QString(sig->fpr);
 
-    if ((sig->summary & GPGME_SIGSUM_VALID)){
-       result="1"+fpr;
+    if ((sig->summary & GPGME_SIGSUM_RED)){
+       result="0"+fpr;
     }
     else{
-       result="0"+fpr;
-
+       result="1"+fpr;
     }
 
     return result;

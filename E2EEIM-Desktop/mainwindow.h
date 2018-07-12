@@ -104,7 +104,7 @@ private:
     Connection *conn;
     Encryption *encryption;
 
-    QString removeNotiFlag;
+
     QString sendTo;
     QString currentMenu;
     QString ACTIVE_USR;
@@ -117,6 +117,7 @@ private:
     bool anyNewContact;
     bool anyNewMessage;
     bool anyNewGroup;
+    bool removeNotiFlag;
 
     gpgme_key_t servKey;
     gpgme_key_t userPriKey;
