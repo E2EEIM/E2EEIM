@@ -56,7 +56,6 @@ public:
     ~MainWindow();
 
 signals:
-    //void closeWindow();
 
 public slots:
     void receiveAddFriendRequest(QByteArray data);

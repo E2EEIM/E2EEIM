@@ -74,20 +74,6 @@ SignIn::~SignIn()
     delete ui;
 }
 
-/*
-void SignIn::on_pushButton_clicked()
-{
-    QString activeUser=selectedAccount;
-    //qDebug() << activeUser;
-    if(activeUser!=""){
-        conn->send("abcdefgh");
-        SignIn::accept();
-    }
-    else{
-        ui->label_signIn_keyFpr->setText("\nUsername can not be empty!");
-    }
-}
-*/
 void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
 {
     selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
@@ -328,6 +314,8 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
                         gpgme_key_t publicKey = encryption->getKey(patt, 0);
                         encryption->setUserPubKey(publicKey);
 
+                        conn->signInFlag=true;
+
                         SignIn::accept();
                     }
                     else{
@@ -337,13 +325,6 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
 
             }
         }
-
-
-
-
-
-
-        //SignIn::accept();
     }
     else{
         ui->label_signIn_keyFpr->setText("\nUsername can not be empty!");
@@ -530,6 +511,8 @@ void SignIn::on_tabWidget_signUp_currentChanged(int index)
 
 void SignIn::on_pushButton_signUpAccountSignUp_clicked()
 {
+    ui->pushButton_signUpAccountSignUp->setText("Generating key Pair...");
+
     QString errMsg;
     QString username=ui->lineEdit_signUpAccountUsername->text();
     QString passphrase=ui->lineEdit_signUpAccountPassphrase->text();
@@ -783,6 +766,7 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         }
 
     }
+    ui->pushButton_signUpAccountSignUp->setText("Sign Up");
 }
 
 void SignIn::on_tabWidget_mainTab_currentChanged(int index)

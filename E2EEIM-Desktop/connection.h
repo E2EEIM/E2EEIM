@@ -24,6 +24,9 @@
 #include <QDataStream>
 #include <QFile>
 #include <QDir>
+#include <QQueue>
+#include <QByteArray>
+#include <QTimer>
 #include "encryption.h"
 
 class Connection : public QObject
@@ -37,17 +40,21 @@ public:
     QByteArray getRecentReceivedMsg();
     QString getServerAddr();
     QString getServerPort();
+    bool signInFlag;
 
 signals:
     void receiveAddFriendrequest(QByteArray data);
     void receiveNewPublicKey(QByteArray data);
     void receiveNewMessage(QByteArray data);
     void disconnectFromServer();
+    void dataWaiting();
 
 
 public slots:
     void readyRead();
     void letDisconnect();
+    void processReceivedData();
+    void noMoreData();
 
 private:
     void writeToFile(QByteArray data, QString filename);
@@ -57,6 +64,8 @@ private:
     QByteArray recentReceivedMsg;
     QString serverAddr;
     QString serverPort;
+    QQueue<QByteArray> receivedData;
+    QTimer *waitForRecive;
 
 };
 

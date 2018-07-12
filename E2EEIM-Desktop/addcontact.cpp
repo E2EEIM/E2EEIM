@@ -330,8 +330,36 @@ void AddContact::on_pushButton_sendAddFriendRequest_clicked()
 
         if(result=="1"){
             this->addFriendRequestList->append(foundUser);
+
+            QFile File("./userData/"+ACTIVE_USER+"/addFriendRequestList.txt");
+            if(!File.exists()){
+                if(!File.open(QFile::WriteOnly | QFile::Text)){
+                    qDebug() << "could not open addFriendRequestList.txt file for writing";
+                    abort();
+                }
+                QTextStream out(&File);
+                out.setCodec("UTF-8");
+                out << "";
+
+                File.flush();
+                File.close();
+            }
+            if(File.exists()){
+                if(!File.open(QFile::Append | QFile::Text)){
+                    qDebug() << "could not open addFriendRequestList.txt file for writing";
+                    abort();
+                }
+                QTextStream out(&File);
+                out.setCodec("UTF-8");
+                out << foundUser+"\n";
+
+                File.flush();
+                File.close();
+            }
+
             ui->pushButton_sendAddFriendRequest->setText("Add friend request sended");
             ui->pushButton_sendAddFriendRequest->setEnabled(false);
+
         }
     }
 }

@@ -52,7 +52,6 @@ void MainWindow::initUserDataPath(){
 
     anyNewContact=false;
 
-    qDebug() << "ACTIVE_USR" << ACTIVE_USR;
     QString userDataPath("./userData");
     QDir userData;
     userData.mkdir(userDataPath);
@@ -155,7 +154,6 @@ void MainWindow::initUserDataPath(){
     removeNotiFlag=false;
 
     finishInitUserDataStatus=true;
-    qDebug() << "[[[[[[[[[[[[[[[[[[[[[[[[[[[[ FINISH INIT USER DATA PATH]]]]]]]]]]]]]]]]]]]]]]]]]";
 
     on_pushButton_Conversation_clicked();
     currentMenu = "conversation";
@@ -304,7 +302,6 @@ QStringList MainWindow::ReadConversation(QString Filename){
 
 
     if(isGroupConversation==true){ //In case group conversation;
-        qDebug() << "**************************** ITS GROUP CONVERSATION";
         QStringList groupMember=getGroupMember(onlyFileName);
         while( !in.atEnd())
         {
@@ -376,12 +373,8 @@ void MainWindow::on_pushButton_Conversation_clicked()
 
     if(ACTIVE_USR!=""){
 
-        qDebug() << "---------------NM_4a";
-
         QString Filename = "./userData/"+ACTIVE_USR+"/newMessage";
         newMessageList=readTextLine(Filename);                 //Read user data from file.
-
-        qDebug() << "---------------NM_4b";
 
         QStringList notiItemList;
         QStringList normalItemList;
@@ -392,8 +385,6 @@ void MainWindow::on_pushButton_Conversation_clicked()
         foreach(QFileInfo item, conversationFile.entryInfoList()){
             if(item.isFile()){
 
-                qDebug() << "---------------NM_4b1";
-
                 conversationList.append(item.fileName());
                 bool newMsgInThis=false;
                 foreach (QString newMessage, newMessageList) {
@@ -401,17 +392,13 @@ void MainWindow::on_pushButton_Conversation_clicked()
                         notiItemList.append(item.fileName());
                         newMsgInThis=true;
                         anyNewMessage=true;
-                        qDebug() << "---------------NM_4b2x";
                     }
                 }
                 if(newMsgInThis==false){
                     normalItemList.append(item.fileName());
-                    qDebug() << "---------------NM_4b2y";
                 }
             }
         }
-
-        qDebug() << "---------------NM_4c";
 
         /*Add conversation to list.*/
         foreach(QString conversation, notiItemList){
@@ -421,14 +408,12 @@ void MainWindow::on_pushButton_Conversation_clicked()
             ui->listWidget_Contact->addItem(item);
             anyNewMessage=true;
 
-            qDebug() << "---------------NM_4dx";
         }
         foreach(QString conversation, normalItemList){
             QListWidgetItem *item = new QListWidgetItem;
             item->setIcon(QIcon(":/img/icons/person.png"));
             item->setText(conversation);
             ui->listWidget_Contact->addItem(item);
-            qDebug() << "---------------NM_4dy";
         }
 
         //In case user move splitter hide contacts list and don't know how to show it again.
@@ -654,24 +639,17 @@ void MainWindow::on_pushButton_AddList_clicked()
 void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
 
     if(removeNotiFlag==false){
-        qDebug() << "-----removeNotiFlag=false";
         conversationWith=item->text();
     }
     else{
-        qDebug() << "-----removeNotiFlag=true";
         removeNotiFlag=false;
     }
-
-    qDebug() << "---------- conversationWith:" << conversationWith;
 
     ui->label_ConversationWith->setText(conversationWith);
     ui->listWidget_Conversation->clear();
 
-    qDebug() << "----------------------lc_1";
-
     if(conversationWith.at(0)=="!"){
 
-        qDebug() << "----------------------lc_1a1";
         ui->listWidget_Conversation->hide();
         ui->frame->hide();
         ui->pushButton_newFriend_picture->setIcon(QIcon(":/img/icons/newPerson.png"));
@@ -682,12 +660,8 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         ui->frame_3->show();
         ui->label_ConversationWith->setText(conversationWith.mid(1) +
                                             " wants to be your friend.");
-
-        qDebug() << "----------------------lc_1a2";
     }
     else if(conversationWith.at(0)=="+"){
-
-        qDebug() << "----------------------lc_1b1";
 
         QString msg="Someone invite you to "+conversationWith.mid(1)+" group.";
 
@@ -701,12 +675,10 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         ui->frame_3->show();
         ui->label_ConversationWith->setText(msg);
 
-        qDebug() << "----------------------lc_1b2";
     }
 
     else if(conversationWith.at(0)=="@"){
 
-        qDebug() << "----------------------lc_1c1";
         ui->listWidget_Conversation->hide();
         ui->frame->hide();
         ui->pushButton_newFriend_picture->show();
@@ -716,25 +688,19 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         ui->frame_3->show();
         ui->label_ConversationWith->setText("You and "+ conversationWith.mid(1) +
                                             " are friends now!");
-        qDebug() << "----------------------lc_1c2";
     }
     else{
 
-        qDebug() << "----------------------lc_1d1";
         ui->pushButton_newFriend_picture->hide();
         ui->frame_addFriend_confirm->hide();
         ui->frame_3->hide();
         ui->listWidget_Conversation->show();
         ui->frame->show();
 
-
-        qDebug() << "----------------------lc_1d2";
-
         /*Load conversation*/
         QString filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
         QStringList conversation=ReadConversation(filename);
 
-        qDebug() << "----------------------lc_1d3";
 
         /*Show conversation*/
         foreach(QString msg, conversation){
@@ -753,7 +719,6 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
             ui->listWidget_Conversation->addItem(item);
         }
 
-        qDebug() << "----------------------lc_1d4";
 
         ui->listWidget_Conversation->scrollToBottom();
     }
@@ -763,10 +728,9 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     QString Filename = "./userData/"+ACTIVE_USR+"/newMessage";
     newMessageList=readTextLine(Filename);
 
-    qDebug() << "---------DN_1";
 
     bool messageFormUnreadUser=false;
-    qDebug() << "---------DN_2";
+
     foreach (QString newMessage, newMessageList) {
         if(newMessage==conversationWith){
             messageFormUnreadUser=true;
@@ -774,15 +738,11 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         }
     }
 
-    qDebug() << "---------DN_3";
 
     if(messageFormUnreadUser==true && currentMenu=="conversation"){
-        qDebug() << "---------DN_4";
         removeFromListFile(Filename, conversationWith);
-        qDebug() << "---------DN_5";
         removeNotiFlag=true;
         on_pushButton_Conversation_clicked();
-        qDebug() << "---------DN_6";
     }
 }
 
@@ -792,11 +752,8 @@ void MainWindow::on_pushButton_SEND_clicked()
     QString conversationWith = ui->label_ConversationWith->text();
     QString msg = ui->plainTextEdit->toPlainText();
 
-    qDebug() << "-----CONVERSATION_WITH:"<< conversationWith;
-
     QStringList groupList=readTextLine("./userData/"+ACTIVE_USR+"/groupList.txt");
     foreach(QString item, groupList){
-        qDebug() << "------G_"+item;
         if("~~"+conversationWith+"~~"==item){
             sendTo="group";
             break;
@@ -805,7 +762,6 @@ void MainWindow::on_pushButton_SEND_clicked()
 
     QStringList contactList=readTextLine("./userData/"+ACTIVE_USR+"/contactList.txt");
     foreach(QString item, contactList){
-        qDebug() << "------P_"+item;
         if(conversationWith==item){
             sendTo="person";
             break;
@@ -853,43 +809,6 @@ void MainWindow::on_pushButton_SEND_clicked()
         }
 
         // Send message
-        qDebug() << "--------------SG_1";
-
-        /*
-        Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.txt";
-        QFile rawFile(Filename);
-        if(!rawFile.exists()){
-            if(!rawFile.open(QFile::WriteOnly | QFile::Text)){
-                qDebug() << "could not open"+Filename+" file for writing";
-                abort();
-            }
-            QTextStream out(&rawFile);
-            out << "";
-
-            rawFile.flush();
-            rawFile.close();
-        }
-        if(rawFile.exists()){
-            if(!rawFile.open(QFile::WriteOnly | QFile::Text)){
-                qDebug() << "could not open file"+ Filename +" for writing";
-                abort();
-            }
-
-            QTextStream out(&rawFile);
-            if(sendTo=="group"){
-                msg="~~"+conversationWith+"~~"+msg;
-            }
-            out << msg;
-
-            rawFile.flush();
-            rawFile.close();
-        }
-        */
-
-        qDebug() << "--------------SG_2";
-
-        qDebug() << "----------------------------SEND_TO:"<<sendTo;
-
         if(sendTo=="person"){
             sendToPerson(conversationWith, msg);
         }
@@ -902,102 +821,7 @@ void MainWindow::on_pushButton_SEND_clicked()
                 }
                 sendToPerson(item, msg);
             }
-
         }
-
-
-        /*
-        if (sendTo=="person"){
-            QByteArray qb = conversationWith.toLatin1();
-            const char *recipient = qb.data();
-
-
-            gpgme_key_t recipientKey=encryption->getKey(recipient, 0);
-
-            qb=Filename.toLatin1();
-            const char *inputFileName=qb.data();
-
-            Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.cipher";
-            qb=Filename.toLatin1();
-            const char *outPutFileName=qb.data();
-
-
-            encryption->encryptSign(userPriKey, recipientKey, inputFileName, outPutFileName);
-
-            QFile File_cipher("./userData/"+ACTIVE_USR+"/msgToEncrypt.cipher");
-            if(!File_cipher.open(QFile::ReadOnly | QFile::Text)){
-                qDebug() << "could not open file for Read";
-                abort();
-            }
-            QTextStream in(&File_cipher);
-            in.setCodec("UTF-8");
-            QString cipher;
-            cipher=in.readAll();
-            File_cipher.close();
-
-            char recvUsernameSize=char(conversationWith.size());
-
-            QByteArray msgToServer;
-            msgToServer.append(cipher);
-            msgToServer.insert(0, conversationWith);
-            msgToServer.insert(0, recvUsernameSize);
-
-            Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.txt";
-            if(rawFile.exists()){
-                if(!rawFile.open(QFile::WriteOnly | QFile::Text)){
-                    qDebug() << "could not open "+Filename+" file for writing";
-                    abort();
-                }
-
-                QTextStream out(&rawFile);
-                out << msgToServer;
-
-                rawFile.flush();
-                rawFile.close();
-
-            }
-
-
-            Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.txt";
-            QByteArray qb2=Filename.toLatin1();
-            inputFileName=qb2.data();
-
-
-            Filename="./userData/"+ACTIVE_USR+"/msgToEncrypt.cipher";
-            QByteArray qb3=Filename.toLatin1();
-            outPutFileName=qb3.data();
-
-            encryption->encryptSign(userPriKey, servKey, inputFileName, outPutFileName);
-
-            QFile qf("./userData/"+ACTIVE_USR+"/msgToEncrypt.cipher");
-            if(!qf.open(QFile::ReadOnly | QFile::Text)){
-                qDebug() << "could not open msgToEncrypt.cipher file for Read";
-                abort();
-            }
-            QTextStream pl(&qf);
-            QString qs;
-            qs=pl.readAll();
-            qf.close();
-
-            QString payload=qs;
-
-            QByteArray data;
-            data.append(payload);
-
-            // Insert operation in front of byte array (data[0]).
-            data.insert(0, (char)17);
-
-            //Insert size of(operation + payload) in front of byte array (data[0]).
-            int dataSize=data.size();
-            QByteArray dataSizeByte;
-            QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
-            ds << dataSize;
-            data.insert(0, dataSizeByte);
-
-            conn->send(data);
-
-        }
-        */
 
         /*Load conversation*/
         QString filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
@@ -1273,11 +1097,6 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 
 void MainWindow::receiveAddFriendRequest(QByteArray data){
 
-    qDebug() << "************************RECEIVE ADD FRIEND REQUEST**********************";
-    //qDebug() << data;
-
-    qDebug() <<"DEEP_DEBUG 3";
-
     QString username;
 
     if(finishInitUserDataStatus==false){
@@ -1298,8 +1117,6 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
 
     QString decryptResult=encryption->decryptVerify("temp.cipher", "temp.txt");
 
-    qDebug() <<"DEEP_DEBUG 4";
-
     if(decryptResult.mid(0,1)=="0"){
         //ui->label_signIn_keyFpr->setStyleSheet("color:#FF6666");
         //ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
@@ -1315,8 +1132,6 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
         QString qs;
         qs=in.readAll();
         File_result.close();
-
-        qDebug() << qs;
         username=qs;
     }
 
@@ -1375,11 +1190,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
 
 void MainWindow::receiveNewPublicKey(QByteArray data){
 
-    qDebug() << "************************RECEIVE NEW PUBLIC KEY**********************";
-    //qDebug() << data;
-
-    qDebug() <<"DEEP_DEBUG A";
-
+    qDebug() << "XXXXXXX";
     if(finishInitUserDataStatus==false){
         initUserDataPath();
     }
@@ -1397,8 +1208,6 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
     File_Result.close();
 
     QString decryptResult=encryption->decryptVerify("temp.cipher", "temp.txt");
-
-    qDebug() <<"DEEP_DEBUG B";
 
     if(decryptResult.mid(0,1)=="1"){
 
@@ -1488,6 +1297,8 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
                     on_pushButton_Contact_clicked();
 
                 }
+
+                qDebug() << "YYYYYYYYYYY";
                 anyNewContact=true;
                 if(currentMenu=="conversation"){
                     on_pushButton_Contact_clicked();
@@ -1510,6 +1321,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
 }
 
 void MainWindow::receiveNewMessage(QByteArray data){
+
     qDebug() << "RECEVIE NEW MESSAGE!!!!!!!!!!!!!";
 
     if(finishInitUserDataStatus==false){
@@ -1633,20 +1445,15 @@ void MainWindow::receiveNewMessage(QByteArray data){
 
             QString senderUsername=QString(senderKey->uids->name);
 
-            qDebug() << "---------------NM_0";
 
             //In case normal message
             if(msg.split(":").first()==senderUsername){
-
-                qDebug() << "---------------NM_1";
 
                 QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
                 QStringList contactList=readTextLine(Filename);
 
                 foreach (QString item, contactList) {
                     if(senderUsername==item || "@"+senderUsername==item){
-
-                        qDebug() << "---------------NM_2";
 
                         QFile File("./userData/"+ACTIVE_USR+"/conversation/"+senderUsername);
                         if(!File.exists()){
@@ -1726,28 +1533,25 @@ void MainWindow::receiveNewMessage(QByteArray data){
                     }
                 }
 
-                qDebug() << "---------------NM_3";
-
                 if(anyNewMessage==true){
 
                     if(currentMenu=="contact"){
-                        qDebug() << "---------------NM_4";
+
                         on_pushButton_Conversation_clicked();
                         on_pushButton_Contact_clicked();
                     }
                     else if(currentMenu=="group"){
-                        qDebug() << "---------------NM_4";
+
                         on_pushButton_Conversation_clicked();
                         on_pushButton_Group_clicked();
                     }
                     else{
-                        qDebug() << "---------------NM_4";
+
                         on_pushButton_Conversation_clicked();
                     }
 
                     if(conversationWith==senderUsername){
 
-                        qDebug() << "---------------NM_5";
 
                         /*Load conversation*/
                         QString filename="./userData/"+ACTIVE_USR+"/conversation/"+senderUsername;
@@ -1813,7 +1617,6 @@ void MainWindow::receiveNewMessage(QByteArray data){
                 int lineBeginPubKey=0;
                 foreach (QString line, inviteMsg) {
                     if(line=="-----BEGIN PGP PUBLIC KEY BLOCK-----"){
-                        qDebug() <<"----------------------------------break;";
                         break;
                     }
                     if(line.mid(0,2)=="~+"){
@@ -1900,20 +1703,14 @@ void MainWindow::receiveNewMessage(QByteArray data){
             }
             else if(msg.mid(0,2)=="~~"){
 
-                qDebug() << "--------------form:" << senderUsername;
-                qDebug() << "---------------msg:" << msg;
                 QString groupName=msg.split("~~").at(1);
 
                 QString conversationFilePath= "./userData/"+ACTIVE_USR+"/conversation/"+groupName;
-
-                qDebug() << "---------------NM_1";
 
                 QStringList groupMember=getGroupMember(groupName);
 
                 foreach (QString item, groupMember) {
                     if(senderUsername==item){
-
-                        qDebug() << "---------------NM_2";
 
                         QFile File("./userData/"+ACTIVE_USR+"/conversation/"+groupName);
                         if(!File.exists()){
@@ -1993,28 +1790,22 @@ void MainWindow::receiveNewMessage(QByteArray data){
                     }
                 }
 
-                qDebug() << "---------------NM_3";
 
                 if(anyNewMessage==true){
 
                     if(currentMenu=="contact"){
-                        qDebug() << "---------------NM_4";
                         on_pushButton_Conversation_clicked();
                         on_pushButton_Contact_clicked();
                     }
                     else if(currentMenu=="group"){
-                        qDebug() << "---------------NM_4";
                         on_pushButton_Conversation_clicked();
                         on_pushButton_Group_clicked();
                     }
                     else{
-                        qDebug() << "---------------NM_4";
                         on_pushButton_Conversation_clicked();
                     }
 
                     if(conversationWith==groupName){
-
-                        qDebug() << "---------------NM_5";
 
                         /*Load conversation*/
                         QString filename="./userData/"+ACTIVE_USR+"/conversation/"+groupName;
@@ -2192,7 +1983,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
 
         QFile FileGroupList(groupListFile);
         if(!FileGroupList.open(QFile::ReadOnly | QFile::Text)){
-            qDebug() << "could not open addFriendRequestList.txt file for Read";
+            qDebug() << "could not open groupList.txt file for Read";
             abort();
         }
 
@@ -2289,20 +2080,14 @@ void MainWindow::on_pushButton_addFriend_decline_clicked()
 
 void MainWindow::removeFromListFile(QString filename, QString item){
 
-    qDebug() << "---------DN_4a";
-
     QStringList list=readTextLine(filename);
-
-    qDebug() << "---------DN_4b";
     QStringList newList;
 
-    qDebug() << "---------DN_4d";
     foreach (QString listItem, list) {
         if(listItem != item){
             newList.append(listItem);
         }
     }
-    qDebug() << "---------DN_4e";
 
 
     QFile File(filename);
@@ -2343,7 +2128,6 @@ void MainWindow::removeFromListFile(QString filename, QString item){
         File.flush();
         File.close();
     }
-    qDebug() << "---------DN_4F";
 
 }
 
