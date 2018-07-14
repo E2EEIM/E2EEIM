@@ -1,7 +1,8 @@
 #include <QCoreApplication>
-#include "myserver.h"
-#include <QByteArray>
+#include "server.h"
+
 #include <QQueue>
+
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
@@ -15,8 +16,10 @@ int main(int argc, char *argv[])
     QList<QString> waitingTaskWork;
     QList<QString> addFriendRequestList;
 
-    MyServer Server(msg, usernameList, userKeyList, loginUser, loginRanNum, waitingTaskUser, waitingTaskWork, addFriendRequestList);
-    Server.startServer();
+    Server server(msg, usernameList, userKeyList, loginUser, loginRanNum, waitingTaskUser, waitingTaskWork, addFriendRequestList);
+    server.startServer();
+
+    // https://forum.qt.io/topic/86025/qt-get-external-ip-address-using-qnetworkreply/2
 
     return a.exec();
 }

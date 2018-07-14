@@ -7,8 +7,6 @@
 #include <locale.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <QDebug>
-#include <QString>
 #include <stdio.h>
 
 #define detectError(err)                                    \

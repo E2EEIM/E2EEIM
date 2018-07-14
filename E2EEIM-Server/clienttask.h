@@ -1,50 +1,52 @@
-#ifndef MYTHREAD_H
-#define MYTHREAD_H
+#ifndef CLIENTTASK_H
+#define CLIENTTASK_H
 
 #include <QObject>
-#include <QThread>
 #include <QTcpSocket>
-#include <QDataStream>
-#include <QDebug>
 #include <QQueue>
-#include <gpgme.h>
 #include <QTimer>
+#include <gpgme.h>
+#include <QDataStream>
 
-class MyThread : public QThread
+class ClientTask : public QObject
 {
     Q_OBJECT
 public:
-    explicit MyThread(QQueue<QByteArray> *queue, QList<QString> *usernameList,
-                      QList<QString> *userKeyList, QList<QString> *loginUser, QList<QString> *loginRanNum,
-                      QList<QString> *waitingTaskUser, QList<QString> *waitingTaskWork,
-                      QList<QString> *addFriendRequestList, int ID, QObject *parent = 0);
-    void run();
+    explicit ClientTask(qintptr socketDescriptor, QQueue<QByteArray> *queue,
+                        QList<QString> *usernameList, QList<QString> *userKeyList,
+                        QList<QString> *loginUser, QList<QString> *loginRanNum,
+                        QList<QString> *waitingTaskUser, QList<QString> *waitingTaskWork,
+                        QList<QString> *addFriendRequestList, QObject *parent = nullptr);
 
-    QTcpSocket *socket;
+    QTimer *timer;
 
 signals:
     void error(QTcpSocket::SocketError socketError);
     void newdata(QByteArray data);
-
-
+    void slowDown();
+    void clientDisconnect();
 
 public slots:
+    void initClient();
+    void timerStart();
     void readyRead();
-    void disconnected();
     void send(QByteArray data);
+    void task();
+    void disconnected();
     void dataFilter(QByteArray data);
-    void printDataDetail(QByteArray data);
+    //void printDataDetail(QByteArray data);
     QByteArray decryptData(QByteArray data, const char* outPutFileName);
     void addNewUser(QByteArray payload);
     QByteArray encryptToClient(QByteArray data,QString recipient, const char *outFileName);
-
     gpgme_key_t getKey(QString pattern);
-
-    void task();
 
 
 private:
-    int socketDescriptor;
+    QTcpSocket *socket;
+    qintptr socketDescriptor;
+
+    QByteArray serverPubKey;
+    QString activeUser;
 
     QQueue<QByteArray> *queuePtr;
     QList<QString> *usernameList;
@@ -62,13 +64,6 @@ private:
     gpgme_key_t recipientKey;
     gpgme_key_t ServerKey = nullptr;
     gpgme_key_t activeUserKey;
-
-    QByteArray serverPubKey;
-
-    QString activeUser;
-
-    QTimer *timer;
-
 };
 
-#endif // MYTHREAD_H
+#endif // CLIENTTASK_H
