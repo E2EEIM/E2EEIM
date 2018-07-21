@@ -28,10 +28,10 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
-    Encryption encryption;
-    Connection connection(encryption);
+    Encryption encryption;              //Create encryption object.
+    Connection connection(encryption);  //Create connection object.
 
-
+    //Create and start mainWindow
     MainWindow w(connection, encryption);
     w.show();
 

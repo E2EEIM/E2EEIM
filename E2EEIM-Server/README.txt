@@ -41,8 +41,5 @@ The executable file will be in current directory.
 
 
 HOW TO RUN
-1. Set GUI pinentry for gpg-agent
-    For macOS(GPGTools Pinentry mac)
-    For Linux(pinentry-gtk2)
 1. Find executable file.
 2. Execute excecutable file.
