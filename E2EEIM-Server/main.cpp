@@ -16,7 +16,10 @@ int main(int argc, char *argv[])
     QList<QString> waitingTaskWork;
     QList<QString> addFriendRequestList;
 
+    //Create server.
     Server server(msg, usernameList, userKeyList, loginUser, loginRanNum, waitingTaskUser, waitingTaskWork, addFriendRequestList);
+
+    //Start server.
     server.startServer();
 
     // https://forum.qt.io/topic/86025/qt-get-external-ip-address-using-qnetworkreply/2

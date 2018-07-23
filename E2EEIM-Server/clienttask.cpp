@@ -7,6 +7,7 @@ ClientTask::ClientTask(qintptr socketDescriptor,QQueue<QByteArray> *queue, QList
                        QList<QString> *loginRanNum, QList<QString> *waitingTaskUser,
                        QList<QString> *waitingTaskWork, QList<QString> *addFriendRequestList, QObject *parent) : QObject(parent)
 {
+    //Init pointer to share data with every thread.
     this->socketDescriptor=socketDescriptor;
     queuePtr=queue;
     this->usernameList=usernameList;
@@ -41,17 +42,24 @@ ClientTask::ClientTask(qintptr socketDescriptor,QQueue<QByteArray> *queue, QList
 
     const char *servKey= "E2EEIM SERVER";
 
+    //Get server private key from key ring.
     err = gpgme_op_keylist_start(ctx,servKey, 1);
     detectError(err);
 
+    //Found server's key flag.
     int nKeysFound=0;
 
+    //Get server key.
     while (!(err = gpgme_op_keylist_next(ctx, &key))) { // loop through the keys in the keyring
         ServerKey=key;
         nKeysFound++;
     }
 
+    //In case not found server key.
     if(nKeysFound == 0){
+
+        //Generate server's key pair.
+
         const char *parms = "<GnupgKeyParms format=\"internal\">\n"
             "Key-Type: RSA\n"
             "Key-Length: 4096\n"
@@ -64,6 +72,7 @@ ClientTask::ClientTask(qintptr socketDescriptor,QQueue<QByteArray> *queue, QList
             "Passphrase: abcdefgh\n"
             "</GnupgKeyParms>\n";
 
+        //Generate server's key.
         gpgme_genkey_result_t GenKeyresult;
         GenKeyresult = genKey(ctx, err, parms);
         qDebug() << "\n--------Finished Key Generation----------";
@@ -76,20 +85,24 @@ ClientTask::ClientTask(qintptr socketDescriptor,QQueue<QByteArray> *queue, QList
 
         const char *serverPubKeyFile="serverPubKey.key";
 
+        //Export server's public key.
         exportKey(ctx, ServerKey, err, serverPubKeyFile);
         qDebug() << "'serverPubKey.key' Saved in current directory\n\n";
     }
-    else{
+    else{ //In case found useable server's private key.
+
         qDebug() << "\n-------FOUND USEABLE SERVER KEY----------";
         qDebug() << "SERVER KEY IS...";
         printKeys(ServerKey);
 
         const char *serverPubKeyFile="serverPubKey.key";
 
+        //Export server's public key.
         exportKey(ctx, ServerKey, err, serverPubKeyFile);
         qDebug() << "'serverPubKey.key' Saved in current directory\n\n";
     }
 
+    //Read export server's key from text file.
     QFile f("serverPubKey.key");
     f.open(QFile::ReadOnly | QFile::Text);
 
@@ -102,77 +115,120 @@ ClientTask::ClientTask(qintptr socketDescriptor,QQueue<QByteArray> *queue, QList
     const QString tmp=infile;
     serverPubKey.append(tmp);
 }
+
+//Init data when thread start.
 void ClientTask::initClient(){
+
+    //Create socket for the client.
     socket=new QTcpSocket();
+
+    //Create timer for get thread idle state.
     timer=new QTimer();
 
+    //Set socket to comunicate with the client.
     if(!socket->setSocketDescriptor(socketDescriptor)){
         emit error(socket->error());
         return;
     }
 
+    //Connect readyRead() event.
+    //Creat a [signal/slot] mechanism, when receive data from the client
+    //to call readyRead() function.
     connect(socket, SIGNAL(readyRead()), this, SLOT(readyRead()));
+
+    //Connect disconnect() event.
+    //Creat a [signal/slot] mechanism, when the client disconnect.
+    //to call disconnect() Slot.
     connect(socket,SIGNAL(disconnected()), this, SLOT(disconnected()));
+
+    //Connect idle event.
+    //Creat a [signal/slot] mechanism, when thread idle.
+    //to call task() function.
     connect(timer, SIGNAL(timeout()), this, SLOT(task()));
 
 }
+
+//Start timer when thread idle.
 void ClientTask::timerStart(){
     timer->start(1000);
 }
 
+//Send data to the client.
 void ClientTask::send(QByteArray data){
 
     qDebug() << "---------------------Send data to: " << activeUser;
 
+    //Write data to socket.
     socket->write(data);
+
+    //Tranmit data.
     socket->flush();
+
+    //Wait for write data finish.
     socket->waitForBytesWritten(1000);
 
 }
 
+//Read data when reaceive from the client.
 void ClientTask::readyRead(){
 
     qDebug() << "---------Receive data from: " << activeUser;
 
+    //Read data from socket.
     QByteArray data = socket->readAll();
 
+    //Get data size from data.
     unsigned int dataSize;
     QDataStream ds(data.mid(0,4));
     ds >> dataSize;
 
+    //Get operation protocol form data.
     unsigned int sizeOfPayloadAndOp=data.mid(4).size();
 
+    //Only data with no loss will process.
     if(sizeOfPayloadAndOp==dataSize){
        dataFilter(data);
     }
 }
+
+//Send waiting data for the client when client connect to server.
 void ClientTask::task(){
 
     QString task;
     QString taskProtocol;
     qDebug() << "---activeUser:" << activeUser;
-    while(waitingTaskUser->indexOf(activeUser)!=(-1)){
 
+    while(waitingTaskUser->indexOf(activeUser)!=(-1)){ //Looking for data the need to send to the client.
+
+        //Slow thread to let client process data from server.
         emit slowDown();
 
+        //Get message that need to send to the client.
         task=waitingTaskWork->at(waitingTaskUser->indexOf(activeUser));
         taskProtocol=task.mid(0,2);
 
-        if(taskProtocol=="13"){
+        if(taskProtocol=="13"){ //In case the message for the client is add friend request.
             qDebug() << "*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13";
 
+            //Get sender data.
             QString sender=task.mid(2);
             gpgme_key_t senderKey=getKey(sender);
             QString senderUsername=QString(senderKey->uids->name);
 
+            //Create data package.
             QByteArray data;
             data.append(senderUsername);
 
+            //Encrypt paylaod.
             QByteArray payload=encryptToClient(data, activeUser, "addFriendCon.cipher");
 
+            //Clear data package.
             data.clear();
+
+            //Append encrypted payload to data package.
             data.append(payload);
 
+            //In insert add freind requst protocol number.
             data.insert(0, (char)13);
 
 
@@ -183,18 +239,24 @@ void ClientTask::task(){
             ds << dataSize;
             data.insert(0, dataSizeByte);
 
+            //Send data to the client.
             send(data);
 
+            //Remove the waiting message for waiting list.
             waitingTaskWork->removeAt(waitingTaskUser->indexOf(activeUser));
             waitingTaskUser->removeAt(waitingTaskUser->indexOf(activeUser));
         }
-        if(taskProtocol=="15"){
+        if(taskProtocol=="15"){ //In case the message for the client is public key.
 
             QString payload=task.mid(2);
 
+            //Create data package.
             QByteArray data;
+
+            //Append encrypted payload to data package.
             data.append(payload);
 
+            //Insert public key exchange protocol to data package.
             data.insert(0, (char)15);
 
             //Insert size of(operation + payload) in front of byte array (data[0]).
@@ -204,21 +266,34 @@ void ClientTask::task(){
             ds << dataSize;
             data.insert(0, dataSizeByte);
 
+            //Send encrypted public key to the client.
             send(data);
 
+            //Remove the waing task from waiting list.
             waitingTaskWork->removeAt(waitingTaskUser->indexOf(activeUser));
             waitingTaskUser->removeAt(waitingTaskUser->indexOf(activeUser));
 
         }
-        if(taskProtocol=="18"){
+        if(taskProtocol=="18"){ //In case the message for the client is send post message.
 
             QString cipher=task.mid(2);
 
+            //Create data package.
             QByteArray data;
+
+            //Append encrypted message to data package.
             data.append(cipher);
+
+            //Encrypt message to the client.
             QByteArray payload=encryptToClient(data, activeUser, "addFriendCon.cipher");
+
+            //Empty data package.
             data.clear();
+
+            //Append encrypted cipher to data package.
             data=payload;
+
+            //Inset send post message potocol to data package.
             data.insert(0, (char)18);
 
             //Insert size of(operation + payload) in front of byte array (data[0]).
@@ -228,8 +303,10 @@ void ClientTask::task(){
             ds << dataSize;
             data.insert(0, dataSizeByte);
 
+            //Send encrypted cipher to the client.
             send(data);
 
+            //Remove the waiting data for the client from waiting list.
             waitingTaskWork->removeAt(waitingTaskUser->indexOf(activeUser));
             waitingTaskUser->removeAt(waitingTaskUser->indexOf(activeUser));
 
@@ -239,13 +316,15 @@ void ClientTask::task(){
 
 }
 
+//Process received data.
 void ClientTask::dataFilter(QByteArray data){
 
-    //QString dataQString(data);
     bool ok;
+
+    //Get process protocol of the data package.
     int intOp=QString(data.mid(4,1)).data()->unicode();
 
-    if(intOp==1){
+    if(intOp==1){ //In case protocol is connection request.
 
         //printDataDetail(data);
 
@@ -268,24 +347,30 @@ void ClientTask::dataFilter(QByteArray data){
         send(data);
 
     }
-    if(intOp==3){
+    if(intOp==3){ //In case protocol is sign up request.
 
         //printDataDetail(data);
 
         //decrypt data to get payload
         QByteArray payload=decryptData(data, "signUp.pgp");
 
+        //Get username length from data package.
         int usernameLength=QString(payload).mid(0,1).data()->unicode();
 
+        //Get uername from data package.
         QString username=QString(payload).mid(5, usernameLength);
 
+        //Get user data key length.
         int userPublicKeyLength;
         userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
 
 
         QString result;
 
+        //Username validation and available.
         if(usernameList->indexOf(username)==(-1)){
+
+            //Sign Up for the client.
             addNewUser(payload);
 
             result="Sign up success, "+username+" ready for sign in!";
@@ -322,33 +407,40 @@ void ClientTask::dataFilter(QByteArray data){
         ds2 << payloadAndOpSize;
         data.insert(0, dataSize);
 
+        //Send sign up result.
         send(data);
 
     }
 
-    if(intOp==5){
+    if(intOp==5){ //In case protocol is sign in request.
 
         //printDataDetail(data);
 
         //decrypt data to get payload
         QByteArray payload=decryptData(data, "signIn.pgp");
 
+        //Get username length from data package.
         int usernameLength=QString(payload).mid(0,1).data()->unicode();
 
+        //Get username from data package.
         QString username(payload.mid(5, usernameLength));
 
+        //Get user's public key length.
         int userPublicKeyLength;
         userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
 
+        //Search for the username in server.
         if(usernameList->indexOf(username)!=(-1)){
             gpgme_key_t userKey=getKey(userKeyList->at(usernameList->indexOf(username)));
 
             printKeys(userKey);
 
+            //random number.
             int rNum = qrand();
             QByteArray qb;
             qb.setNum(rNum);
 
+            //Save sign in ID.
             if(loginUser->indexOf(username)==(-1)){
 
                 loginUser->append(username);
@@ -360,13 +452,16 @@ void ClientTask::dataFilter(QByteArray data){
             }
 
 
+            //Encrypt sign in verifiaction.
             QByteArray cipher=encryptToClient(qb, username, "rannum.cipher");
 
+            //Empty data package variable.
             data.clear();
 
+            //Append encrypted sign in verification to data package.
             data.append(cipher);
 
-            // Insert operation in front of byte array (data[0]).
+            // Insert sign in verification protocol number in front of byte array (data[0]).
             data.insert(0, (char)6);
 
             //Insert size of(operation + payload) in front of byte array (data[0]).
@@ -376,68 +471,88 @@ void ClientTask::dataFilter(QByteArray data){
             ds << dataSize;
             data.insert(0, dataSizeByte);
 
+            //Send encrypted sign in verification to client.
             send(data);
 
 
         }
-        else{
+        else{ //In case the username not found in this server.
 
+            //Create sign in result.
             QByteArray qb="USER NOT FOUND IN THIS SERVER!";
 
-            //QByteArray cipher=encryptToClient(qb, username, "rannum.cipher");
+            //Empty data package variable.
             data.clear();
+
+            //Append sign in result to data package.
             data.append(qb);
 
-            // Insert operation in front of byte array (data[0]).
+            // Insert sign in reuslt protocol number in front of byte array (data[0]).
             data.insert(0, (char)6);
 
-            //Insert size of(operation + payload) in front of byte array (data[0]).
+            //Insert size of(procols number + payload) in front of byte array (data[0]).
             int dataSize=data.size();
             QByteArray dataSizeByte;
             QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
             ds << dataSize;
             data.insert(0, dataSizeByte);
 
+            //Send sign in result to the client.
             send(data);
 
 
         }
 
     }
-    if(intOp==7){
+    if(intOp==7){ //In case protocol is sign in verification.
 
         //printDataDetail(data);
+
+        //Decrypt payload
         QByteArray payload=decryptData(data, "signInVerify.pgp");
 
         QString dataQS=QString(payload);
 
+        //Get verfiy number.
         QString verifyNum=dataQS.split("@@").first();
+
+        //Get fingerprint of the key that decrypt payload.
         QString keyID=dataQS.split("@@").last();
 
+        //Get key for fingerprint.
         gpgme_key_t userKey=getKey(keyID);
 
+        //Get user of key.
         QString username=(userKey->uids->name);
 
+        //Get index of sign in ID.
         int userIndex=loginUser->indexOf(username);
 
         QByteArray qb;
 
+        //Verify login.
         if(loginRanNum->at(userIndex)==verifyNum){
 
+            //Create sign in result.
             qb = "verify success!!!";
             activeUser=username;
         }
         else{
+
+            //Create sign in result.
             qb = "Server couldn't verify this account's private key belongs to you!";
         }
 
+        //Encrypt sign in result to the client.
         QByteArray cipher=encryptToClient(qb, username, "signInResult.cipher");
 
+        //Empty data package variable.
         data.clear();
 
+        //Append encrypted sign in result to data package.
         data.append(cipher);
 
-        // Insert operation in front of byte array (data[0]).
+        // Insert operation(sign in result protocol) in front of byte array (data[0]).
         data.insert(0, (char)8);
 
         //Insert size of(operation + payload) in front of byte array (data[0]).
@@ -447,6 +562,7 @@ void ClientTask::dataFilter(QByteArray data){
         ds << dataSize;
         data.insert(0, dataSizeByte);
 
+        //Send encrypted sign in reuslt to the client.
         send(data);
 
         if(qb=="verify success!!!"){
@@ -454,36 +570,52 @@ void ClientTask::dataFilter(QByteArray data){
         }
 
     }
-    if(intOp==9){
+    if(intOp==9){ //In case protocol is search for user.
 
         //printDataDetail(data);
+        //Decrypt payload.
         QByteArray payload=decryptData(data, "username.keyword");
 
         QString dataQS=QString(payload);
 
+        //Get keyword and sender.
         QString keyword=dataQS.split("@@").first();
         QString sender=dataQS.split("@@").last();
 
-        if(usernameList->indexOf(keyword)==(-1)){
+        //Search for keywork.
+        if(usernameList->indexOf(keyword)==(-1)){// In case not found.
+
+            //Empty data package variable.
             payload.clear();
+
+            //Append search result to data package.
             payload.append("0");
         }
-        else{
+        else{ //In case found the user.
+
+            //Get found user key fingerprint.
             int idx=usernameList->indexOf(keyword);
             QString userKey=userKeyList->at(idx);
 
+            //Clear data package variable.
             payload.clear();
+
+            //Append search result to data package.
             payload.append("1\n");
             payload.append(keyword+"\n");
             payload.append(userKey);
         }
 
+        //Encrypt search result.
         QByteArray cipher=encryptToClient(payload, sender, "searchUser.cipher");
 
+        //Empty data package variable.
         data.clear();
+
+        //Append encrypted search result.
         data.append(cipher);
 
-        // Insert operation in front of byte array (data[0]).
+        // Insert operation(search result protocol) in front of byte array (data[0]).
         data.insert(0, (char)10);
 
         //Insert size of(operation + payload) in front of byte array (data[0]).
@@ -493,48 +625,67 @@ void ClientTask::dataFilter(QByteArray data){
         ds << dataSize;
         data.insert(0, dataSizeByte);
 
+        //Send encrypted search result to the client.
         send(data);
 
     }
-    if(intOp==11){
+    if(intOp==11){ //In case protocol is add friend request.
 
         //printDataDetail(data);
+
+        //Decrypt paylaod.
         QByteArray payload=decryptData(data, "username.keyword");
 
         QString dataQS=QString(payload);
 
+        //Get sender and recipeint.
         QString keyword=dataQS.split("@@").first();
         QString sender=dataQS.split("@@").last();
 
-        if(usernameList->indexOf(keyword)==(-1)){
+        //Search for recpient.
+        if(usernameList->indexOf(keyword)==(-1)){ //In case not found recipeint.
+            //Empty paylaod
             payload.clear();
+            //Append add friend requst result.
             payload.append("0");
         }
-        else{
+        else{ //In case found recipeint.
 
+            //Empty payload.
             payload.clear();
+
+            //Append add friend request result.
             payload.append("1");
 
+            //Create waiting message for recipeint.
             QString taskUser=keyword;
             QString taskWork="13"+sender;
 
+            //Add waiting message to waiting list.
             waitingTaskUser->append(taskUser);
             waitingTaskWork->append(taskWork);
 
+            //Get sender key.
             gpgme_key_t senderkey = getKey(sender);
 
+            //Get sender username.
             sender=QString(senderkey->uids->name);
 
+            //Add the requst to server's add friend request list for verify.
             addFriendRequestList->append(sender+"@@"+keyword);
 
         }
 
+        //Encrypt request result for sender.
         QByteArray cipher=encryptToClient(payload, sender, "searchUser.cipher");
 
+        //Empty data package variable.
         data.clear();
+
+        //Append encrypted result to data package.
         data.append(cipher);
 
-        // Insert operation in front of byte array (data[0]).
+        // Insert operation(add friend request result protocol) in front of byte array (data[0]).
         data.insert(0, (char)12);
 
         //Insert size of(operation + payload) in front of byte array (data[0]).
@@ -544,29 +695,38 @@ void ClientTask::dataFilter(QByteArray data){
         ds << dataSize;
         data.insert(0, dataSizeByte);
 
+        //Send request result to sender.
         send(data);
     }
-    if(intOp==14){
+    if(intOp==14){ //In case protocols is accept add firend request.
 
         //printDataDetail(data);
+
+        //Decrypt payload.
         QByteArray payload=decryptData(data, "username.keyword");
 
         QString dataQS=QString(payload);
 
+        //Get request sender username and confirm sender username.
         QString keyword=dataQS.split("@@").first();
         QString sender=dataQS.split("@@").last();
 
+        //Get request sernder public key and confirm sender public key.
         gpgme_key_t username_sendRequest = getKey(keyword);
         gpgme_key_t username_sendConfirm = getKey(sender);
 
+
+        //Verify confirm and request.
         sender=QString(username_sendConfirm->uids->name);
 
         QString addFriendRequestID=keyword+"@@"+sender;
 
-        if(addFriendRequestList->indexOf(addFriendRequestID)!=-1){
+        if(addFriendRequestList->indexOf(addFriendRequestID)!=-1){ //In case found the request of the confirm.
 
+            //Export request sender public key to text file.
            exportKey(ctx, username_sendRequest, err, "temp.key");
 
+           //Read request sender public eky form text file.
            QFile outFile("temp.key");
            if(!outFile.open(QFile::ReadOnly | QFile::Text)){
                qDebug() << "cound not open file for writing";
@@ -578,16 +738,24 @@ void ClientTask::dataFilter(QByteArray data){
            outFile.flush();
            outFile.close();
 
+           //Create data package variable.
            QByteArray userReqKey;
+
+           //Append request sender public key to data package.
            userReqKey.append(dataStream);
 
+           //Insert request sender username to data package.
            QString usernameOfRequest=QString(username_sendRequest->uids->name);
            userReqKey.insert(0, usernameOfRequest);
 
+           //Insert request sender username length to data package.
            char usernameSize=char(usernameOfRequest.size());
            userReqKey.insert(0, usernameSize);
 
+           //Encrypt data package for confirm sender.
            encryptToClient(userReqKey, sender, "key.cipher");
+
+           //Read encrypted data package for text file.
            QFile outFile3("key.cipher");
            if(!outFile3.open(QFile::ReadOnly | QFile::Text)){
                qDebug() << "cound not open file for writing";
@@ -599,14 +767,20 @@ void ClientTask::dataFilter(QByteArray data){
            outFile3.flush();
            outFile3.close();
 
+           //Create data pacakge for confirm sender.
            QByteArray qb;
+
+           //Append request sender public key to data package for confirm sender.
            qb.append(dataStream3);
 
+           //Add data for confirm sender to data waiting list.
            waitingTaskUser->append(sender);
            waitingTaskWork->append("15"+qb);
 
+           //Export confirm sender public key to a text file.
            exportKey(ctx, username_sendConfirm, err, "temp.key");
 
+           //Read confirm sender public key from text file.
            QFile outFile2("temp.key");
            if(!outFile2.open(QFile::ReadOnly | QFile::Text)){
                qDebug() << "cound not open file for writing";
@@ -618,15 +792,21 @@ void ClientTask::dataFilter(QByteArray data){
            outFile2.flush();
            outFile2.close();
 
+           //Create data package for request sender.
            QByteArray userConKey;
+
+           //Append confirm sender public key to data package for request sender.
            userConKey.append(dataStream2);
 
+           //Insert confirm sender username to data package for request sender.
            QString usernameOfConfirm=QString(username_sendConfirm->uids->name);
            userConKey.insert(0, usernameOfConfirm);
 
+           //Insert confirm sender username length to data package for request sender.
            usernameSize=char(usernameOfConfirm.size());
            userConKey.insert(0, usernameSize);
 
+           //Encrypt data for request sender.
            encryptToClient(userConKey, keyword, "key.cipher");
            QFile outFile4("key.cipher");
            if(!outFile4.open(QFile::ReadOnly | QFile::Text)){
@@ -639,13 +819,20 @@ void ClientTask::dataFilter(QByteArray data){
            outFile4.flush();
            outFile4.close();
 
+           //Create data waiting item.
            QByteArray qb2;
+
+           //Append encrypted confirm sender to data waiting item.
            qb2.append(dataStream4);
 
+           //Add data waiting item for request sender to data waiting list.
            waitingTaskUser->append(keyword);
            waitingTaskWork->append("15"+qb2);
 
+           //Remove the add Friend request from list.
            addFriendRequestList->removeAt(addFriendRequestList->indexOf(addFriendRequestID));
+
+           //Go to idle state.
            task();
 
         }
@@ -659,16 +846,23 @@ void ClientTask::dataFilter(QByteArray data){
 
         }
     }
-    if(intOp==17){
+    if(intOp==17){ //In case the protocol is post message.
 
         //printDataDetail(data);
+
+        //Decrypt payload.
         QByteArray payload=decryptData(data, "msg.cipher");
 
-       if(payload.mid(0,1)=="1"){
+        //Verify key signature.
+       if(payload.mid(0,1)=="1"){ //In case good signature.
+           //Get reciepint username from payload.
            int recipientUsernameSize=QString(payload.mid(1,1)).data()->unicode();
            QString recipientUsername=QString(payload.mid(2, recipientUsernameSize));
 
-           if(usernameList->indexOf(recipientUsername)!=(-1)){
+           //Search for recipeint username inserver.
+           if(usernameList->indexOf(recipientUsername)!=(-1)){ //Found recipient.
+
+               //Add the message for recipent to data waiting list.
                waitingTaskUser->append(recipientUsername);
                waitingTaskWork->append("18"+QString(payload.mid(recipientUsernameSize+2)));
            }
@@ -676,12 +870,15 @@ void ClientTask::dataFilter(QByteArray data){
     }
 
 }
+
+//Decrypt data from client.
 QByteArray ClientTask::decryptData(QByteArray data, const char* outputFileName){
 
-    QByteArray decrypted;
-    QByteArray cipher=data.mid(5);
-    int intOp=QString(data.mid(4,1)).data()->unicode();
+    QByteArray decrypted; //For decrypted message
+    QByteArray cipher=data.mid(5); //Get cipher from data package.
+    int intOp=QString(data.mid(4,1)).data()->unicode(); //Get operation number(Protocol)
 
+    //Write cipher to a text file.
     QFile File("temp.cipher");
     if(!File.open(QFile::WriteOnly | QFile::Text)){
         qDebug() << "cound not open file for writing";
@@ -693,17 +890,22 @@ QByteArray ClientTask::decryptData(QByteArray data, const char* outputFileName){
     File.close();
 
 
-    QString verifyResult;
+    QString verifyResult; //For verify signature result.
 
 
-    if(intOp==3){
+    if(intOp==3){ //In case operation number(Protocol number) is 3.
+
+        //Use decrypt() function.
         decrypt(ctx, err, "temp.cipher", outputFileName);
     }
-    else{
+    else{ //In case operation number is not 3.
+
+        //Use decryptVerify() function.
         verifyResult=decryptVerify(ctx, err, "temp.cipher", outputFileName);
     }
 
 
+    //Read decrypted message from output file.
     QFile outFile(outputFileName);
 
     if(!outFile.open(QFile::ReadOnly | QFile::Text)){
@@ -716,6 +918,8 @@ QByteArray ClientTask::decryptData(QByteArray data, const char* outputFileName){
     outFile.flush();
     outFile.close();
 
+
+    //Return decrypted message and verify result.
     if(intOp==7 || intOp==9 || intOp==11 || intOp==14){
         decrypted.append(dataStream);
         decrypted.append("@@");
@@ -738,14 +942,18 @@ QByteArray ClientTask::decryptData(QByteArray data, const char* outputFileName){
 
 
 }
+
+//User sign up.
 void ClientTask::addNewUser(QByteArray payload){
 
+    //Get username.
     int usernameLength=QString(payload).mid(0,1).data()->unicode();
     QString username=QString(payload.mid(5, usernameLength));
 
     // Import user's public key
     QByteArray publicKey=payload.mid(5+usernameLength);
 
+    //Save user public key to a file.
     QFile File("temp.data");
     if(!File.open(QFile::WriteOnly | QFile::Text)){
         qDebug() << "cound not open file for writing";
@@ -756,20 +964,27 @@ void ClientTask::addNewUser(QByteArray payload){
     File.flush();
     File.close();
 
+    //Import user's public key.
     importKey(ctx, err, "temp.data");
 
     //Get user's keyID
     gpgme_key_t userKey=getKey(username);
     QString userKeyID(userKey->subkeys->keyid);
 
+    //Add user to register list.
     usernameList->append(username);
     userKeyList->append(userKeyID);
 }
 
+//Encrypt message before send to client.
 QByteArray ClientTask::encryptToClient(QByteArray data, QString recipient, const char *outFileName){
 
+    //Get recipient public key.
     gpgme_key_t recipientKey=getKey(recipient);
-    QByteArray encrypted;
+
+    QByteArray encrypted; //For encrypted messsage.
+
+    //Save raw data to a text file.
     QFile File("temp.data");
     if(!File.open(QFile::WriteOnly | QFile::Text)){
         abort();
@@ -779,12 +994,18 @@ QByteArray ClientTask::encryptToClient(QByteArray data, QString recipient, const
     File.flush();
     File.close();
 
+    //Set signer key.
     gpgme_signers_add(ctx, ServerKey);
+
+    //Encrypt and sign message.
     encryptSign(ctx, err, recipientKey, "temp.data", outFileName);
+
+    //Release key in recipientKey variable.
     gpgme_key_unref (recipientKey);
 
-    QFile outFile(outFileName);
 
+    //Read encrypted message from encrypt output file.
+    QFile outFile(outFileName);
     if(!outFile.open(QFile::ReadOnly | QFile::Text)){
         qDebug() << "cound not open file for writing";
         abort();
@@ -797,14 +1018,21 @@ QByteArray ClientTask::encryptToClient(QByteArray data, QString recipient, const
 
     encrypted.append(ciper);
 
+    //return encryped message.
     return encrypted;
 
 }
+
+//Get key.
 gpgme_key_t ClientTask::getKey(QString pattern){
 
+    //Convert pattern into const char*
+    //that required in search key process.
     gpgme_key_t targetKey;
     QByteArray ba = pattern.toLatin1();
     const char *patt=ba.data();
+
+    //Find key.
     err = gpgme_op_keylist_start(ctx, patt, 0);
     detectError(err);
     int nKeysFound=0;
@@ -814,13 +1042,17 @@ gpgme_key_t ClientTask::getKey(QString pattern){
     }
 
     if(nKeysFound==0){
-        abort();
+        return targetKey;
     }
     return targetKey;
 }
 
+//Client disconnect from server.
 void ClientTask::disconnected(){
     qDebug() << socketDescriptor << " Disconnected: ";
+    //Delete socket.
     socket->deleteLater();
+
+    //Emit signal to delete thread.
     emit clientDisconnect();
 }
