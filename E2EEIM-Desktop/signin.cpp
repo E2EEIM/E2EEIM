@@ -28,26 +28,34 @@ SignIn::SignIn(Connection &conn, Encryption &encryption, QWidget *parent) :
     this->conn=&conn;
     this->encryption=&encryption;
 
+    //Connect disconnect from server event.
+    //Creat a [signal/slot] mechanism, when client application disconnect from server.
+    //to call disconnectFromServer() function.
     connect(this->conn, SIGNAL(disconnectFromServer()), this, SLOT(disconnectFromServer()), Qt::QueuedConnection);
 
+    //Set available tab when signIn window start to show.
     ui->tabWidget_signIn->setTabEnabled(1, false);
-
     ui->tabWidget_signUp->setTabEnabled(1, false);
     ui->tabWidget_signUp->setTabEnabled(2, false);
 
+    //Hide server and port line edit.
     ui->frame_signIn_serverForm->hide();;
     ui->frame_SignUpServerEnterNew->hide();
 
+    //Disable "Connect" button when signIn window start to show.
     ui->pushButton_signIn_serverConnect->setEnabled(false);
     ui->pushButton_SignUpServerConnect->setEnabled(false);
 
+    //Hide error message when sigIn window start to show.
     ui->label_signIn_serverErr->hide();
     ui->label_signUpConnectError->hide();
 
+    //Get current connection status.
     int connectionStatus=conn.getConnectionStatus();
 
     qDebug() << "Connection status:" << connectionStatus;
 
+    //Set enable tab for each connection status.
     if(connectionStatus==0){
         ui->tabWidget_mainTab->setCurrentIndex(1);
         on_tabWidget_mainTab_currentChanged(1);
@@ -74,15 +82,19 @@ SignIn::~SignIn()
     delete ui;
 }
 
+//User click Sign In button in (Sign In-account) tab
 void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
 {
+    //Get selected account.
     selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
     if(selectedAccount!=""){
 
+        //get index of selected account in account list.
         int keyIndex=accountNameList.indexOf(selectedAccount);
         QString accountKey;
 
 
+        //Get account key's fingerprint.
         for(int i=0; i<accountKeyList.length(); i++){
             if(i==keyIndex){
                  accountKey=accountKeyList.at(i);
@@ -91,12 +103,16 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         qDebug() << "selectedAccount: "<< selectedAccount;
         qDebug() << "accountKey: "<< accountKey;
 
+        //Convert key fingerprint to const char* variable type
+        //that required in get key process.
         QByteArray ba=accountKey.toLatin1();
         const char *patt=ba.data();
 
+        //Get private key of the figerprint.
         gpgme_key_t privateKey = encryption->getKey(patt, 1);
         encryption->setUserPriKey(privateKey);
 
+        //Get public key of the fingerprint.
         gpgme_key_t publicKey = encryption->getKey(patt, 0);
         encryption->setUserPriKey(publicKey);
 
@@ -105,6 +121,7 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         // Export selected account public key
         encryption->exportKey(publicKey, "userPublicKey.key");
 
+        //Read exported public key to pubKey variable.
         QFile File("userPublicKey.key");
         if(!File.open(QFile::ReadOnly | QFile::Text)){
             qDebug() << "Cound not open file for Read";
@@ -115,6 +132,7 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         pubKey=in.readAll();
         File.close();
 
+        //Create payload to send sign in request to server.
         // Create 5*-> send sign in require.
         QByteArray data;
         data.clear();
@@ -144,6 +162,9 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         data.insert(0, usernameSize);
 
         //Encrypt Payload
+
+          //Save payload to text file
+          //the required in encryption process.
         QFile File_Payload("signIn.payload");
         if(!File_Payload.open(QFile::WriteOnly | QFile::Text)){
             qDebug() << "Cound not open file for writing";
@@ -155,10 +176,13 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         File_Payload.flush();
         File_Payload.close();
 
+        //Get server public key.
         gpgme_key_t servPubKey=encryption->getServerPubKey();
 
+        //Encrypt payload.
         encryption->encryptSign(privateKey, servPubKey, "signIn.payload", "signIn.epkg");
 
+        //Read encrypted payload and store in payload variable.
         QFile File_EncryptedPayload("signIn.epkg");
         if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
             qDebug() << "Cound not open file for Read";
@@ -169,10 +193,12 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         payload=in2.readAll();
         File_EncryptedPayload.close();
 
+        //Clear data package variable
+        //and add enctyped payload to data package.
         data.clear();
         data.append(payload);
 
-        // Insert operation in front of byte array (data[0]).
+        // Insert sign in requst operation number in front of byte array (data[0]).
         data.insert(0, (char)5);
 
         //Insert size of(operation + payload) in front of byte array (data[0]).
@@ -182,19 +208,25 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         ds2 << dataSize;
         data.insert(0, dataSizeByte);
 
+        //Send sign in request to srever.
         conn->send(data);
 
+        //Clear data variable.
         data.clear();
+
+        //Get received server responds message from connection class.
         data=conn->getRecentReceivedMsg();
 
-        //qDebug() << data;
 
+        //In case sign in not success.
         if(data.mid(5)=="USER NOT FOUND IN THIS SERVER!"){
             ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
             ui->label_signIn_keyFpr->setText("Error: This account not found in this server!");
 
         }
-        else{
+        else{ //In case sign in success.
+            //Save cipher recieved from server to text file
+            //the required in decryption process.
             QFile File_Result("signInRan.cipher");
             if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
                 qDebug() << "Cound not open file for writing";
@@ -207,13 +239,15 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
             File_Result.close();
 
 
+            //Decrypt recieved cipher.
             QString decryptResult=encryption->decryptVerify("signInRan.cipher", "signInRan.txt");
 
-            if(decryptResult.mid(0,1)=="0"){
+            if(decryptResult.mid(0,1)=="0"){ //In case bad signature from server.
                 ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
                 ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
             }
             else{
+                //Read decrypted message, random text stuff from server.
                 QFile File_result("signInRan.txt");
                 if(!File_result.open(QFile::ReadOnly | QFile::Text)){
                     qDebug() << "Cound not open file for Read";
@@ -226,8 +260,10 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
 
                 qDebug() << signInRan;
 
+                //Encrypt random text stuff that get from server to send back to server.
                 encryption->encryptSign(privateKey, servPubKey, "signInRan.txt", "signIn.epkg");
 
+                //Read cipher, encrypted message to server.
                 QFile File_EncryptedPayload("signIn.epkg");
                 if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
                     qDebug() << "Cound not open file for Read";
@@ -238,10 +274,12 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
                 payload=in.readAll();
                 File_EncryptedPayload.close();
 
+                //Clear data package variavle
+                //and add cipher to data package.
                 data.clear();
                 data.append(payload);
 
-                // Insert operation in front of byte array (data[0]).
+                // Insert sign in verification operation number in front of byte array (data[0]).
                 data.insert(0, (char)7);
 
                 //Insert size of(operation + payload) in front of byte array (data[0]).
@@ -251,12 +289,17 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
                 ds2 << dataSize;
                 data.insert(0, dataSizeByte);
 
-                conn->send(data); // //////////////////////////
+                //Send data package to server.
+                conn->send(data);
 
+                //Clear data package variable.
                 data.clear();
+
+                //Get received sign in result from connection class.
                 data=conn->getRecentReceivedMsg();
 
-                //Decrypt Payload
+                //Save recieved sign in result cipher to text file
+                //that required in decryption process.
                 QFile File_Result("signInResult.cipher");
                 if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
                     qDebug() << "Cound not open file for writing";
@@ -268,13 +311,15 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
                 File_Result.flush();
                 File_Result.close();
 
+                //Decrypt sign in result cipher.
                 QString decryptResult=encryption->decryptVerify("signInResult.cipher", "signInResult.txt");
 
-                if(decryptResult.mid(0,1)=="0"){
+                if(decryptResult.mid(0,1)=="0"){ //In case bad signature from server.
                     ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
                     ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
                 }
                 else{
+                    //Read decrypted sign in result.
                     QFile File_result("signInResult.txt");
                     if(!File_result.open(QFile::ReadOnly | QFile::Text)){
                         qDebug() << "Cound not open file for Read";
@@ -285,40 +330,52 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
                     signInResult=in.readAll();
                     File_result.close();
 
-                    qDebug() << signInResult;
 
-                    if(signInResult=="verify success!!!"){
+                    if(signInResult=="verify success!!!"){ //In case sign in success.
 
+                        //Get selected account username.
                         selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
                         QString accountKey;
 
-
+                        //Get index of selected account in account list.
                         int keyIndex=accountNameList.indexOf(selectedAccount);
 
-
+                        //Get the account key fingerprint.
                         for(int i=0; i<accountKeyList.length(); i++){
                             if(i==keyIndex){
                                  accountKey=accountKeyList.at(i);
                             }
                         }
 
+                        //Display key fingerprint.
                         ui->label_signIn_keyFpr->setText(accountKey);
                         ui->label_signIn_keyFpr->setStyleSheet("color:#999999");
 
+                        //Convert key fingerprint into const char* variable type
+                        //that required in get key process.
                         QByteArray ba=accountKey.toLatin1();
                         const char *patt=ba.data();
 
+                        //Get the account private key.
                         gpgme_key_t privateKey = encryption->getKey(patt, 1);
+
+                        //Set account private key as active-user's private key in encryption class.
                         encryption->setUserPriKey(privateKey);
 
+                        //Get the account public key.
                         gpgme_key_t publicKey = encryption->getKey(patt, 0);
+
+                        //Set account public key as active-user's public key in encryption class.
                         encryption->setUserPubKey(publicKey);
 
+                        //Set sign in sucess flag to in connection class.
                         conn->signInFlag=true;
 
+                        //Close signIn window to show mainWindow.
                         SignIn::accept();
                     }
-                    else{
+                    else{ //In case sign in not success.
+                        //Show sign in result message from server.
                         ui->label_signIn_keyFpr->setText(signInResult);
                     }
                 }
@@ -326,69 +383,92 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
             }
         }
     }
-    else{
+    else{ // In caes user not select any account.
         ui->label_signIn_keyFpr->setText("\nUsername can not be empty!");
     }
 }
 
+//Let other class get selected account username.
 QString SignIn::getActiveUser(){
     QString ACTIVE_USER=selectedAccount;
     return ACTIVE_USER;
 }
 
-
+//User typing in [sign up - server ip] line edit.
 void SignIn::on_lineEdit_SignUpServerIP_textChanged(const QString &arg1)
 {
+    //Get server port number from lineEdit
     QString port=ui->lineEdit_SignUpServerPort->text();
-    if(arg1!="" && port!=""){
+
+    if(arg1!="" && port!=""){ //When port number and ip address are not empty.
+
+        //Enable "Connect" button
         ui->pushButton_SignUpServerConnect->setEnabled(true);
 
+        //Set "Connect" button as default button for enter key.
         ui->pushButton_signIn_AccountSignIn->setDefault(false);
         ui->pushButton_signIn_serverConnect->setDefault(false);
         ui->pushButton_signUpAccountSignUp->setDefault(false);
         ui->pushButton_SignUpServerConnect->setDefault(true);
     }
-    else{
+    else{ //In case server port number or server address empty.
+
+        //Disable "Connect" button
         ui->pushButton_SignUpServerConnect->setEnabled(false);
     }
 }
 
+//User typing in [sign up - server port number] line edit.
 void SignIn::on_lineEdit_SignUpServerPort_textChanged(const QString &arg1)
 {
+    //Get server ip address from lineEdit
     QString ip=ui->lineEdit_SignUpServerIP->text();
-    if(ip!="" && arg1!=""){
+
+    if(ip!="" && arg1!=""){//When port number and ip address are not empty.
+
+        //Enable "Connect" button
         ui->pushButton_SignUpServerConnect->setEnabled(true);
 
+        //Set "Connect" button as default button for enter key.
         ui->pushButton_signIn_AccountSignIn->setDefault(false);
         ui->pushButton_signIn_serverConnect->setDefault(false);
         ui->pushButton_signUpAccountSignUp->setDefault(false);
         ui->pushButton_SignUpServerConnect->setDefault(true);
     }
-    else{
+    else{//In case server port number or server address empty.
+        //Disable "Connect" button.
         ui->pushButton_SignUpServerConnect->setEnabled(false);
     }
 }
 
+//When user click "Connect" button in [ Sign Up - server] tab.
 void SignIn::on_pushButton_SignUpServerConnect_clicked()
 {
-    if(conn->getConnectionStatus()!=1){
+
+    if(conn->getConnectionStatus()!=1){// In case connection status is not "connected".
+
+        //Hide error message
         ui->label_signUpConnectError->setText("");
         ui->label_signUpConnectError->hide();
 
-        if(conn->getConnectionStatus()==-2){
+        if(conn->getConnectionStatus()==-2){// In case connection status is disconnected
             ui->comboBox_signIn_selectServer->setCurrentText("*New Server");
             ui->comboBox_signUp_selectServer->setCurrentText("*New Server");
         }
 
+        //Get value from [Sign up - Server] form
         QString newIP=ui->lineEdit_SignUpServerIP->text();
         QString newPort=ui->lineEdit_SignUpServerPort->text();
         QString selectedServer=ui->comboBox_signUp_selectServer->currentText();
 
+        //In case user select server from dropdown combobox
         if(selectedServer!="Select server..." && selectedServer!="*New Server"){
             qDebug() << selectedServer;
         }
-        else{
-            if(selectedServer=="*New Server"){
+        else{//In case user not select server from drop down combobox.
+            if(selectedServer=="*New Server"){//In case user select *New Server.
+
+                //Show connect status.
                 qDebug()<<newIP<<", Port "<<newPort;
                 ui->label_signUpConnectError->setText("Waiting for connection");
                 ui->label_signUpConnectError->setStyleSheet("color:#333333");
@@ -402,19 +482,27 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
                     ui->label_signUpConnectError->setText(loading[i]);
                 }
 
+                //Connect to new server.
                 conn->connected(newIP, newPort);
 
+                //In case client applcation can't connect to server.
                 if(conn->getConnectionStatus()==-1){
                     ui->label_signUpConnectError->show();
                     ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
                     ui->label_signUpConnectError->setText("ERROR: Can not connect to server!");
                 }
+
+                //In case client application can connect to server.
                 if(conn->getConnectionStatus()==1){
 
+                    //Get server ip and port from Connection class
                     QString servAddr=conn->getServerAddr();
                     QString servPort=conn->getServerPort();
 
                     qDebug() << conn->getConnectionStatus();
+
+                    //Enable [sign in - account] and [sign up - account] tab
+                    //display connection status.
                     ui->tabWidget_signIn->setTabEnabled(1, true);
                     ui->tabWidget_signIn->setCurrentIndex(1);
                     ui->label_signIn_serverErr->show();
@@ -428,20 +516,27 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
                     ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
                     ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
 
+                    //Hide *new server from
                     ui->frame_signIn_serverForm->hide();
                     ui->frame_SignUpServerEnterNew->hide();
 
+                    //Change "Connect" button to be "Disconnect" button
                     ui->pushButton_signIn_serverConnect->setText("Disconnect");
                     ui->pushButton_SignUpServerConnect->setText("Disconnect");
 
+                    //Enable "Disconnect" button
                     ui->pushButton_signIn_serverConnect->setEnabled(true);
                     ui->pushButton_SignUpServerConnect->setEnabled(true);
 
+                    //Disable drop down select server combobox
                     ui->comboBox_signIn_selectServer->setEnabled(false);
                     ui->comboBox_signUp_selectServer->setEnabled(false);
 
+                    //Move to [Sign Up - Account] tab
                     ui->tabWidget_signUp->setCurrentIndex(1);
                 }
+
+                //In case server not return server's public key.
                 if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
                     ui->label_signUpConnectError->show();
                     ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
@@ -456,10 +551,14 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
         //ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
 
     }
-    else{
+    else{// In case client application connected to server.
+
+        //Disconnect form current server.
         conn->letDisconnect();
 
         int connectStatus=conn->getConnectionStatus();
+
+        //Set connection GUI as disconnected.
         if(connectStatus!=1){
             ui->comboBox_signIn_selectServer->setEnabled(true);
             ui->comboBox_signUp_selectServer->setEnabled(true);
@@ -489,15 +588,20 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
 
 }
 
+//When user change sub tab of in Sign Up tab.
 void SignIn::on_tabWidget_signUp_currentChanged(int index)
 {
-    if(index==0){
+    if(index==0){// User select [Sign Up - Server] tab.
+
+        //Set "Connect" button as default button for Enter key.
         ui->pushButton_signIn_AccountSignIn->setDefault(false);
         ui->pushButton_signIn_serverConnect->setDefault(false);
         ui->pushButton_signUpAccountSignUp->setDefault(false);
         ui->pushButton_SignUpServerConnect->setDefault(true);
     }
-    else if(index==1){
+    else if(index==1){//User select [Sign Up - Account] tab.
+
+        //Set "Sign Up" button as defult button for Enter key.
         ui->tabWidget_signUp->setTabEnabled(1, true);
         ui->label_signUpAccountErrMsg->setStyleSheet("color:#AA6666");
         ui->label_signUpAccountErrMsg->setText("");
@@ -509,15 +613,19 @@ void SignIn::on_tabWidget_signUp_currentChanged(int index)
     }
 }
 
+//When user click "Sign Up" button in [Sign Up - Account] tab.
 void SignIn::on_pushButton_signUpAccountSignUp_clicked()
 {
+    //In form sign up status.
     ui->pushButton_signUpAccountSignUp->setText("Generating key Pair...");
 
+    //Get information from sign up form.
     QString errMsg;
     QString username=ui->lineEdit_signUpAccountUsername->text();
     QString passphrase=ui->lineEdit_signUpAccountPassphrase->text();
     QString confirmPassphrase=ui->lineEdit_signUpAccountConfirmPassphrase->text();
 
+    //Username validation.
     if(username==""){
         errMsg+="\n-Username can not be empty!";
     }
@@ -561,6 +669,7 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
 
     }
 
+    //Passphrase validation.
     if(passphrase==""){
         errMsg+="\n-Passphrase can not be empty!";
     }
@@ -570,21 +679,20 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
     if(errMsg!=""){
         ui->label_signUpAccountErrMsg->setText(errMsg);
     }
-    else{
+    else{// When Username and Passphrase valid.
+
+        //Set useable tab.
         ui->tabWidget_signUp->setCurrentIndex(2);
         ui->tabWidget_signUp->setTabEnabled(0, false);
         ui->tabWidget_signUp->setTabEnabled(1, false);
         ui->tabWidget_signUp->setTabEnabled(2, true);
 
+        //Inform sign up status.
         ui->label_signUpFinishg->setText("Generating Key Pair...");
         ui->label_signUpAccountErrMsg->setText("Generating Key Pair, please wait...");
         ui->label_signUpAccountErrMsg->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
         ui->label_signUpAccountErrMsg->show();
 
-
-        for(int i=10000000; i>0; i--){
-
-        }
 
         // Generate a new key pair
         QByteArray data;
@@ -613,6 +721,7 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         QByteArray ba=accountKey.toLatin1();
         const char *patt=ba.data();
 
+        //Get generated key pair..
         newUsersPrivateKey = encryption->getKey(patt, 1);
         newUsersPublicKey = encryption->getKey(patt, 0);
 
@@ -630,6 +739,7 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         File.close();
 
 
+        // //////// Send Sign Up Request to Server.
 
         // Create *2-> send sign up require.
         data.clear();
@@ -727,12 +837,15 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         File_Result.close();
 
 
+        //Decrypt sign up result from server.
         QString decryptResult=encryption->decryptVerify("signUpResult.cipher", "signUpResult.txt");
 
         if(decryptResult.mid(0,1)=="0"){
             ui->label_signUpFinishg->setText("ERROR: Server signature not fully valid");
         }
         else{
+
+            //Read dectyped sign up result from text file.
             QFile File_result("signUpResult.txt");
             if(!File_result.open(QFile::ReadOnly | QFile::Text)){
                 qDebug() << "Cound not open file for Read";
@@ -743,6 +856,7 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
             signUpReslut=in2.readAll();
             File_result.close();
 
+            //Display sign up result.
             ui->label_signUpFinishg->setText(signUpReslut);
 
             /*
@@ -755,10 +869,12 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
 
             qDebug() << signUpReslut;
 
+            //Enable use able tab after sign up.
             ui->tabWidget_signUp->setTabEnabled(0, true);
             ui->tabWidget_signUp->setTabEnabled(1, true);
             ui->tabWidget_signUp->setTabEnabled(2, true);
 
+            //Clear sign up form.
             ui->lineEdit_signUpAccountUsername->clear();
             ui->lineEdit_signUpAccountPassphrase->clear();
             ui->lineEdit_signUpAccountConfirmPassphrase->clear();
@@ -769,14 +885,19 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
     ui->pushButton_signUpAccountSignUp->setText("Sign Up");
 }
 
+//When user change main tab between SignIn/SignUp
 void SignIn::on_tabWidget_mainTab_currentChanged(int index)
 {
+    //When connection status is "connected"
     if(conn->getConnectionStatus()==1){
 
+        //Get connected server ip and port.
         QString servAddr=conn->getServerAddr();
         QString servPort=conn->getServerPort();
 
         qDebug() << conn->getConnectionStatus();
+
+        //Display connection status.
         ui->tabWidget_signIn->setTabEnabled(1, true);
         ui->tabWidget_signIn->setCurrentIndex(1);
         ui->label_signIn_serverErr->show();
@@ -790,24 +911,34 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
         ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
         ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
 
+        //Hide *New Server form.
         ui->frame_signIn_serverForm->hide();
         ui->frame_SignUpServerEnterNew->hide();
 
+        //Change "connect" button to be "Disconnect" button.
         ui->pushButton_signIn_serverConnect->setText("Disconnect");
         ui->pushButton_SignUpServerConnect->setText("Disconnect");
 
+        //Enable "Disconnect" button.
         ui->pushButton_signIn_serverConnect->setEnabled(true);
         ui->pushButton_SignUpServerConnect->setEnabled(true);
 
+        //Disable drop down select server combobox.
         ui->comboBox_signIn_selectServer->setEnabled(false);
         ui->comboBox_signUp_selectServer->setEnabled(false);
     }
-    if(conn->getConnectionStatus()==-2){
 
+    if(conn->getConnectionStatus()==-2){ //In case disconnted.
+
+        //Get recent connected server ip and port.
             QString servAddr=conn->getServerAddr();
             QString servPort=conn->getServerPort();
 
             qDebug() << conn->getConnectionStatus();
+
+
+            //Disable [Sign In - Account] tab
+            //and display connection status.
             ui->tabWidget_signIn->setTabEnabled(1, false);
             ui->tabWidget_signIn->setCurrentIndex(0);
             ui->label_signIn_serverErr->show();
@@ -815,21 +946,26 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
             ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#AA6666;}");
 
 
+            //Disable [Sign Up - Account] tab
+            //and display connection status.
             ui->tabWidget_signUp->setTabEnabled(1, false);
             ui->tabWidget_signUp->setCurrentIndex(0);
             ui->label_signUpConnectError->show();
             ui->label_signUpConnectError->setText("Disconnect from server!! \nServer:" +servAddr+":"+servPort);
             ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#AA6666;}");
 
+            //Display *New Server form.
             ui->frame_signIn_serverForm->show();
             ui->frame_SignUpServerEnterNew->show();
 
+            //Placeholder as recent conneted server in *New Server form.
             ui->lineEdit_signIn_serverAddress->setText(servAddr);
             ui->lineEdit_signIn_serverPort->setText(servPort);
 
             ui->lineEdit_SignUpServerIP->setText(servAddr);
             ui->lineEdit_SignUpServerPort->setText(servPort);
 
+            //Enable "Connect" button.
             ui->pushButton_signIn_serverConnect->setText("Connect");
             ui->pushButton_SignUpServerConnect->setText("Connect");
 
@@ -841,11 +977,12 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
         }
 
 
-    if(index == 0){
+    if(index == 0){ // When user select Sign In tab.
         if(ui->tabWidget_signIn->currentIndex()==0 ||
-                ui->tabWidget_signIn->currentIndex()==1){
+                ui->tabWidget_signIn->currentIndex()==1){ //When user select Server or Account tab.
             QStringList allAccounts=encryption->getE2eeimAccounts();
 
+            //Reload useable account.
             if(!allAccounts.isEmpty()){
                 ui->comboBox_signIn_SelectAccount->clear();
                 accountNameList.clear();
@@ -864,10 +1001,12 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
                     i++;
                 }
 
+                //Get selected account.
                 selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
                 on_comboBox_signIn_SelectAccount_currentIndexChanged(selectedAccount);
             }
 
+            //Set "Connect" button as default button for Enter key.
             if(ui->tabWidget_signIn->currentIndex()==0){
                 ui->pushButton_signIn_AccountSignIn->setDefault(false);
                 ui->pushButton_signIn_serverConnect->setDefault(true);
@@ -875,6 +1014,7 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
                 ui->pushButton_SignUpServerConnect->setDefault(false);
 
             }
+            //Set "Sign In" button as default button for Enter key.
             if(ui->tabWidget_signIn->currentIndex()==1){
                 ui->pushButton_signIn_AccountSignIn->setDefault(true);
                 ui->pushButton_signIn_serverConnect->setDefault(false);
@@ -885,36 +1025,42 @@ void SignIn::on_tabWidget_mainTab_currentChanged(int index)
     }
 }
 
+//User select account in drop-down combobox.
 void SignIn::on_comboBox_signIn_SelectAccount_currentIndexChanged(const QString &arg1)
 {
 
 
+    //Get selected account.
     selectedAccount=arg1;
     selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
     QString accountKey;
 
-
+    //Get selected account index.
     int keyIndex=accountNameList.indexOf(selectedAccount);
 
 
+    //Get key fingerprint of selected account.
     for(int i=0; i<accountKeyList.length(); i++){
         if(i==keyIndex){
              accountKey=accountKeyList.at(i);
         }
     }
 
+    //Show key fingerprint of selected account.
     ui->label_signIn_keyFpr->setText(accountKey);
     ui->label_signIn_keyFpr->setStyleSheet("color:#999999");
 
     QByteArray ba=accountKey.toLatin1();
     const char *patt=ba.data();
 
+    //Set selected account key for Encryption class.
     gpgme_key_t privateKey = encryption->getKey(patt, 1);
     encryption->setUserPriKey(privateKey);
 
     gpgme_key_t publicKey = encryption->getKey(patt, 0);
     encryption->setUserPubKey(publicKey);
 
+    //Set "Sign In" button as default button for enter key.
     ui->pushButton_signIn_AccountSignIn->setDefault(true);
     ui->pushButton_signIn_serverConnect->setDefault(false);
     ui->pushButton_signUpAccountSignUp->setDefault(false);
@@ -922,108 +1068,145 @@ void SignIn::on_comboBox_signIn_SelectAccount_currentIndexChanged(const QString 
 
 }
 
+//When user select server in drop-down combobox in [Sign In - server] tab.
 void SignIn::on_comboBox_signIn_selectServer_currentIndexChanged(const QString &arg1)
 {
-    if(arg1=="Select Server..."){
+    if(arg1=="Select Server..."){ // In case user not select server.
+        //Disable "Connect" button.
         ui->pushButton_signIn_serverConnect ->setEnabled(false);
         ui->frame_signIn_serverForm->hide();
 
     }
-    if(arg1=="*New Server"){
+    if(arg1=="*New Server"){ // In case user select *New Server.
+
+        //Get ip and port of New Server.
         QString ip=ui->lineEdit_signIn_serverAddress->text();
         QString port=ui->lineEdit_signIn_serverPort->text();
 
-        if(ip=="" || port==""){
+        if(ip=="" || port==""){// Ip or Port is empty.
+            //Disable "Connect" button.
             ui->pushButton_signIn_serverConnect->setEnabled(false);
         }
-        else{
+        else{//Ip and port is not empty.
+
+            //Enable "Connect" button.
             ui->pushButton_signIn_serverConnect->setEnabled(true);
 
+            //Set "Connect" button as default button for Enter key.
             ui->pushButton_signIn_AccountSignIn->setDefault(false);
             ui->pushButton_signIn_serverConnect->setDefault(true);
             ui->pushButton_signUpAccountSignUp->setDefault(false);
             ui->pushButton_SignUpServerConnect->setDefault(false);
         }
     }
-    if(arg1!="*New Server"){
+    if(arg1!="*New Server"){// User not select "*New server"
+
+        //Hide *New Server form.
         ui->frame_signIn_serverForm->hide();
     }
     else{
+        //Show *New Server form.
         ui->frame_signIn_serverForm->show();
     }
 
 }
 
+//User typing server address in [Sign In - Server] tab.
 void SignIn::on_lineEdit_signIn_serverAddress_textChanged(const QString &arg1)
 {
+    //Get server port.
     QString port=ui->lineEdit_signIn_serverPort->text();
-    if(arg1!="" && port!=""){
+    if(arg1!="" && port!=""){ //When sever ip and port are not empty.
+
+        //Enable "Connect" button.
         ui->pushButton_signIn_serverConnect->setEnabled(true);
 
+        //Set "Connect" button as default button for Enter key.
         ui->pushButton_signIn_AccountSignIn->setDefault(false);
         ui->pushButton_signIn_serverConnect->setDefault(true);
         ui->pushButton_signUpAccountSignUp->setDefault(false);
         ui->pushButton_SignUpServerConnect->setDefault(false);
     }
     else{
+        //Disable "Connect" button.
         ui->pushButton_signIn_serverConnect->setEnabled(false);
     }
 }
 
+//User typing server port in [Sign In - Server] tab.
 void SignIn::on_lineEdit_signIn_serverPort_textChanged(const QString &arg1)
 {
+    //Get server ip.
     QString ip=ui->lineEdit_signIn_serverAddress->text();
-    if(ip!="" && arg1!=""){
+    if(ip!="" && arg1!=""){ //When server ip and port are not empty.
+
+        //Enable "Connect" button.
         ui->pushButton_signIn_serverConnect->setEnabled(true);
 
+        //Set "Connect" button as default button for enter key.
         ui->pushButton_signIn_AccountSignIn->setDefault(false);
         ui->pushButton_signIn_serverConnect->setDefault(true);
         ui->pushButton_signUpAccountSignUp->setDefault(false);
         ui->pushButton_SignUpServerConnect->setDefault(false);
     }
     else{
+
+        //Disalbe "Connect" button.
         ui->pushButton_signIn_serverConnect->setEnabled(false);
     }
 }
 
+//User click "Connect" button in [Sign In - Server] tab.
 void SignIn::on_pushButton_signIn_serverConnect_clicked()
 {
-    if(conn->getConnectionStatus()!=1){
+    if(conn->getConnectionStatus()!=1){ //When client application not connect to any server.
 
         if(conn->getConnectionStatus()==-2){
             ui->comboBox_signIn_selectServer->setCurrentText("*New Server");
             ui->comboBox_signUp_selectServer->setCurrentText("*New Server");
         }
+        //Hide error message.
         ui->label_signIn_serverErr->setText("");
         ui->label_signIn_serverErr->hide();
 
+        //Get server information in server tab.
         QString newIP=ui->lineEdit_signIn_serverAddress->text();
         QString newPort=ui->lineEdit_signIn_serverPort->text();
         QString selectedServer=ui->comboBox_signIn_selectServer->currentText();
 
-        if(selectedServer!="Select Server..." && selectedServer!="*New Server"){
+        if(selectedServer!="Select Server..." && selectedServer!="*New Server"){ //In case user select a server from drop-down combobox.
             qDebug() << selectedServer;
         }
-        else{
+        else{// In case user not select any server.
+
+            //User select "*New Server"
             if(selectedServer=="*New Server"){
+                //Display connection satatus.
                 qDebug()<<newIP<<", Port "<<newPort;
                 ui->label_signIn_serverErr->setText("Waiting for connection");
                 ui->label_signIn_serverErr->setStyleSheet("color:#333333");
                 ui->label_signIn_serverErr->show();
 
+                //Send connection request to new server.
                 conn->connected(newIP, newPort);
 
+                //In case cannot connect to new server.
                 if(conn->getConnectionStatus()==-1){
                     ui->label_signIn_serverErr->show();
                     ui->label_signIn_serverErr->setStyleSheet("color:#AA6666");
                     ui->label_signIn_serverErr->setText("ERROR: Can not connect to server!");
                 }
+
+                //In caes can connect to New Server.
                 if(conn->getConnectionStatus()==1){
 
+                    //Get server information.
                     QString servAddr=conn->getServerAddr();
                     QString servPort=conn->getServerPort();
 
                     qDebug() << conn->getConnectionStatus();
+
+                    //Display connection status and enable tab after connected to a server.
                     ui->tabWidget_signIn->setTabEnabled(1, true);
                     ui->tabWidget_signIn->setCurrentIndex(1);
                     ui->label_signIn_serverErr->show();
@@ -1037,15 +1220,19 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
                     ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
                     ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
 
+                    //Hide *New Server form.
                     ui->frame_signIn_serverForm->hide();
                     ui->frame_SignUpServerEnterNew->hide();
 
+                    //Change "Connect" button to be "Disconnect" button.
                     ui->pushButton_signIn_serverConnect->setText("Disconnect");
                     ui->pushButton_SignUpServerConnect->setText("Disconnect");
 
+                    //Enable "Disconnect" button.
                     ui->pushButton_signIn_serverConnect->setEnabled(true);
                     ui->pushButton_SignUpServerConnect->setEnabled(true);
 
+                    //Disale select server combobox.
                     ui->comboBox_signIn_selectServer->setEnabled(false);
                     ui->comboBox_signUp_selectServer->setEnabled(false);
 
@@ -1098,11 +1285,12 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
 }
 
 
-
+//User select server in drop-down combobox.
 void SignIn::on_comboBox_signUp_selectServer_currentTextChanged(const QString &arg1)
 {
     qDebug() << arg1;
     if(arg1=="Select Server..."){
+
         ui->pushButton_SignUpServerConnect->setEnabled(false);
         ui->frame_SignUpServerEnterNew->hide();
 
