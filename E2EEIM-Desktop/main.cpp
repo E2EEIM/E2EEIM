@@ -26,6 +26,14 @@ int main(int argc, char *argv[])
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);    // High-DPI Scaling support
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);       // High-DPI Icons support
 
+    /*
+   Warning: QT_DEVICE_PIXEL_RATIO is deprecated. Instead use:
+   QT_AUTO_SCREEN_SCALE_FACTOR to enable platform plugin controlled per-screen factors.
+   QT_SCREEN_SCALE_FACTORS to set per-screen factors.
+   QT_SCALE_FACTOR to set the application global scale factor.
+   */
+
+
     QApplication a(argc, argv);
 
     Encryption encryption;              //Create encryption object.

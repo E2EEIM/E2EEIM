@@ -348,7 +348,6 @@ QStringList MainWindow::ReadConversation(QString Filename){
     QString tmp="[-STaRT-]"; // Start message mark, to support multi-line message.
 
     QString onlyFileName=Filename.split("/").last();
-    qDebug() << "########################## onlyFileName:" << onlyFileName;
 
     bool isGroupConversation=false;
     QStringList allGroupName=readTextLine("./userData/"+ACTIVE_USR+"/groupList.txt");

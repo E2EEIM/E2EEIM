@@ -132,11 +132,10 @@ void Connection::send(QByteArray data){
 
 }
 void Connection::readyRead(){
-    qDebug() << "------------------------------readyRead()" << signInFlag;
     QByteArray data = socket->readAll();
 
     if(signInFlag==true){
-        waitForRecive->start(1000);
+        waitForRecive->start(5000);
         if(QString(data.mid(4,1)).data()->unicode() < 15){
             receivedData.enqueue(data);
             emit dataWaiting();
@@ -163,8 +162,6 @@ void Connection::processReceivedData(){
         while(!receivedData.isEmpty()){
             QByteArray data=receivedData.dequeue();
             int op=QString(data.mid(4,1)).data()->unicode();
-
-            qDebug() << "INT OPr:" << op;
 
             if(op==2){
 
@@ -201,26 +198,18 @@ void Connection::processReceivedData(){
                 recentReceivedMsg=data;
             }
             else if(op==13){
-                qDebug() << "It should emit";
                 emit receiveAddFriendrequest(data);
             }
             else if(op==15){
-                qDebug() << "Receive new public key!!!";
                 emit receiveNewPublicKey(data);
             }
             else if(op==18){
-                //qDebug() << "Receive new message!!!!!!!!!!!!!!!!!!";
                 emit receiveNewMessage(data);
             }
             else{
-                qDebug() << "UNKNOWN data arrived!!!!!!!!!!";
             }
         }
     }
-    else{
-        qDebug() << "--------------------- QUEUE IS EMPTY!!!";
-    }
-
 }
 
 QByteArray Connection::getRecentReceivedMsg(){

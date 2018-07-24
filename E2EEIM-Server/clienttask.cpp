@@ -196,7 +196,6 @@ void ClientTask::task(){
 
     QString task;
     QString taskProtocol;
-    qDebug() << "---activeUser:" << activeUser;
 
     while(waitingTaskUser->indexOf(activeUser)!=(-1)){ //Looking for data the need to send to the client.
 
@@ -314,6 +313,7 @@ void ClientTask::task(){
 
     }
 
+
 }
 
 //Process received data.
@@ -361,8 +361,8 @@ void ClientTask::dataFilter(QByteArray data){
         QString username=QString(payload).mid(5, usernameLength);
 
         //Get user data key length.
-        int userPublicKeyLength;
-        userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
+        //int userPublicKeyLength;
+        //userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
 
 
         QString result;
@@ -426,8 +426,8 @@ void ClientTask::dataFilter(QByteArray data){
         QString username(payload.mid(5, usernameLength));
 
         //Get user's public key length.
-        int userPublicKeyLength;
-        userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
+        //int userPublicKeyLength;
+        //userPublicKeyLength = QString(payload).mid(1,4).toUInt(&ok, 16);
 
         //Search for the username in server.
         if(usernameList->indexOf(username)!=(-1)){

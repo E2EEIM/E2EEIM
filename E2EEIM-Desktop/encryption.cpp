@@ -211,7 +211,7 @@ gpgme_import_result_t Encryption::importKey(const char *inFileName){
 
 gpgme_key_t Encryption::getKey(const char *pattern, int isPrivateKey){
 
-    gpgme_key_t targetKey;
+    gpgme_key_t targetKey=NULL;
     gpgme_key_t key;
 
     err = gpgme_op_keylist_start(ctx,pattern, isPrivateKey);
