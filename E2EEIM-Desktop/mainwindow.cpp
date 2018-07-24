@@ -835,6 +835,7 @@ void MainWindow::on_pushButton_SEND_clicked()
     QString conversationWith = ui->label_ConversationWith->text(); //Get recipient username
     QString msg = ui->plainTextEdit->toPlainText(); //Get message
 
+
     //Checking, if recipent is a group.
     QStringList groupList=readTextLine("./userData/"+ACTIVE_USR+"/groupList.txt");
     foreach(QString item, groupList){
@@ -1480,8 +1481,6 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
 //Client receive new message.
 void MainWindow::receiveNewMessage(QByteArray data){
 
-    qDebug() << "RECEVIE NEW MESSAGE!!!!!!!!!!!!!";
-
     //After login client application may receive a new immediately
     //but client application not finish init user data.
     if(finishInitUserDataStatus==false){
@@ -1616,8 +1615,6 @@ void MainWindow::receiveNewMessage(QByteArray data){
             QString payload;
             payload=qs;
 
-            qDebug() << "decrypResult:" << decryptResult;
-            //qDebug() << "payload:" << payload;
 
             //Get the message.
             QString msg=payload;
