@@ -319,7 +319,7 @@ void ClientTask::task(){
 //Process received data.
 void ClientTask::dataFilter(QByteArray data){
 
-    bool ok;
+    //bool ok;
 
     //Get process protocol of the data package.
     int intOp=QString(data.mid(4,1)).data()->unicode();
@@ -375,10 +375,25 @@ void ClientTask::dataFilter(QByteArray data){
 
             result="Sign up success, "+username+" ready for sign in!";
 
+            //Create <-*4 sign up result
+            data.clear();
+            QByteArray signUpResult;
+            signUpResult.append(result);
+            QString userSubkey=userKeyList->at(usernameList->indexOf(username));
+
+            QByteArray ciper=encryptToClient(signUpResult, userSubkey, "signUpResult.ciper");
+
+            //-Append server's encrypted sign up result message to Byte Array
+            data.append(ciper);
+
         }
         else{
 
             result= "Username: "+username+" not available!";
+
+            //Create <-*4 sign up result
+            data.clear();
+            data.append(result);
 
         }
 
@@ -386,16 +401,6 @@ void ClientTask::dataFilter(QByteArray data){
 
         //Send sign up result
 
-        //Create <-*4 sign up result
-        data.clear();
-        QByteArray signUpResult;
-        signUpResult.append(result);
-        QString userSubkey=userKeyList->at(usernameList->indexOf(username));
-
-        QByteArray ciper=encryptToClient(signUpResult, userSubkey, "signUpResult.ciper");
-
-        //-Append server's encrypted sign up result message to Byte Array
-        data.append(ciper);
 
         //-Insert operation to index 0
         data.insert(0,(char)4);

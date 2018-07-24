@@ -717,16 +717,20 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         gpgme_genkey_result_t GenKeyresult;
         GenKeyresult = encryption->genKey(parms);
 
+
         QString accountKey=QString(GenKeyresult->fpr);
         QByteArray ba=accountKey.toLatin1();
         const char *patt=ba.data();
+
 
         //Get generated key pair..
         newUsersPrivateKey = encryption->getKey(patt, 1);
         newUsersPublicKey = encryption->getKey(patt, 0);
 
+
         // Export new user's public key
         encryption->exportKey(newUsersPublicKey, "userPublicKey.key");
+
 
         QFile File("userPublicKey.key");
         if(!File.open(QFile::ReadOnly | QFile::Text)){
@@ -787,6 +791,7 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         File_Payload.flush();
         File_Payload.close();
 
+
         gpgme_key_t servPubKey=encryption->getServerPubKey();
 
         encryption->encryptSign(newUsersPrivateKey, servPubKey, "2.payload", "2payload.encrypted");
@@ -824,26 +829,60 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         data.clear();
         data=conn->getRecentReceivedMsg();
 
-        //Decrypt Payload
-        QFile File_Result("signUpResult.cipher");
-        if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
-            qDebug() << "Cound not open file for writing";
-            abort();
+        QString decryptResult="1";
+
+        if(data.length() < 50){ //In case username not available.
+
+            QFile File_Result2("signUpResult.txt");
+            if(!File_Result2.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "Cound not open file for writing";
+                abort();
+            }
+            QTextStream ts2(&File_Result2);
+            ts2 << data.mid(5);
+
+            File_Result2.flush();
+            File_Result2.close();
         }
-        QTextStream ts(&File_Result);
-        ts << data.mid(5);
+        else{ //In case username available
 
-        File_Result.flush();
-        File_Result.close();
+            //Decrypt Payload
+            QFile File_Result("signUpResult.cipher");
+            if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "Cound not open file for writing";
+                abort();
+            }
+            QTextStream ts(&File_Result);
+            ts << data.mid(5);
+
+            File_Result.flush();
+            File_Result.close();
+
+            QFile File_Result2("signUpResult.txt");
+            if(!File_Result2.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "Cound not open file for writing";
+                abort();
+            }
+            QTextStream ts2(&File_Result2);
+            ts2 << "";
+
+            File_Result2.flush();
+            File_Result2.close();
 
 
-        //Decrypt sign up result from server.
-        QString decryptResult=encryption->decryptVerify("signUpResult.cipher", "signUpResult.txt");
+
+            //Decrypt sign up result from server.
+            decryptResult=encryption->decryptVerify("signUpResult.cipher", "signUpResult.txt");
+
+        }
+
+
 
         if(decryptResult.mid(0,1)=="0"){
             ui->label_signUpFinishg->setText("ERROR: Server signature not fully valid");
         }
         else{
+
 
             //Read dectyped sign up result from text file.
             QFile File_result("signUpResult.txt");
@@ -867,6 +906,7 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
             }
             */
 
+
             qDebug() << signUpReslut;
 
             //Enable use able tab after sign up.
@@ -883,6 +923,8 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
 
     }
     ui->pushButton_signUpAccountSignUp->setText("Sign Up");
+
+
 }
 
 //When user change main tab between SignIn/SignUp
