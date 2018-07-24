@@ -369,11 +369,11 @@ QString decryptVerify(gpgme_ctx_t ctx, gpgme_error_t err, const char *inputFileN
     QString result;
     QString fpr=QString(sig->fpr);
 
-    if ((sig->summary & GPGME_SIGSUM_VALID)){
-       result="1"+fpr;
+    if ((sig->summary & GPGME_SIGSUM_RED)){
+       result="0"+fpr;
     }
     else{
-       result="0"+fpr;
+       result="1"+fpr;
 
     }
 

@@ -217,7 +217,7 @@ void MainWindow::initUserDataPath(){
     // init default split bar size.
     QList<int> currentSizes = ui->splitter->sizes();
     currentSizes[0]=216;
-    //currentSizes[1]=507;
+    currentSizes[1]=507;
     ui->splitter->setSizes(currentSizes);
 
 }
@@ -806,7 +806,6 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     QString Filename = "./userData/"+ACTIVE_USR+"/newMessage";
     newMessageList=readTextLine(Filename);
 
-
     bool messageFormUnreadUser=false; //The conversation is notifacation item flag.
 
     foreach (QString newMessage, newMessageList) {
@@ -821,6 +820,13 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         removeFromListFile(Filename, conversationWith);
         removeNotiFlag=true;
         on_pushButton_Conversation_clicked();
+    }
+
+    QList<int> currentSizes = ui->splitter->sizes();
+    if(currentSizes[1]<1){
+        currentSizes[0]=216;
+        currentSizes[1]=507;
+        ui->splitter->setSizes(currentSizes);
     }
 }
 
