@@ -185,10 +185,18 @@ void ClientTask::readyRead(){
     //Get operation protocol form data.
     unsigned int sizeOfPayloadAndOp=data.mid(4).size();
 
+
+
+
     //Only data with no loss will process.
     if(sizeOfPayloadAndOp==dataSize){
        dataFilter(data);
     }
+    else{
+        qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
+        //dataFilter(data);
+    }
+
 }
 
 //Send waiting data for the client when client connect to server.
@@ -323,6 +331,7 @@ void ClientTask::dataFilter(QByteArray data){
 
     //Get process protocol of the data package.
     int intOp=QString(data.mid(4,1)).data()->unicode();
+    qDebug() << "intOp:" << intOp;
 
     if(intOp==1){ //In case protocol is connection request.
 

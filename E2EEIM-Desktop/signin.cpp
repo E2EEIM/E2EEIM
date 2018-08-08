@@ -1078,7 +1078,8 @@ void SignIn::on_comboBox_signIn_SelectAccount_currentIndexChanged(const QString 
     QString accountKey;
 
     //Get selected account index.
-    int keyIndex=accountNameList.indexOf(selectedAccount);
+    //int keyIndex=accountNameList.indexOf(selectedAccount);
+    int keyIndex=ui->comboBox_signIn_SelectAccount->currentIndex();
 
 
     //Get key fingerprint of selected account.
