@@ -444,11 +444,17 @@ QString Encryption::decryptVerify(const char *inputFileName,
     char buf[BUF_SIZE + 1];
     int ret;
 
+    qDebug() << "---------------------------dv_1";
+
     err=gpgme_data_new_from_file(&in, inputFileName, 1);
     detectError(err);
 
+    qDebug() << "---------------------------dv_2";
+
     err=gpgme_data_new(&out);
     detectError(err);
+
+    qDebug() << "---------------------------dv_3";
 
     gpgme_op_decrypt_verify(ctx, in, out);
     detectError(err);
@@ -458,7 +464,11 @@ QString Encryption::decryptVerify(const char *inputFileName,
         detectError(err);
     }
 
+    qDebug() << "---------------------------dv_4";
+
     verifyResult = gpgme_op_verify_result(ctx);
+
+    qDebug() << "---------------------------dv_5";
 
     outputFile = fopen (outputFileName, "w+");
 
@@ -467,6 +477,8 @@ QString Encryption::decryptVerify(const char *inputFileName,
     // Error handling
     if (ret)
         detectError(gpgme_err_code_from_errno (errno));
+
+    qDebug() << "---------------------------dv_6";
 
     // Read the contents of "out" and place it into buf
     while ((ret = gpgme_data_read (out, buf, BUF_SIZE)) > 0) {
@@ -478,6 +490,8 @@ QString Encryption::decryptVerify(const char *inputFileName,
     if (ret < 0)
         detectError(gpgme_err_code_from_errno (errno));
 
+    qDebug() << "---------------------------dv_7";
+
     // Close "outputFile"
     fclose(outputFile);
 
@@ -486,15 +500,32 @@ QString Encryption::decryptVerify(const char *inputFileName,
     // Release the "out" data object
     gpgme_data_release (out);
 
+    qDebug() << "---------------------------dv_8";
+
     gpgme_signature_t sig=verifyResult->signatures;
+    qDebug() << "---------------------------dv_8a";
+
     QString result;
-    QString fpr=QString(sig->fpr);
+    qDebug() << "---------------------------dv_8b";
+
+    //QString fpr=QString(sig->key->fpr);
+    QString fpr;
+    char* fingerprint=sig->fpr;
+
+
+    qDebug() << "---------------------------dv_9";
 
     if ((sig->summary & GPGME_SIGSUM_RED)){
        result="0"+fpr;
+       result.append(fingerprint);
+
+       qDebug() << "---------------------------dv_10a";
     }
     else{
        result="1"+fpr;
+       result.append(fingerprint);
+
+       qDebug() << "---------------------------dv_10b";
     }
 
     return result;
