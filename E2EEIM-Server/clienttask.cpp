@@ -146,6 +146,8 @@ void ClientTask::initClient(){
     //to call task() function.
     connect(timer, SIGNAL(timeout()), this, SLOT(task()));
 
+    splitPacket=false;
+
 }
 
 //Start timer when thread idle.
@@ -186,16 +188,42 @@ void ClientTask::readyRead(){
     unsigned int sizeOfPayloadAndOp=data.mid(4).size();
 
 
-
     qDebug() << "readyRead:" << data;
 
     //Only data with no loss will process.
-    if(sizeOfPayloadAndOp==dataSize){
-       dataFilter(data);
+    if(sizeOfPayloadAndOp!=dataSize){
+
+        qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
+        splitPacket=true;
+        receiveBuffer.append(data);
+
+        unsigned int dataSize;
+        QDataStream ds(receiveBuffer.mid(0,4));
+        ds >> dataSize;
+
+        unsigned int sizeOfPayloadAndOp=receiveBuffer.mid(4).size();
+
+        if(sizeOfPayloadAndOp==dataSize){
+
+            qDebug() << "+++++++++++BUFFER HAVE IT ALL SEND DTATA TO PROCESS+++++++++++++";
+
+            QByteArray allData=receiveBuffer;
+
+            splitPacket=false;
+            receiveBuffer.clear();
+
+            dataFilter(allData);
+        }
+        else{
+            qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
+        }
+
     }
     else{
-        qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
-        //dataFilter(data);
+        splitPacket=false;
+        receiveBuffer.clear();
+        dataFilter(data);
+
     }
 
 }

@@ -48,6 +48,9 @@ private:
     QByteArray serverPubKey;
     QString activeUser;
 
+    bool splitPacket;
+    QByteArray receiveBuffer;
+
     QQueue<QByteArray> *queuePtr;
     QList<QString> *usernameList;
     QList<QString> *userKeyList;

@@ -134,20 +134,83 @@ void Connection::send(QByteArray data){
 void Connection::readyRead(){
     QByteArray data = socket->readAll();
 
-    if(signInFlag==true){
-        waitForRecive->start(5000);
-        if(QString(data.mid(4,1)).data()->unicode() < 15){
-            receivedData.enqueue(data);
-            emit dataWaiting();
+
+    //Get data size from data.
+    unsigned int dataSize;
+    QDataStream ds(data.mid(0,4));
+    ds >> dataSize;
+
+    //Get operation protocol form data.
+    unsigned int sizeOfPayloadAndOp=data.mid(4).size();
+
+
+    qDebug() << "readyRead:" << data;
+
+    //Only data with no loss will process.
+    if(sizeOfPayloadAndOp!=dataSize){
+
+        qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
+        splitPacket=true;
+        receiveBuffer.append(data);
+
+        unsigned int dataSize;
+        QDataStream ds(receiveBuffer.mid(0,4));
+        ds >> dataSize;
+
+        unsigned int sizeOfPayloadAndOp=receiveBuffer.mid(4).size();
+
+        if(sizeOfPayloadAndOp==dataSize){
+
+            qDebug() << "+++++++++++BUFFER HAVE IT ALL SEND DTATA TO PROCESS+++++++++++++";
+
+            QByteArray allData=receiveBuffer;
+
+            splitPacket=false;
+            receiveBuffer.clear();
+
+            if(signInFlag==true){
+                waitForRecive->start(5000);
+                if(QString(data.mid(4,1)).data()->unicode() < 15){
+                    receivedData.enqueue(data);
+                    emit dataWaiting();
+                }
+                else{
+                    receivedData.enqueue(data);
+                }
+            }
+            else{
+                receivedData.enqueue(data);
+                emit dataWaiting();
+            }
+
+        }
+        else{
+            qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
+        }
+
+    }
+    else{
+        splitPacket=false;
+        receiveBuffer.clear();
+
+
+        if(signInFlag==true){
+            waitForRecive->start(5000);
+            if(QString(data.mid(4,1)).data()->unicode() < 15){
+                receivedData.enqueue(data);
+                emit dataWaiting();
+            }
+            else{
+                receivedData.enqueue(data);
+            }
         }
         else{
             receivedData.enqueue(data);
+            emit dataWaiting();
         }
+
     }
-    else{
-        receivedData.enqueue(data);
-        emit dataWaiting();
-    }
+
 }
 
 void Connection::noMoreData(){

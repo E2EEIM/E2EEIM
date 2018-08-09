@@ -67,6 +67,9 @@ private:
     QQueue<QByteArray> receivedData;
     QTimer *waitForRecive;
 
+    bool splitPacket;
+    QByteArray receiveBuffer;
+
 };
 
 #endif // CONNECTION_H
