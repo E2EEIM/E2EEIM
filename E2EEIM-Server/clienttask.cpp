@@ -175,7 +175,7 @@ void ClientTask::readyRead(){
     qDebug() << "---------Receive data from: " << activeUser;
 
     //Read data from socket.
-    QByteArray data = socket->readAll();
+    QByteArray data(socket->readAll());
 
     //Get data size from data.
     unsigned int dataSize;
@@ -187,6 +187,7 @@ void ClientTask::readyRead(){
 
 
 
+    qDebug() << "readyRead:" << data;
 
     //Only data with no loss will process.
     if(sizeOfPayloadAndOp==dataSize){
