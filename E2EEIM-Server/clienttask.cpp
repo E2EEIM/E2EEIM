@@ -187,9 +187,6 @@ void ClientTask::readyRead(){
     //Get operation protocol form data.
     unsigned int sizeOfPayloadAndOp=data.mid(4).size();
 
-
-    qDebug() << "readyRead:" << data;
-
     //Only data with no loss will process.
     if(sizeOfPayloadAndOp!=dataSize){
 
@@ -269,7 +266,7 @@ void ClientTask::task(){
 
 
             //Insert size of(operation + payload) in front of byte array (data[0]).
-            int dataSize=data.size();
+            unsigned int dataSize=data.size();
             QByteArray dataSizeByte;
             QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
             ds << dataSize;
@@ -376,7 +373,7 @@ void ClientTask::dataFilter(QByteArray data){
         data.insert(0,(char)2);
 
           //-Insert size of (operation + payload) to index 0
-        int payloadAndOpSize=serverPubKey.size()+1;
+        unsigned int payloadAndOpSize=serverPubKey.size()+1;
         QByteArray dataSize;
         QDataStream ds(&dataSize, QIODevice::WriteOnly);
         ds << payloadAndOpSize;
@@ -444,11 +441,28 @@ void ClientTask::dataFilter(QByteArray data){
         data.insert(0,(char)4);
 
         //-Insert size of (operation + payload) to index 0
-        int payloadAndOpSize=serverPubKey.size()+1;
+        unsigned int payloadAndOpSize=data.size();
         QByteArray dataSize;
         QDataStream ds2(&dataSize, QIODevice::WriteOnly);
         ds2 << payloadAndOpSize;
         data.insert(0, dataSize);
+
+        qDebug() << "====payloadAndOpSize:" << payloadAndOpSize;
+
+        if(true){
+            //Get data size from data.
+                unsigned int dataSize;
+                QDataStream ds(data.mid(0,4));
+                ds >> dataSize;
+
+                //Get operation protocol form data.
+                unsigned int sizeOfPayloadAndOp=data.mid(4).size();
+
+
+                qDebug() << "readyRead:" << data;
+
+                qDebug() << sizeOfPayloadAndOp << "-" << dataSize;
+        }
 
         //Send sign up result.
         send(data);
@@ -508,7 +522,7 @@ void ClientTask::dataFilter(QByteArray data){
             data.insert(0, (char)6);
 
             //Insert size of(operation + payload) in front of byte array (data[0]).
-            int dataSize=data.size();
+            unsigned int dataSize=data.size();
             QByteArray dataSizeByte;
             QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
             ds << dataSize;
@@ -534,7 +548,7 @@ void ClientTask::dataFilter(QByteArray data){
             data.insert(0, (char)6);
 
             //Insert size of(procols number + payload) in front of byte array (data[0]).
-            int dataSize=data.size();
+            unsigned int dataSize=data.size();
             QByteArray dataSizeByte;
             QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
             ds << dataSize;
@@ -599,7 +613,7 @@ void ClientTask::dataFilter(QByteArray data){
         data.insert(0, (char)8);
 
         //Insert size of(operation + payload) in front of byte array (data[0]).
-        int dataSize=data.size();
+        unsigned int dataSize=data.size();
         QByteArray dataSizeByte;
         QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
         ds << dataSize;
@@ -662,7 +676,7 @@ void ClientTask::dataFilter(QByteArray data){
         data.insert(0, (char)10);
 
         //Insert size of(operation + payload) in front of byte array (data[0]).
-        int dataSize=data.size();
+        unsigned int dataSize=data.size();
         QByteArray dataSizeByte;
         QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
         ds << dataSize;
@@ -732,7 +746,7 @@ void ClientTask::dataFilter(QByteArray data){
         data.insert(0, (char)12);
 
         //Insert size of(operation + payload) in front of byte array (data[0]).
-        int dataSize=data.size();
+        unsigned int dataSize=data.size();
         QByteArray dataSizeByte;
         QDataStream ds(&dataSizeByte, QIODevice::WriteOnly);
         ds << dataSize;
