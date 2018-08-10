@@ -132,7 +132,7 @@ void Connection::send(QByteArray data){
 
 }
 void Connection::readyRead(){
-    QByteArray data = socket->readAll();
+    QByteArray data(socket->readAll());
 
 
     //Get data size from data.
@@ -143,8 +143,12 @@ void Connection::readyRead(){
     //Get operation protocol form data.
     unsigned int sizeOfPayloadAndOp=data.mid(4).size();
 
+    int op=QString(data.mid(4,1)).data()->unicode();
 
-    qDebug() << "readyRead:" << data.mid(0,10);
+    qDebug() << "intOp:" << op;
+
+
+    qDebug() << "readyRead:" << data;
 
     //Only data with no loss will process.
     if(sizeOfPayloadAndOp!=dataSize){
@@ -172,15 +176,70 @@ void Connection::readyRead(){
                 waitForRecive->start(5000);
                 if(QString(allData.mid(4,1)).data()->unicode() < 15){
                     receivedData.enqueue(allData);
+            qDebug() << "******************** ADD TO QUEUE **";
                     emit dataWaiting();
                 }
                 else{
+            qDebug() << "******************** ADD TO QUEUE **";
                     receivedData.enqueue(allData);
                 }
             }
             else{
                 receivedData.enqueue(allData);
+        qDebug() << "******************** ADD TO QUEUE **";
                 emit dataWaiting();
+            }
+
+        }
+        else if(sizeOfPayloadAndOp > dataSize){
+
+            QString msg(data);
+            if(msg.split("END PGP MESSAGE-----\n").count() > 1){
+                for(int i=0; i < msg.split("END PGP MESSAGE-----\n").count(); i++){
+                    QString item=msg.split("END PGP MESSAGE-----\n").at(i);
+                    if(item.right(5)=="-----"){
+
+                        qDebug() << "=============== Read multiple packet from socket case !!";
+
+                        item=item+"END PGP MESSAGE-----\n";
+
+                        QByteArray data;
+                        data.append(item);
+
+                        splitPacket=false;
+                        receiveBuffer.clear();
+
+
+                        if(signInFlag==true){
+                            waitForRecive->start(5000);
+                            if(QString(data.mid(4,1)).data()->unicode() < 15){
+                                receivedData.enqueue(data);
+                            qDebug() << "******************** ADD TO QUEUE **";
+                                emit dataWaiting();
+                            }
+                            else{
+                                receivedData.enqueue(data);
+                            qDebug() << "******************** ADD TO QUEUE **";
+                            }
+                        }
+                        else{
+                            receivedData.enqueue(data);
+                        qDebug() << "******************** ADD TO QUEUE **";
+                            emit dataWaiting();
+                        }
+
+                    }
+                    else{
+                        qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
+                        splitPacket=true;
+                        receiveBuffer.clear();
+                        receiveBuffer.append(item);
+                    }
+                }
+            }
+            else{
+                qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
+
             }
 
         }
@@ -198,14 +257,17 @@ void Connection::readyRead(){
             waitForRecive->start(5000);
             if(QString(data.mid(4,1)).data()->unicode() < 15){
                 receivedData.enqueue(data);
+            qDebug() << "******************** ADD TO QUEUE **";
                 emit dataWaiting();
             }
             else{
                 receivedData.enqueue(data);
+            qDebug() << "******************** ADD TO QUEUE **";
             }
         }
         else{
             receivedData.enqueue(data);
+        qDebug() << "******************** ADD TO QUEUE **";
             emit dataWaiting();
         }
 
@@ -225,6 +287,8 @@ void Connection::processReceivedData(){
         while(!receivedData.isEmpty()){
             QByteArray data=receivedData.dequeue();
             int op=QString(data.mid(4,1)).data()->unicode();
+
+            //qDebug() << "intOp:" << op;
 
             if(op==2){
 
