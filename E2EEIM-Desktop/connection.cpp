@@ -144,7 +144,7 @@ void Connection::readyRead(){
     unsigned int sizeOfPayloadAndOp=data.mid(4).size();
 
 
-    qDebug() << "readyRead:" << data;
+    qDebug() << "readyRead:" << data.mid(0,10);
 
     //Only data with no loss will process.
     if(sizeOfPayloadAndOp!=dataSize){
@@ -170,16 +170,16 @@ void Connection::readyRead(){
 
             if(signInFlag==true){
                 waitForRecive->start(5000);
-                if(QString(data.mid(4,1)).data()->unicode() < 15){
-                    receivedData.enqueue(data);
+                if(QString(allData.mid(4,1)).data()->unicode() < 15){
+                    receivedData.enqueue(allData);
                     emit dataWaiting();
                 }
                 else{
-                    receivedData.enqueue(data);
+                    receivedData.enqueue(allData);
                 }
             }
             else{
-                receivedData.enqueue(data);
+                receivedData.enqueue(allData);
                 emit dataWaiting();
             }
 
