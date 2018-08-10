@@ -193,7 +193,8 @@ void Connection::readyRead(){
         }
         else if(sizeOfPayloadAndOp > dataSize){
 
-            QString msg(data);
+            QString msg=QString::fromStdString(data.toStdString());
+
             if(msg.split("END PGP MESSAGE-----\n").count() > 1){
                 for(int i=0; i < msg.split("END PGP MESSAGE-----\n").count(); i++){
                     QString item=msg.split("END PGP MESSAGE-----\n").at(i);
