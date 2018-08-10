@@ -314,17 +314,30 @@ void Setting::deleteItem(QStringList deleteList, QString fileName){
                      }
                  }
             }
-             else{
+             else{ // Delete from contactList.txt
+
+                 line=in.readLine();
+                 remain.append(line);
+
+                 /*
                  line=in.readLine();
                  foreach(QString item, deleteList){
                      if(line!=item){
                          remain.append(line);
                      }
                  }
+                 */
              }
         }
         File.flush();
         File.close();
+
+        if(fileName=="userData/"+ActiveUser+"/contactList.txt"){
+            foreach (QString item, deleteList) {
+               int idx=remain.indexOf(item);
+               remain.removeAt(idx);
+            }
+        }
 
         if(remain.isEmpty()==true){
             remain.append("\n");

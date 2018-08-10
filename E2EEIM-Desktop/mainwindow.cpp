@@ -544,7 +544,9 @@ void MainWindow::on_pushButton_Contact_clicked()
             contact->setIcon(QIcon(":/img/icons/newPerson.png"));
             QString theContact=CONTACT;
             contact->setText(theContact);
-            ui->listWidget_Contact->addItem(contact);
+            if(CONTACT!=""){
+                ui->listWidget_Contact->addItem(contact);
+            }
             anyNewContact=true;
 
         }
@@ -553,7 +555,9 @@ void MainWindow::on_pushButton_Contact_clicked()
             contact->setIcon(QIcon(":/img/icons/newPerson.png"));
             QString theContact=CONTACT;
             contact->setText(theContact);
-            ui->listWidget_Contact->addItem(contact);
+            if(CONTACT!=""){
+                ui->listWidget_Contact->addItem(contact);
+            }
             anyNewContact=true;
 
         }
@@ -561,7 +565,9 @@ void MainWindow::on_pushButton_Contact_clicked()
             QListWidgetItem *contact = new QListWidgetItem;
             contact->setIcon(QIcon(":/img/icons/person.png"));
             contact->setText(CONTACT);
-            ui->listWidget_Contact->addItem(contact);
+            if(CONTACT!=""){
+                ui->listWidget_Contact->addItem(contact);
+            }
         }
     }
 
@@ -848,7 +854,7 @@ void MainWindow::on_pushButton_SEND_clicked()
     //Checking, if recipient is a person(friend).
     QStringList contactList=readTextLine("./userData/"+ACTIVE_USR+"/contactList.txt");
     foreach(QString item, contactList){
-        if(conversationWith==item){
+        if(conversationWith==item && item != ""){
             sendTo="person";
             break;
         }
@@ -1275,7 +1281,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
         QString Filename = "./userData/"+ACTIVE_USR+"/contactList.txt";
         QStringList contactList=readTextLine(Filename);
         foreach(QString CONTACT, contactList){
-            if(ContactName==CONTACT){
+            if(ContactName==CONTACT && CONTACT!=""){
                 isDuplicate=true;
             }
         }
