@@ -205,11 +205,10 @@ void Connection::readyRead(){
                         item=item+"END PGP MESSAGE-----\n";
 
                         QByteArray data;
-                        data.append(item);
+                        data.append(item.toLatin1());
 
                         splitPacket=false;
                         receiveBuffer.clear();
-
 
                         if(signInFlag==true){
                             waitForRecive->start(5000);
@@ -231,7 +230,7 @@ void Connection::readyRead(){
 
                     }
                     else{
-                        qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
+                        qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------x";
                         splitPacket=true;
                         receiveBuffer.clear();
                         receiveBuffer.append(item);
@@ -347,6 +346,8 @@ void Connection::processReceivedData(){
                 qDebug() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
                 qDebug() << "!!!!!!!!!! RECEIVE UNKNOWN OPERATION !!!!!!!!!!!";
                 qDebug() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+                qDebug() << "UNKNOWN DATA:" << data;
+
             }
         }
     }
