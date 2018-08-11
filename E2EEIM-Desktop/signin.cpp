@@ -33,6 +33,31 @@ SignIn::SignIn(Connection &conn, Encryption &encryption, QWidget *parent) :
     //to call disconnectFromServer() function.
     connect(this->conn, SIGNAL(disconnectFromServer()), this, SLOT(disconnectFromServer()), Qt::QueuedConnection);
 
+    //Connect receiveSignInVerify event.
+    //Creat a [signal/slot] mechanism, when active-user
+    //receive sign in verifiation request from server
+    //to call receiveSignInVerfiy() function.
+    connect(this->conn, SIGNAL(receiveSignInVerify(QByteArray)), this, SLOT(receiveSignInVerify(QByteArray)), Qt::QueuedConnection);
+
+    //Connect receiveSignInResult event.
+    //Creat a [signal/slot] mechanism, when active-user
+    //receive sign-in request from server
+    //to call receiveSignInResult() function.
+    connect(this->conn, SIGNAL(receiveSignInResult(QByteArray)), this, SLOT(receiveSignInResult(QByteArray)), Qt::QueuedConnection);
+
+    //Connect receiveSignInResult event.
+    //Creat a [signal/slot] mechanism, when active-user
+    //receive sign-in request from server
+    //to call receiveSignInResult() function.
+    connect(this->conn, SIGNAL(receiveSignUpResult(QByteArray)), this, SLOT(receiveSignUpResult(QByteArray)), Qt::QueuedConnection);
+
+    //Connect generateKeyPair event.
+    //Creat a [signal/slot] mechanism, when user
+    //filled sign-up form and click Sign Up.
+    //to call generateKeyPair() function.
+    connect(this, SIGNAL(generateKeyPairSig(QStringList)), this, SLOT(generateKeyPair(QStringList)), Qt::QueuedConnection);
+
+
     //Set available tab when signIn window start to show.
     ui->tabWidget_signIn->setTabEnabled(1, false);
     ui->tabWidget_signUp->setTabEnabled(1, false);
@@ -114,7 +139,7 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
 
         //Get public key of the fingerprint.
         gpgme_key_t publicKey = encryption->getKey(patt, 0);
-        encryption->setUserPriKey(publicKey);
+        encryption->setUserPubKey(publicKey);
 
         encryption->printKeys(publicKey);
 
@@ -214,178 +239,191 @@ void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
         //Clear data variable.
         data.clear();
 
-        //Get received server responds message from connection class.
-        data=conn->getRecentReceivedMsg();
+        //Display sign in status
+        ui->label_signIn_keyFpr->setStyleSheet("color:#333333");
+        ui->label_signIn_keyFpr->setText("Status: Waiting for response from server...");
 
-
-        //In case sign in not success.
-        if(data.mid(5)=="USER NOT FOUND IN THIS SERVER!"){
-            ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
-            ui->label_signIn_keyFpr->setText("Error: This account not found in this server!");
-
-        }
-        else{ //In case sign in success.
-            //Save cipher recieved from server to text file
-            //the required in decryption process.
-            QFile File_Result("signInRan.cipher");
-            if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
-                qDebug() << "Cound not open file for writing";
-                abort();
-            }
-            QTextStream ts(&File_Result);
-            ts << data.mid(5);
-
-            File_Result.flush();
-            File_Result.close();
-
-
-            //Decrypt recieved cipher.
-            QString decryptResult=encryption->decryptVerify("signInRan.cipher", "signInRan.txt");
-
-            if(decryptResult.mid(0,1)=="0"){ //In case bad signature from server.
-                ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
-                ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
-            }
-            else{
-                //Read decrypted message, random text stuff from server.
-                QFile File_result("signInRan.txt");
-                if(!File_result.open(QFile::ReadOnly | QFile::Text)){
-                    qDebug() << "Cound not open file for Read";
-                    abort();
-                }
-                QTextStream in2(&File_result);
-                QString signInRan;
-                signInRan=in2.readAll();
-                File_result.close();
-
-                qDebug() << signInRan;
-
-                //Encrypt random text stuff that get from server to send back to server.
-                encryption->encryptSign(privateKey, servPubKey, "signInRan.txt", "signIn.epkg");
-
-                //Read cipher, encrypted message to server.
-                QFile File_EncryptedPayload("signIn.epkg");
-                if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
-                    qDebug() << "Cound not open file for Read";
-                    abort();
-                }
-                QTextStream in(&File_EncryptedPayload);
-                QString payload;
-                payload=in.readAll();
-                File_EncryptedPayload.close();
-
-                //Clear data package variavle
-                //and add cipher to data package.
-                data.clear();
-                data.append(payload);
-
-                // Insert sign in verification operation number in front of byte array (data[0]).
-                data.insert(0, (char)7);
-
-                //Insert size of(operation + payload) in front of byte array (data[0]).
-                int dataSize=data.size();
-                QByteArray dataSizeByte;
-                QDataStream ds2(&dataSizeByte, QIODevice::WriteOnly);
-                ds2 << dataSize;
-                data.insert(0, dataSizeByte);
-
-                //Send data package to server.
-                conn->send(data);
-
-                //Clear data package variable.
-                data.clear();
-
-                //Get received sign in result from connection class.
-                data=conn->getRecentReceivedMsg();
-
-                //Save recieved sign in result cipher to text file
-                //that required in decryption process.
-                QFile File_Result("signInResult.cipher");
-                if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
-                    qDebug() << "Cound not open file for writing";
-                    abort();
-                }
-                QTextStream ts(&File_Result);
-                ts << data.mid(5);
-
-                File_Result.flush();
-                File_Result.close();
-
-                //Decrypt sign in result cipher.
-                QString decryptResult=encryption->decryptVerify("signInResult.cipher", "signInResult.txt");
-
-                if(decryptResult.mid(0,1)=="0"){ //In case bad signature from server.
-                    ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
-                    ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
-                }
-                else{
-                    //Read decrypted sign in result.
-                    QFile File_result("signInResult.txt");
-                    if(!File_result.open(QFile::ReadOnly | QFile::Text)){
-                        qDebug() << "Cound not open file for Read";
-                        abort();
-                    }
-                    QTextStream in(&File_result);
-                    QString signInResult;
-                    signInResult=in.readAll();
-                    File_result.close();
-
-
-                    if(signInResult=="verify success!!!"){ //In case sign in success.
-
-                        //Get selected account username.
-                        selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
-                        QString accountKey;
-
-                        //Get index of selected account in account list.
-                        int keyIndex=accountNameList.indexOf(selectedAccount);
-
-                        //Get the account key fingerprint.
-                        for(int i=0; i<accountKeyList.length(); i++){
-                            if(i==keyIndex){
-                                 accountKey=accountKeyList.at(i);
-                            }
-                        }
-
-                        //Display key fingerprint.
-                        ui->label_signIn_keyFpr->setText(accountKey);
-                        ui->label_signIn_keyFpr->setStyleSheet("color:#999999");
-
-                        //Convert key fingerprint into const char* variable type
-                        //that required in get key process.
-                        QByteArray ba=accountKey.toLatin1();
-                        const char *patt=ba.data();
-
-                        //Get the account private key.
-                        gpgme_key_t privateKey = encryption->getKey(patt, 1);
-
-                        //Set account private key as active-user's private key in encryption class.
-                        encryption->setUserPriKey(privateKey);
-
-                        //Get the account public key.
-                        gpgme_key_t publicKey = encryption->getKey(patt, 0);
-
-                        //Set account public key as active-user's public key in encryption class.
-                        encryption->setUserPubKey(publicKey);
-
-                        //Set sign in sucess flag to in connection class.
-                        conn->signInFlag=true;
-
-                        //Close signIn window to show mainWindow.
-                        SignIn::accept();
-                    }
-                    else{ //In case sign in not success.
-                        //Show sign in result message from server.
-                        ui->label_signIn_keyFpr->setText(signInResult);
-                    }
-                }
-
-            }
-        }
     }
     else{ // In caes user not select any account.
         ui->label_signIn_keyFpr->setText("\nUsername can not be empty!");
     }
+}
+
+void SignIn::receiveSignInVerify(QByteArray data){
+
+
+    //In case sign in not success.
+    if(data.mid(5)=="USER NOT FOUND IN THIS SERVER!"){
+        ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
+        ui->label_signIn_keyFpr->setText("Error: This account not found in this server!");
+
+    }
+    else{ //In case sign in success.
+        //Save cipher recieved from server to text file
+        //that required in decryption process.
+        QFile File_Result("signInRan.cipher");
+        if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "Cound not open file for writing";
+            abort();
+        }
+        QTextStream ts(&File_Result);
+        ts << data.mid(5);
+
+        File_Result.flush();
+        File_Result.close();
+
+
+        //Decrypt recieved cipher.
+        QString decryptResult=encryption->decryptVerify("signInRan.cipher", "signInRan.txt");
+
+        if(decryptResult.mid(0,1)=="0"){ //In case bad signature from server.
+            ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
+            ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
+        }
+        else{
+            //Read decrypted message, random text stuff from server.
+            QFile File_result("signInRan.txt");
+            if(!File_result.open(QFile::ReadOnly | QFile::Text)){
+                qDebug() << "Cound not open file for Read";
+                abort();
+            }
+            QTextStream in2(&File_result);
+            QString signInRan;
+            signInRan=in2.readAll();
+            File_result.close();
+
+            qDebug() << signInRan;
+
+            //Encrypt random text stuff that get from server to send back to server.
+            gpgme_key_t privateKey=encryption->getUserPriKey();
+            gpgme_key_t servPubKey=encryption->getServerPubKey();
+            encryption->encryptSign(privateKey, servPubKey, "signInRan.txt", "signIn.epkg");
+
+            //Read cipher, encrypted message to server.
+            QFile File_EncryptedPayload("signIn.epkg");
+            if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
+                qDebug() << "Cound not open file for Read";
+                abort();
+            }
+            QTextStream in(&File_EncryptedPayload);
+            QString payload;
+            payload=in.readAll();
+            File_EncryptedPayload.close();
+
+            //Clear data package variavle
+            //and add cipher to data package.
+            data.clear();
+            data.append(payload);
+
+            // Insert sign in verification operation number in front of byte array (data[0]).
+            data.insert(0, (char)7);
+
+            //Insert size of(operation + payload) in front of byte array (data[0]).
+            int dataSize=data.size();
+            QByteArray dataSizeByte;
+            QDataStream ds2(&dataSizeByte, QIODevice::WriteOnly);
+            ds2 << dataSize;
+            data.insert(0, dataSizeByte);
+
+            //Send data package to server.
+            conn->send(data);
+
+            //Clear data package variable.
+            data.clear();
+
+            //Display sign in status
+            ui->label_signIn_keyFpr->setStyleSheet("color:#333333");
+            ui->label_signIn_keyFpr->setText("Status: Verifying account...");
+
+        }
+    }
+
+}
+
+void SignIn::receiveSignInResult(QByteArray data){
+
+    //Save recieved sign in result cipher to text file
+    //that required in decryption process.
+    QFile File_Result("signInResult.cipher");
+    if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
+        qDebug() << "Cound not open file for writing";
+        abort();
+    }
+    QTextStream ts(&File_Result);
+    ts << data.mid(5);
+
+    File_Result.flush();
+    File_Result.close();
+
+    //Decrypt sign in result cipher.
+    QString decryptResult=encryption->decryptVerify("signInResult.cipher", "signInResult.txt");
+
+    if(decryptResult.mid(0,1)=="0"){ //In case bad signature from server.
+        ui->label_signIn_keyFpr->setStyleSheet("color:#AA6666");
+        ui->label_signIn_keyFpr ->setText("ERROR: Server signature not fully valid");
+    }
+    else{
+        //Read decrypted sign in result.
+        QFile File_result("signInResult.txt");
+        if(!File_result.open(QFile::ReadOnly | QFile::Text)){
+            qDebug() << "Cound not open file for Read";
+            abort();
+        }
+        QTextStream in(&File_result);
+        QString signInResult;
+        signInResult=in.readAll();
+        File_result.close();
+
+
+        if(signInResult=="verify success!!!"){ //In case sign in success.
+
+            //Get selected account username.
+            selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
+            QString accountKey;
+
+            //Get index of selected account in account list.
+            int keyIndex=accountNameList.indexOf(selectedAccount);
+
+            //Get the account key fingerprint.
+            for(int i=0; i<accountKeyList.length(); i++){
+                if(i==keyIndex){
+                     accountKey=accountKeyList.at(i);
+                }
+            }
+
+            //Display key fingerprint.
+            ui->label_signIn_keyFpr->setText(accountKey);
+            ui->label_signIn_keyFpr->setStyleSheet("color:#999999");
+
+            //Convert key fingerprint into const char* variable type
+            //that required in get key process.
+            QByteArray ba=accountKey.toLatin1();
+            const char *patt=ba.data();
+
+            //Get the account private key.
+            gpgme_key_t privateKey = encryption->getKey(patt, 1);
+
+            //Set account private key as active-user's private key in encryption class.
+            encryption->setUserPriKey(privateKey);
+
+            //Get the account public key.
+            gpgme_key_t publicKey = encryption->getKey(patt, 0);
+
+            //Set account public key as active-user's public key in encryption class.
+            encryption->setUserPubKey(publicKey);
+
+            //Set sign in sucess flag to in connection class.
+            conn->signInFlag=true;
+
+            //Close signIn window to show mainWindow.
+            SignIn::accept();
+        }
+        else{ //In case sign in not success.
+            //Show sign in result message from server.
+            ui->label_signIn_keyFpr->setText(signInResult);
+        }
+    }
+
 }
 
 //Let other class get selected account username.
@@ -616,8 +654,6 @@ void SignIn::on_tabWidget_signUp_currentChanged(int index)
 //When user click "Sign Up" button in [Sign Up - Account] tab.
 void SignIn::on_pushButton_signUpAccountSignUp_clicked()
 {
-    //In form sign up status.
-    ui->pushButton_signUpAccountSignUp->setText("Generating key Pair...");
 
     //Get information from sign up form.
     QString errMsg;
@@ -681,6 +717,8 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
     }
     else{// When Username and Passphrase valid.
 
+        ui->pushButton_signUpAccountSignUp->setEnabled(false);
+
         //Set useable tab.
         ui->tabWidget_signUp->setCurrentIndex(2);
         ui->tabWidget_signUp->setTabEnabled(0, false);
@@ -694,236 +732,264 @@ void SignIn::on_pushButton_signUpAccountSignUp_clicked()
         ui->label_signUpAccountErrMsg->show();
 
 
-        // Generate a new key pair
-        QByteArray data;
-        data.append(username);
+        QStringList account;
+        account.append(username);
+        account.append(passphrase);
 
-        QString keyParms="<GnupgKeyParms format=\"internal\">\n"
-                         "Key-Type: RSA\n"
-                         "Key-Length: 4096\n"
-                         "Subkey-Type: RSA\n"
-                         "Subkey-Length: 4096\n"
-                         "Name-Real: "+username+"\n"
-                         "Name-Comment: Generated by E2EEIM Chat, Passphrase:"+passphrase+"\n"
-                         "Name-Email: client@e2eeim.chat\n"
-                         "Expire-Date: 1d\n"
-                         "Passphrase: "+passphrase+"\n"
-                         "</GnupgKeyParms>\n";
+        QCoreApplication::processEvents();
 
+        emit generateKeyPair(account);
+    }
+}
 
-        QByteArray byteParms = keyParms.toLatin1();
-        const char *parms = byteParms.data();
+void SignIn::generateKeyPair(QStringList account){
 
-        gpgme_genkey_result_t GenKeyresult;
-        GenKeyresult = encryption->genKey(parms);
+    QString username=account.at(0);
+    QString passphrase=account.at(1);
+    // Generate a new key pair
+    QByteArray data;
+    data.append(username);
 
-
-        QString accountKey=QString(GenKeyresult->fpr);
-        QByteArray ba=accountKey.toLatin1();
-        const char *patt=ba.data();
-
-
-        //Get generated key pair..
-        newUsersPrivateKey = encryption->getKey(patt, 1);
-        newUsersPublicKey = encryption->getKey(patt, 0);
+    QString keyParms="<GnupgKeyParms format=\"internal\">\n"
+                     "Key-Type: RSA\n"
+                     "Key-Length: 4096\n"
+                     "Subkey-Type: RSA\n"
+                     "Subkey-Length: 4096\n"
+                     "Name-Real: "+username+"\n"
+                     "Name-Comment: Generated by E2EEIM Chat, Passphrase:"+passphrase+"\n"
+                     "Name-Email: client@e2eeim.chat\n"
+                     "Expire-Date: 1d\n"
+                     "Passphrase: "+passphrase+"\n"
+                     "</GnupgKeyParms>\n";
 
 
-        // Export new user's public key
-        encryption->exportKey(newUsersPublicKey, "userPublicKey.key");
+    QByteArray byteParms = keyParms.toLatin1();
+    const char *parms = byteParms.data();
+
+    QCoreApplication::processEvents();
+
+    gpgme_genkey_result_t GenKeyresult;
+    GenKeyresult = encryption->genKey(parms);
 
 
-        QFile File("userPublicKey.key");
-        if(!File.open(QFile::ReadOnly | QFile::Text)){
-            qDebug() << "Cound not open file for Read";
-            abort();
-        }
-        QTextStream in(&File);
-        QString pubKey;
-        pubKey=in.readAll();
-        File.close();
+    QString accountKey=QString(GenKeyresult->fpr);
+    QByteArray ba=accountKey.toLatin1();
+    const char *patt=ba.data();
 
 
-        // //////// Send Sign Up Request to Server.
+    //Get generated key pair..
+    newUsersPrivateKey = encryption->getKey(patt, 1);
+    newUsersPublicKey = encryption->getKey(patt, 0);
 
-        // Create *2-> send sign up require.
-        data.clear();
 
-        // Create payload
+    // Export new user's public key
+    encryption->exportKey(newUsersPublicKey, "userPublicKey.key");
 
-          //Add user public key to byte array.
-        data.append(pubKey);
 
-          //Insert unsername in front of byte array (data[0]).
-        data.insert(0, username);
+    QFile File("userPublicKey.key");
+    if(!File.open(QFile::ReadOnly | QFile::Text)){
+        qDebug() << "Cound not open file for Read";
+        abort();
+    }
+    QTextStream in(&File);
+    QString pubKey;
+    pubKey=in.readAll();
+    File.close();
 
-          //Insert user public key size in front of byte array (data[0]).
-        /*
-        int publicKeySize=pubKey.size();
-        QByteArray publicKeySizeByte;
-        QDataStream ds(&publicKeySizeByte, QIODevice::WriteOnly);
-        ds << publicKeySize;
-        data.insert(0, publicKeySizeByte);
-        */
 
-        int publicKeySize=pubKey.size();
-        QByteArray publicKeySizeHex;
-        publicKeySizeHex.setNum(publicKeySize, 16);
+    // //////// Send Sign Up Request to Server.
 
-        while(publicKeySizeHex.length() < 4){
-            publicKeySizeHex.insert(0,"0");
-        }
+    // Create *2-> send sign up require.
+    data.clear();
 
-        data.insert(0, publicKeySizeHex);
+    // Create payload
 
-          //Insert user username size in front of byte array (data[0]).
-        char usernameSize=char(username.size());
-        data.insert(0, usernameSize);
+      //Add user public key to byte array.
+    data.append(pubKey);
 
-        //Encrypt Payload
-        QFile File_Payload("2.payload");
-        if(!File_Payload.open(QFile::WriteOnly | QFile::Text)){
+      //Insert unsername in front of byte array (data[0]).
+    data.insert(0, username);
+
+      //Insert user public key size in front of byte array (data[0]).
+    /*
+    int publicKeySize=pubKey.size();
+    QByteArray publicKeySizeByte;
+    QDataStream ds(&publicKeySizeByte, QIODevice::WriteOnly);
+    ds << publicKeySize;
+    data.insert(0, publicKeySizeByte);
+    */
+
+    int publicKeySize=pubKey.size();
+    QByteArray publicKeySizeHex;
+    publicKeySizeHex.setNum(publicKeySize, 16);
+
+    while(publicKeySizeHex.length() < 4){
+        publicKeySizeHex.insert(0,"0");
+    }
+
+    data.insert(0, publicKeySizeHex);
+
+      //Insert user username size in front of byte array (data[0]).
+    char usernameSize=char(username.size());
+    data.insert(0, usernameSize);
+
+    //Encrypt Payload
+    QFile File_Payload("2.payload");
+    if(!File_Payload.open(QFile::WriteOnly | QFile::Text)){
+        qDebug() << "Cound not open file for writing";
+        abort();
+    }
+    QTextStream out(&File_Payload);
+    out << data;
+
+    File_Payload.flush();
+    File_Payload.close();
+
+
+    gpgme_key_t servPubKey=encryption->getServerPubKey();
+
+    encryption->encryptSign(newUsersPrivateKey, servPubKey, "2.payload", "2payload.encrypted");
+
+    QFile File_EncryptedPayload("2payload.encrypted");
+    if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
+        qDebug() << "Cound not open file for Read";
+        abort();
+    }
+    QTextStream in2(&File_EncryptedPayload);
+    QString payload;
+    payload=in2.readAll();
+    File_EncryptedPayload.close();
+
+    data.clear();
+    data.append(payload);
+
+    // Insert operation in front of byte array (data[0]).
+    data.insert(0, (char)3);
+
+    //Insert size of(operation + payload) in front of byte array (data[0]).
+    int dataSize=data.size();
+    QByteArray dataSizeByte;
+    QDataStream ds2(&dataSizeByte, QIODevice::WriteOnly);
+    ds2 << dataSize;
+    data.insert(0, dataSizeByte);
+
+    //ui->label_signUpFinishg->setText("Sending sign up request...");
+
+    if(conn->getConnectionStatus()==1){
+        conn->send(data);
+
+        ui->label_signUpAccountErrMsg->setText("Sending sign up request, please wait...");
+        ui->label_signUpAccountErrMsg->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+        ui->label_signUpFinishg->setText("Sending sign up request, please wait...");
+
+    }
+
+    QCoreApplication::processEvents();
+
+    data.clear();
+}
+
+
+void SignIn::receiveSignUpResult(QByteArray data){
+
+
+    QString decryptResult="1";
+
+    if(data.length() < 50){ //In case username not available.
+
+        QFile File_Result2("signUpResult.txt");
+        if(!File_Result2.open(QFile::WriteOnly | QFile::Text)){
             qDebug() << "Cound not open file for writing";
             abort();
         }
-        QTextStream out(&File_Payload);
-        out << data;
+        QTextStream ts2(&File_Result2);
+        ts2 << data.mid(5);
 
-        File_Payload.flush();
-        File_Payload.close();
+        File_Result2.flush();
+        File_Result2.close();
+    }
+    else{ //In case username available
+
+        //Decrypt Payload
+
+        //Save encrypted result to a file.
+        QFile File_Result("signUpResult.cipher");
+        if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "Cound not open file for writing";
+            abort();
+        }
+        QTextStream ts(&File_Result);
+        ts << data.mid(5);
+
+        File_Result.flush();
+        File_Result.close();
+
+        //Create output file.
+        QFile File_Result2("signUpResult.txt");
+        if(!File_Result2.open(QFile::WriteOnly | QFile::Text)){
+            qDebug() << "Cound not open file for writing";
+            abort();
+        }
+        QTextStream ts2(&File_Result2);
+        ts2 << "";
+
+        File_Result2.flush();
+        File_Result2.close();
 
 
-        gpgme_key_t servPubKey=encryption->getServerPubKey();
+        //Decrypt sign up result from server.
+        decryptResult=encryption->decryptVerify("signUpResult.cipher", "signUpResult.txt");
 
-        encryption->encryptSign(newUsersPrivateKey, servPubKey, "2.payload", "2payload.encrypted");
+    }
 
-        QFile File_EncryptedPayload("2payload.encrypted");
-        if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
+
+
+    if(decryptResult.mid(0,1)=="0"){
+        ui->label_signUpFinishg->setText("ERROR: Server signature not fully valid");
+
+        ui->pushButton_signUpAccountSignUp->setEnabled(true);
+    }
+    else{
+
+
+        //Read dectyped sign up result from text file.
+        QFile File_result("signUpResult.txt");
+        if(!File_result.open(QFile::ReadOnly | QFile::Text)){
             qDebug() << "Cound not open file for Read";
             abort();
         }
-        QTextStream in2(&File_EncryptedPayload);
-        QString payload;
-        payload=in2.readAll();
-        File_EncryptedPayload.close();
+        QTextStream in2(&File_result);
+        QString signUpReslut;
+        signUpReslut=in2.readAll();
+        File_result.close();
 
-        data.clear();
-        data.append(payload);
+        //Display sign up result.
+        ui->label_signUpFinishg->setText(signUpReslut);
 
-        // Insert operation in front of byte array (data[0]).
-        data.insert(0, (char)3);
+        /*
+        if(signUpReslut.mid(0,9)=="Username:"){
 
-        //Insert size of(operation + payload) in front of byte array (data[0]).
-        int dataSize=data.size();
-        QByteArray dataSizeByte;
-        QDataStream ds2(&dataSizeByte, QIODevice::WriteOnly);
-        ds2 << dataSize;
-        data.insert(0, dataSizeByte);
-
-        ui->label_signUpFinishg->setText("Sending sign up request...");
-
-        if(conn->getConnectionStatus()==1){
-            conn->send(data);
-        }
-
-        // Get sign up result message
-        data.clear();
-        data=conn->getRecentReceivedMsg();
-
-        QString decryptResult="1";
-
-        if(data.length() < 50){ //In case username not available.
-
-            QFile File_Result2("signUpResult.txt");
-            if(!File_Result2.open(QFile::WriteOnly | QFile::Text)){
-                qDebug() << "Cound not open file for writing";
-                abort();
-            }
-            QTextStream ts2(&File_Result2);
-            ts2 << data.mid(5);
-
-            File_Result2.flush();
-            File_Result2.close();
-        }
-        else{ //In case username available
-
-            //Decrypt Payload
-            QFile File_Result("signUpResult.cipher");
-            if(!File_Result.open(QFile::WriteOnly | QFile::Text)){
-                qDebug() << "Cound not open file for writing";
-                abort();
-            }
-            QTextStream ts(&File_Result);
-            ts << data.mid(5);
-
-            File_Result.flush();
-            File_Result.close();
-
-            QFile File_Result2("signUpResult.txt");
-            if(!File_Result2.open(QFile::WriteOnly | QFile::Text)){
-                qDebug() << "Cound not open file for writing";
-                abort();
-            }
-            QTextStream ts2(&File_Result2);
-            ts2 << "";
-
-            File_Result2.flush();
-            File_Result2.close();
-
-
-
-            //Decrypt sign up result from server.
-            decryptResult=encryption->decryptVerify("signUpResult.cipher", "signUpResult.txt");
+            encryption->deletePrivateKey(newUsersPrivateKey);
 
         }
+        */
 
+        qDebug() << signUpReslut;
 
+        //Enable use able tab after sign up.
+        ui->tabWidget_signUp->setTabEnabled(0, true);
+        ui->tabWidget_signUp->setTabEnabled(1, true);
+        ui->tabWidget_signUp->setTabEnabled(2, true);
 
-        if(decryptResult.mid(0,1)=="0"){
-            ui->label_signUpFinishg->setText("ERROR: Server signature not fully valid");
-        }
-        else{
+        //Clear sign up form.
+        ui->lineEdit_signUpAccountUsername->clear();
+        ui->lineEdit_signUpAccountPassphrase->clear();
+        ui->lineEdit_signUpAccountConfirmPassphrase->clear();
 
-
-            //Read dectyped sign up result from text file.
-            QFile File_result("signUpResult.txt");
-            if(!File_result.open(QFile::ReadOnly | QFile::Text)){
-                qDebug() << "Cound not open file for Read";
-                abort();
-            }
-            QTextStream in2(&File_result);
-            QString signUpReslut;
-            signUpReslut=in2.readAll();
-            File_result.close();
-
-            //Display sign up result.
-            ui->label_signUpFinishg->setText(signUpReslut);
-
-            /*
-            if(signUpReslut.mid(0,9)=="Username:"){
-
-                encryption->deletePrivateKey(newUsersPrivateKey);
-
-            }
-            */
-
-
-            qDebug() << signUpReslut;
-
-            //Enable use able tab after sign up.
-            ui->tabWidget_signUp->setTabEnabled(0, true);
-            ui->tabWidget_signUp->setTabEnabled(1, true);
-            ui->tabWidget_signUp->setTabEnabled(2, true);
-
-            //Clear sign up form.
-            ui->lineEdit_signUpAccountUsername->clear();
-            ui->lineEdit_signUpAccountPassphrase->clear();
-            ui->lineEdit_signUpAccountConfirmPassphrase->clear();
-
-        }
+        ui->pushButton_signUpAccountSignUp->setEnabled(true);
 
     }
-    ui->pushButton_signUpAccountSignUp->setText("Sign Up");
-
 
 }
 
@@ -1226,12 +1292,16 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
             if(selectedServer=="*New Server"){
                 //Display connection satatus.
                 qDebug()<<newIP<<", Port "<<newPort;
-                ui->label_signIn_serverErr->setText("Waiting for connection");
+                ui->label_signIn_serverErr->setText("Waiting for connection...");
                 ui->label_signIn_serverErr->setStyleSheet("color:#333333");
                 ui->label_signIn_serverErr->show();
 
+                QCoreApplication::processEvents();
+
                 //Send connection request to new server.
                 conn->connected(newIP, newPort);
+
+                QCoreApplication::processEvents();
 
                 //In case cannot connect to new server.
                 if(conn->getConnectionStatus()==-1){

@@ -126,7 +126,7 @@ void Connection::send(QByteArray data){
        qDebug() << " OP 9 SENDED";
     }
 
-    if(op==3 || op==5 || op==7 || op==9 || op==11){
+    if( op==9 || op==11){
         socket->waitForReadyRead();
     }
 
@@ -322,7 +322,16 @@ void Connection::processReceivedData(){
                     }
                 }
             }
-            else if(op==4 || op==6 || op==8 || op==10 || op==12){
+            else if(op==4){
+                emit receiveSignUpResult(data);
+            }
+            else if(op==6){
+                emit receiveSignInVerify(data);
+            }
+            else if(op==8){
+                emit receiveSignInResult(data);
+            }
+            else if(op==10 || op==12){
                 recentReceivedMsg=data;
             }
             else if(op==13){
@@ -335,6 +344,9 @@ void Connection::processReceivedData(){
                 emit receiveNewMessage(data);
             }
             else{
+                qDebug() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
+                qDebug() << "!!!!!!!!!! RECEIVE UNKNOWN OPERATION !!!!!!!!!!!";
+                qDebug() << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
             }
         }
     }

@@ -36,8 +36,17 @@ public:
     QString getActiveUser();
     ~SignIn();
 
+signals:
+    void receiveAddFriendrequest(QByteArray data);
+    void generateKeyPairSig(QStringList account);
+
+
 public slots:
     void disconnectFromServer();
+    void receiveSignInVerify(QByteArray data);
+    void receiveSignInResult(QByteArray data);
+    void receiveSignUpResult(QByteArray data);
+    void generateKeyPair(QStringList account);
 
 private slots:
 
