@@ -48,6 +48,7 @@ public slots:
     void receiveSignUpResult(QByteArray data);
     void generateKeyPair(QStringList account);
 
+
 private slots:
 
     void on_lineEdit_SignUpServerIP_textChanged(const QString &arg1);
@@ -76,6 +77,8 @@ private slots:
 
 
     void on_comboBox_signUp_selectServer_currentTextChanged(const QString &arg1);
+
+    void on_tabWidget_signIn_currentChanged(int index);
 
 private:
     Ui::SignIn *ui;

@@ -62,6 +62,7 @@ public slots:
     void receiveNewPublicKey(QByteArray data);
     void receiveNewMessage(QByteArray data);
     void disconnectFromServer();
+    void clearConversationSpace();
 
 private slots:
     QStringList ReadConversation(QString Filename);

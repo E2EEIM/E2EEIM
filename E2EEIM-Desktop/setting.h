@@ -40,8 +40,12 @@ class Setting : public QDialog
     Q_OBJECT
 
 public:
-    explicit Setting(QString activeUser, QWidget *parent = 0);
+    explicit Setting(QString activeUser, QString currentMenu, QString currentConversation, QWidget *parent = 0);
     ~Setting();
+
+    QString getCurrentConversationStatus();
+
+signals:
 
 private slots:
     QStringList readContact(QString Filename);
@@ -61,6 +65,8 @@ private:
     QStringList deleteList;
     QString deleteInFile;
     QString currentTab;
+    QString currentConversation;
+    QString currentConversationStatus;
 };
 
 #endif // SETTING_H

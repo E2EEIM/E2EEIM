@@ -1443,3 +1443,35 @@ void SignIn::disconnectFromServer(){
     ui->tabWidget_signIn->setCurrentIndex(0);
     on_tabWidget_mainTab_currentChanged(0);
 }
+
+void SignIn::on_tabWidget_signIn_currentChanged(int index)
+{
+    if(index==1){
+
+        QStringList allAccounts=encryption->getE2eeimAccounts();
+
+        //Reload useable account.
+        if(!allAccounts.isEmpty()){
+            ui->comboBox_signIn_SelectAccount->clear();
+            accountNameList.clear();
+            accountKeyList.clear();
+
+            int i=0;
+            foreach (QString account, allAccounts) {
+                if(i%2==0){
+                    accountNameList.append(account);
+                    ui->comboBox_signIn_SelectAccount->addItem(account);
+                }
+                else{
+                    accountKeyList.append(account);
+                }
+
+                i++;
+            }
+
+            //Get selected account.
+            selectedAccount=ui->comboBox_signIn_SelectAccount->currentText();
+            on_comboBox_signIn_SelectAccount_currentIndexChanged(selectedAccount);
+        }
+    }
+}

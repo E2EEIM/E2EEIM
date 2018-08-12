@@ -63,13 +63,16 @@ QStringList Setting::readContact(QString Filename){
 
 
 
-Setting::Setting(QString activeUser, QWidget *parent) :
+Setting::Setting(QString activeUser, QString currentMenu, QString currentConversation, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Setting)
 {
     ui->setupUi(this);
     ActiveUser=activeUser;
     ui->label->setText(activeUser);
+
+    this->currentConversation=currentConversation;
+    currentConversationStatus="notDelete";
 
     ui->pushButton_Delete->setEnabled(false);
     ui->pushButton_Leave->setEnabled(false);
@@ -129,21 +132,31 @@ Setting::Setting(QString activeUser, QWidget *parent) :
 
     currentTab="Account";
 
+    if(currentMenu=="conversation"){
+        ui->tabWidget->setCurrentIndex(1);
+    }
+    else if(currentMenu=="contact"){
+        ui->tabWidget->setCurrentIndex(2);
+    }
+    else if(currentMenu=="group"){
+        ui->tabWidget->setCurrentIndex(3);
+    }
+
 }
 void Setting::tabSelected(){
     if(ui->tabWidget->currentIndex()==0){
         currentTab="Account";
 
     }
-    if(ui->tabWidget->currentIndex()==1){
+    else if(ui->tabWidget->currentIndex()==1){
         currentTab="Conversation";
 
     }
-    if(ui->tabWidget->currentIndex()==2){
+    else if(ui->tabWidget->currentIndex()==2){
         currentTab="Contact";
 
     }
-    if(ui->tabWidget->currentIndex()==3){
+    else if(ui->tabWidget->currentIndex()==3){
         currentTab="Group";
 
     }
@@ -241,6 +254,11 @@ void Setting::on_pushButton_Leave_clicked()
     ui->pushButton_Leave->setEnabled(false);
 }
 
+QString Setting::getCurrentConversationStatus(){
+
+    QString status=currentConversationStatus;
+    return status;
+}
 
 void Setting::deleteItem(QStringList deleteList, QString fileName){
     QStringList remain;
@@ -251,6 +269,11 @@ void Setting::deleteItem(QStringList deleteList, QString fileName){
             qDebug() << item;
             QFile file(fileName+"/"+item);
             file.remove();
+
+            if(item==currentConversation){
+                currentConversationStatus="deleted";
+
+            }
         }
         ui->listWidget_ConversationList->clear();
         /* Load conversation list*/
@@ -391,5 +414,5 @@ void Setting::deleteItem(QStringList deleteList, QString fileName){
 
 void Setting::on_pushButton_clicked()
 {
-    this->close();
+    Setting::accept();
 }

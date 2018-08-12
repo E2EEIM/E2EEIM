@@ -207,6 +207,9 @@ void MainWindow::initUserDataPath(){
     // Set this(this function) initialization status.
     finishInitUserDataStatus=true;
 
+    ui->listWidget_Conversation->setWordWrap(true);
+    ui->listWidget_Conversation->setTextElideMode(Qt::ElideNone);
+
     // call on_pushButton_Converation_clicked(),
     // usuall the function will call when active-user click
     // Coveration Menu to show or refresh conversation list
@@ -712,11 +715,14 @@ void MainWindow::on_pushButton_AddList_clicked()
 void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
 
     if(removeNotiFlag==false){  //In case user click notification item.
-        conversationWith=item->text(); //Set conversationWith variable as text of the item.
+
+            conversationWith=item->text(); //Set conversationWith variable as text of the item.
     }
     else{
         removeNotiFlag=false;
     }
+
+    qDebug() << "CW:" << conversationWith;
 
     // display conversation name as text of item.
     ui->label_ConversationWith->setText(conversationWith);
@@ -778,6 +784,21 @@ void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         ui->frame_3->hide();
         ui->listWidget_Conversation->show();
         ui->frame->show();
+
+        QString Filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
+        QFile File(Filename);
+        if(!File.exists()){
+            if(!File.open(QFile::WriteOnly | QFile::Text)){
+                qDebug() << "could not open "+ Filename +" file for writing";
+                abort();
+            }
+            QTextStream out(&File);
+            out.setCodec("UTF-8");
+            out << "";
+
+            File.flush();
+            File.close();
+        }
 
         /*Load conversation*/
         QString filename="./userData/"+ACTIVE_USR+"/conversation/"+conversationWith;
@@ -1100,16 +1121,40 @@ void MainWindow::sendToPerson(QString recipientName, QString message){
 //User select text menu event.
 void MainWindow::textMenuChange(){
     QString selected = ui->comboBox->currentText(); //Get the selected menu.
-    //ui->comboBox->setCurrentIndex(0);
+
     if(selected=="Quit"){ //In case user selecte "Quit" in text menu.
         cleanClose(); //Call cleanClose() function to quit client application in proper way.
     }
     if(selected=="Setting"){ //In case user selecte "Setting" in text menu.
-        Setting settingWindow(ACTIVE_USR); //Create setting window.
+        Setting settingWindow(ACTIVE_USR, currentMenu, conversationWith); //Create setting window.
+
         settingWindow.setWindowTitle("Setting"); //Set the window title.
         settingWindow.setModal(false); //No need modal.
-        settingWindow.exec(); //Open the setting window.
-        on_pushButton_Conversation_clicked(); //Refresh client appliation.
+
+
+        QString currentConversationStatus="unknown";
+        if(settingWindow.exec() == QDialog::Accepted)  //Open the setting window.
+        {
+            currentConversationStatus = settingWindow.getCurrentConversationStatus(); //get currentConversationStatus
+        }
+
+        qDebug() << currentConversationStatus;
+
+        if(currentConversationStatus=="deleted"){
+            clearConversationSpace();
+        }
+
+        //Refresh mainWindow.
+        if(currentMenu=="conversation"){
+            on_pushButton_Conversation_clicked();
+        }
+        else if(currentMenu=="contact"){
+            on_pushButton_Contact_clicked();
+        }
+        else if(currentMenu=="group"){
+            on_pushButton_Group_clicked();
+        }
+
     }
     if(selected=="Sign Out"){ //In case user select "Sign Out" in text menu.
         disconnectFromServer(); //Call disconnectFormServer() to disconnect from server and not receive
@@ -1117,6 +1162,16 @@ void MainWindow::textMenuChange(){
 
     }
     ui->comboBox->setCurrentIndex(0); //Set selected selected item in text menu to default value.
+}
+
+//Hide deleted conversation.
+void MainWindow::clearConversationSpace(){
+
+    conversationWith="";
+    ui->label_ConversationWith->setText("");
+    ui->listWidget_Conversation->clear();
+    ui->frame->hide();
+
 }
 
 // Sign out function.
@@ -1142,6 +1197,9 @@ void MainWindow::signOut(){
 
     //Set active-user to default.
     ACTIVE_USR = "";
+
+    //Set conversationWith to default.
+    conversationWith="";
 
     //Set init user data status to default.
     finishInitUserDataStatus=false;
@@ -2099,18 +2157,30 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
         this->removeFromListFile(Filename, "!"+conversationWith);
         this->removeFromListFile(Filename, "@"+conversationWith);
 
-        //Append new friend username to contact list.
-        QFile File(Filename);
-        if(!File.open(QFile::Append | QFile::Text)){
-              qDebug() << "Could not open file " +Filename+ " for writing";
-              exit(1);
-        }
-        QTextStream out2(&File);
-        out2.setCodec("UTF-8");
-        out2 << conversationWith+"\n";
+        QString contactFile = "./userData/"+ACTIVE_USR+"/contactList.txt";
+        QStringList contactList=readTextLine(contactFile);
 
-        File.flush();
-        File.close();
+        bool isDuplicate=false;
+        foreach (QString item, contactList) {
+            if(item==conversationWith){
+                isDuplicate=true;
+            }
+        }
+
+        if(isDuplicate==false){
+            //Append new friend username to contact list.
+            QFile File(Filename);
+            if(!File.open(QFile::Append | QFile::Text)){
+                  qDebug() << "Could not open file " +Filename+ " for writing";
+                  exit(1);
+            }
+            QTextStream out2(&File);
+            out2.setCodec("UTF-8");
+            out2 << conversationWith+"\n";
+
+            File.flush();
+            File.close();
+        }
 
         //Refresh contact list.
         on_pushButton_Contact_clicked();
@@ -2147,7 +2217,6 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
             }
 
             ui->listWidget_Conversation->scrollToBottom(); //Scroll down to bottom to show recent message.
-
         }
 
     }
