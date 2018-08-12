@@ -230,6 +230,7 @@ void Connection::readyRead(){
 
                     }
                     else{
+                        qDebug() << "RIGHT 5 :" << item.right(5);
                         qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------x";
                         splitPacket=true;
                         receiveBuffer.clear();
@@ -284,6 +285,20 @@ void Connection::noMoreData(){
 void Connection::processReceivedData(){
 
     if(!receivedData.isEmpty()){
+
+        QByteArray firstInQueue=receivedData.first();
+        int firstOp = QString(firstInQueue.mid(4,1)).data()->unicode();
+
+        qDebug() << "firstOp:" << firstOp;
+        qDebug() << "signInFlag:" << signInFlag;
+
+        // Do not process Op=15 and Op=18 when sign-in still not finish.
+        if(firstOp >= 15 && signInFlag==true){
+            qDebug() << "RETURN 15 true";
+            return;
+        }
+
+
         while(!receivedData.isEmpty()){
             QByteArray data=receivedData.dequeue();
             int op=QString(data.mid(4,1)).data()->unicode();

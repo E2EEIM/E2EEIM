@@ -335,6 +335,9 @@ void SignIn::receiveSignInVerify(QByteArray data){
             ui->label_signIn_keyFpr->setStyleSheet("color:#333333");
             ui->label_signIn_keyFpr->setText("Status: Verifying account...");
 
+            //Set Sign-in flag to in form connection it's still under sign-in process.
+            conn->signInFlag=true;
+
         }
     }
 
@@ -411,9 +414,6 @@ void SignIn::receiveSignInResult(QByteArray data){
 
             //Set account public key as active-user's public key in encryption class.
             encryption->setUserPubKey(publicKey);
-
-            //Set sign in sucess flag to in connection class.
-            conn->signInFlag=true;
 
             //Close signIn window to show mainWindow.
             SignIn::accept();

@@ -1175,6 +1175,9 @@ void MainWindow::signOut(){
         this->setWindowTitle("E2EEIM-"+ACTIVE_USR); // Show active-user's username in window title.
         this->show();
 
+        conn->signInFlag=false;
+        conn->noMoreData();
+
     }
     else{ //In case user not select any account to sign in.
         this->setWindowTitle("E2EEIM"); //Set mainWindow title to default.
