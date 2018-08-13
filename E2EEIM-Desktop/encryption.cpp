@@ -463,6 +463,7 @@ QString Encryption::decryptVerify(const char *inputFileName,
     if(decryptResult->wrong_key_usage){
         detectError(err);
     }
+    detectError(err);
 
     qDebug() << "---------------------------dv_4";
 
@@ -510,8 +511,15 @@ QString Encryption::decryptVerify(const char *inputFileName,
 
     //QString fpr=QString(sig->key->fpr);
     QString fpr;
-    char* fingerprint=sig->fpr;
 
+    char* fingerprint;
+    while(sig->fpr==NULL){
+        qDebug() << "NULL fpr";
+        qDebug() << sig->key->fpr;
+        qDebug() << sig->key->uids->name;
+    }
+
+    fingerprint=sig->fpr;
 
     qDebug() << "---------------------------dv_9";
 

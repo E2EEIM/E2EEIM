@@ -714,6 +714,10 @@ void MainWindow::on_pushButton_AddList_clicked()
 /*When user click item on contact list(listWidget_Contact).*/
 void MainWindow::listWidget_Contact_ItemClicked(QListWidgetItem* item){
 
+    qDebug() << "removeNotiFlag:" << removeNotiFlag;
+
+    conversationWith=item->text();
+
     if(removeNotiFlag==false){  //In case user click notification item.
 
             conversationWith=item->text(); //Set conversationWith variable as text of the item.

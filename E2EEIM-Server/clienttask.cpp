@@ -1,6 +1,7 @@
 #include "clienttask.h"
 #include "encryption.h"
 #include <QFile>
+#include <QTime>
 
 ClientTask::ClientTask(qintptr socketDescriptor,QQueue<QByteArray> *queue, QList<QString> *usernameList,
                        QList<QString> *userKeyList, QList<QString> *loginUser,
@@ -234,7 +235,7 @@ void ClientTask::task(){
     while(waitingTaskUser->indexOf(activeUser)!=(-1)){ //Looking for data the need to send to the client.
 
         //Slow thread to let client process data from server.
-        emit slowDown();
+        //emit slowDown();
 
         //Get message that need to send to the client.
         task=waitingTaskWork->at(waitingTaskUser->indexOf(activeUser));
@@ -493,6 +494,7 @@ void ClientTask::dataFilter(QByteArray data){
             printKeys(userKey);
 
             //random number.
+            qsrand(QTime::currentTime().msec());
             int rNum = qrand();
             QByteArray qb;
             qb.setNum(rNum);
