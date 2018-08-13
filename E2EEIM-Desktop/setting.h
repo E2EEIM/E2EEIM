@@ -49,7 +49,10 @@ signals:
 
 private slots:
     QStringList readContact(QString Filename);
+
+    void listWidget_Conversation_ItemClicked(QListWidgetItem* item);
     void listWidget_Contact_ItemClicked(QListWidgetItem* item);
+    void listWidget_Group_ItemClicked(QListWidgetItem* item);
     void deleteItem(QStringList deleteList, QString fileName);
     void on_pushButton_Delete_clicked();
     void tabSelected();

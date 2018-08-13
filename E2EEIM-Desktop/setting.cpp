@@ -96,7 +96,7 @@ Setting::Setting(QString activeUser, QString currentMenu, QString currentConvers
     foreach(QString GROUP, groupList){
         QListWidgetItem *group = new QListWidgetItem;
         group->setIcon(QIcon(":/img/icons/person.png"));
-        group->setText("GROUP~~"+GROUP);
+        group->setText(GROUP);
         ui->listWidget_GroupList->addItem(group);
     }
 
@@ -123,11 +123,11 @@ Setting::Setting(QString activeUser, QString currentMenu, QString currentConvers
 
     /*Connect WidgetListItem on click event*/
     connect(ui->listWidget_ConversationList, SIGNAL(itemClicked(QListWidgetItem*)),
-                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
+                this, SLOT(listWidget_Conversation_ItemClicked(QListWidgetItem*)));
     connect(ui->listWidget_ContactList, SIGNAL(itemClicked(QListWidgetItem*)),
                 this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
     connect(ui->listWidget_GroupList, SIGNAL(itemClicked(QListWidgetItem*)),
-                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)));
+                this, SLOT(listWidget_Group_ItemClicked(QListWidgetItem*)));
     connect(ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(tabSelected()));
 
     currentTab="Account";
@@ -143,6 +143,11 @@ Setting::Setting(QString activeUser, QString currentMenu, QString currentConvers
     }
 
 }
+Setting::~Setting()
+{
+    delete ui;
+}
+
 void Setting::tabSelected(){
     if(ui->tabWidget->currentIndex()==0){
         currentTab="Account";
@@ -162,17 +167,10 @@ void Setting::tabSelected(){
     }
 }
 
-void Setting::listWidget_Contact_ItemClicked(QListWidgetItem* item){
-
-    QString selectedItem = item->text();
+void Setting::listWidget_Conversation_ItemClicked(QListWidgetItem* item){
 
     QStringList selectedConversation;
-    QStringList selectedContact;
-    QStringList selectedGroup;
-
     QList <QListWidgetItem*> SELECTED_CONVERSATION = ui->listWidget_ConversationList->selectedItems();
-    QList <QListWidgetItem*> SELECTED_CONTACT = ui->listWidget_ContactList->selectedItems();
-    QList <QListWidgetItem*> SELECTED_GROUP = ui->listWidget_GroupList->selectedItems();
 
     if(SELECTED_CONVERSATION.isEmpty()==true){
         ui->pushButton_DeleteConversation->setEnabled(false);
@@ -180,6 +178,20 @@ void Setting::listWidget_Contact_ItemClicked(QListWidgetItem* item){
     else{
         ui->pushButton_DeleteConversation->setEnabled(true);
     }
+
+    if(currentTab=="Conversation"){
+        foreach( QListWidgetItem *conversation, SELECTED_CONVERSATION){
+            selectedConversation.append(conversation->text());
+        }
+        deleteList=selectedConversation;
+        deleteInFile="userData/"+ActiveUser+"/conversation";
+    }
+}
+
+void Setting::listWidget_Contact_ItemClicked(QListWidgetItem* item){
+
+    QStringList selectedContact;
+    QList <QListWidgetItem*> SELECTED_CONTACT = ui->listWidget_ContactList->selectedItems();
 
     if(SELECTED_CONTACT.isEmpty()==true){
         ui->pushButton_Delete->setEnabled(false);
@@ -189,6 +201,21 @@ void Setting::listWidget_Contact_ItemClicked(QListWidgetItem* item){
 
     }
 
+    if(currentTab=="Contact"){
+        foreach( QListWidgetItem *contact, SELECTED_CONTACT){
+            selectedContact.append(contact->text());
+        }
+        deleteList=selectedContact;
+        deleteInFile="userData/"+ActiveUser+"/contactList.txt";
+    }
+}
+void Setting::listWidget_Group_ItemClicked(QListWidgetItem* item){
+
+    qDebug() << "group_itemClicked()";
+
+    QStringList selectedGroup;
+    QList <QListWidgetItem*> SELECTED_GROUP = ui->listWidget_GroupList->selectedItems();
+
     if(SELECTED_GROUP.isEmpty()==true){
         ui->pushButton_Leave->setEnabled(false);
     }
@@ -197,27 +224,8 @@ void Setting::listWidget_Contact_ItemClicked(QListWidgetItem* item){
 
     }
 
-    if(currentTab=="Conversation"){
-        selectedContact.empty();
+    if(currentTab=="Group"){
         selectedGroup.empty();
-        foreach( QListWidgetItem *conversation, SELECTED_CONVERSATION){
-            selectedConversation.append(conversation->text());
-        }
-        deleteList=selectedConversation;
-        deleteInFile="userData/"+ActiveUser+"/conversation";
-    }
-    else if(currentTab=="Contact"){
-        selectedGroup.empty();
-        selectedConversation.empty();
-        foreach( QListWidgetItem *contact, SELECTED_CONTACT){
-            selectedContact.append(contact->text());
-        }
-        deleteList=selectedContact;
-        deleteInFile="userData/"+ActiveUser+"/contactList.txt";
-    }
-    else if(currentTab=="Group"){
-        selectedContact.empty();
-        selectedConversation.empty();
         foreach( QListWidgetItem *group, SELECTED_GROUP){
             selectedGroup.append(group->text());
         }
@@ -225,11 +233,6 @@ void Setting::listWidget_Contact_ItemClicked(QListWidgetItem* item){
         deleteInFile="userData/"+ActiveUser+"/groupList.txt";
 
     }
-}
-
-Setting::~Setting()
-{
-    delete ui;
 }
 
 void Setting::on_pushButton_DeleteConversation_clicked()
@@ -249,6 +252,7 @@ void Setting::on_pushButton_Delete_clicked()
 
 void Setting::on_pushButton_Leave_clicked()
 {
+    qDebug() << "Leave_clicked()";
     if(deleteList.isEmpty()==false)
         deleteItem(deleteList, deleteInFile);
     ui->pushButton_Leave->setEnabled(false);
@@ -318,6 +322,7 @@ void Setting::deleteItem(QStringList deleteList, QString fileName){
         while( !in.atEnd())
         {
              if(fileName=="userData/"+ActiveUser+"/groupList.txt"){
+                 qDebug() << "delete group!!";
                  line=in.readLine();
                  if(line.left(2)!="~~"){
                     if(foundTargetGroup==false){
@@ -327,7 +332,7 @@ void Setting::deleteItem(QStringList deleteList, QString fileName){
                  }
                  else{
                      foreach(QString item, deleteList){
-                         if(line.split("~~").at(1) == item.split("~~").last()){
+                         if(line.split("~~").at(1) == item){
                              foundTargetGroup=true;
                          }
                          else{
@@ -388,7 +393,7 @@ void Setting::deleteItem(QStringList deleteList, QString fileName){
            foreach(QString GROUP, groupList){
                 QListWidgetItem *group = new QListWidgetItem;
                 group->setIcon(QIcon(":/img/icons/person.png"));
-                group->setText("GROUP~~"+GROUP);
+                group->setText(GROUP);
                 ui->listWidget_GroupList->addItem(group);
             }
 
