@@ -165,7 +165,7 @@ void Connection::readyRead(){
 
         if(sizeOfPayloadAndOp==dataSize){
 
-            qDebug() << "+++++++++++BUFFER HAVE IT ALL SEND DTATA TO PROCESS+++++++++++++";
+            qDebug() << "+++++++++++BUFFER HAVE IT ALL, START TO PROCESS DATA+++++++++++++";
 
             QByteArray allData=receiveBuffer;
 
@@ -229,12 +229,52 @@ void Connection::readyRead(){
                         }
 
                     }
+                    else if(item.right(5)==""){
+                        qDebug() << "RIGHT 5 :" << item.right(5);
+                        qDebug() << "+++++++++++BUFFER HAVE IT ALL, THIS PART ARE NOTHING+++++++++++++";
+                    }
                     else{
                         qDebug() << "RIGHT 5 :" << item.right(5);
-                        qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------x";
+                        qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA------------------x";
                         splitPacket=true;
                         receiveBuffer.clear();
                         receiveBuffer.append(item);
+
+                        unsigned int dataSize;
+                        QDataStream ds(receiveBuffer.mid(0,4));
+                        ds >> dataSize;
+
+                        //Get operation protocol form data.
+                        unsigned int sizeOfPayloadAndOp=receiveBuffer.mid(4).size();
+
+                        if(sizeOfPayloadAndOp==dataSize){
+
+                            qDebug() << "+++++++++++BUFFER HAVE IT ALL, START TO PROCESS DATA+++++++++++++";
+
+                            QByteArray allData=receiveBuffer;
+
+                            splitPacket=false;
+                            receiveBuffer.clear();
+
+                            if(signInFlag==true){
+                                waitForRecive->start(5000);
+                                if(QString(allData.mid(4,1)).data()->unicode() < 15){
+                                    receivedData.enqueue(allData);
+                            qDebug() << "******************** ADD TO QUEUE **";
+                                    emit dataWaiting();
+                                }
+                                else{
+                            qDebug() << "******************** ADD TO QUEUE **";
+                                    receivedData.enqueue(allData);
+                                }
+                            }
+                            else{
+                                receivedData.enqueue(allData);
+                        qDebug() << "******************** ADD TO QUEUE **";
+                                emit dataWaiting();
+                            }
+
+                        }
                     }
                 }
             }

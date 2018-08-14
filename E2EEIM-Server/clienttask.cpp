@@ -180,6 +180,8 @@ void ClientTask::readyRead(){
     //Read data from socket.
     QByteArray data(socket->readAll());
 
+    qDebug() << "readyRead()" << data;
+
     //Get data size from data.
     unsigned int dataSize;
     QDataStream ds(data.mid(0,4));
@@ -203,7 +205,7 @@ void ClientTask::readyRead(){
 
         if(sizeOfPayloadAndOp==dataSize){
 
-            qDebug() << "+++++++++++BUFFER HAVE IT ALL SEND DTATA TO PROCESS+++++++++++++";
+            qDebug() << "+++++++++++BUFFER HAVE IT ALL, START TO PROCESS DATA+++++++++++++";
 
             QByteArray allData=receiveBuffer;
 
@@ -211,6 +213,65 @@ void ClientTask::readyRead(){
             receiveBuffer.clear();
 
             dataFilter(allData);
+        }
+        else if(sizeOfPayloadAndOp > dataSize){
+
+            QString msg=QString::fromStdString(receiveBuffer.toStdString());
+
+            if(msg.split("END PGP MESSAGE-----\n").count() > 1){
+                for(int i=0; i < msg.split("END PGP MESSAGE-----\n").count(); i++){
+                    QString item=msg.split("END PGP MESSAGE-----\n").at(i);
+                    if(item.right(5)=="-----"){
+
+                        qDebug() << "=============== Read multiple packet from socket case !!";
+
+                        item=item+"END PGP MESSAGE-----\n";
+
+                        QByteArray data;
+                        data.append(item.toLatin1());
+
+                        splitPacket=false;
+                        receiveBuffer.clear();
+                        dataFilter(data);
+                    }
+                    else if(item.right(5)==""){
+                        qDebug() << "RIGHT 5 :" << item.right(5);
+                        qDebug() << "+++++++++++BUFFER HAVE IT ALL, THIS PART ARE NOTHING+++++++++++++";
+                    }
+                    else{
+                        qDebug() << "RIGHT 5 :" << item.right(5);
+                        qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------x";
+                        splitPacket=true;
+                        receiveBuffer.clear();
+                        receiveBuffer.append(item);
+
+                        unsigned int dataSize;
+                        QDataStream ds(receiveBuffer.mid(0,4));
+                        ds >> dataSize;
+
+                        //Get operation protocol form data.
+                        unsigned int sizeOfPayloadAndOp=receiveBuffer.mid(4).size();
+
+
+                        if(sizeOfPayloadAndOp==dataSize){
+
+                            qDebug() << "+++++++++++BUFFER HAVE IT ALL, START TO PROCESS DATA+++++++++++++";
+
+                            QByteArray allData=receiveBuffer;
+
+                            splitPacket=false;
+                            receiveBuffer.clear();
+
+                            dataFilter(allData);
+                        }
+                    }
+                }
+            }
+            else{
+                qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
+
+            }
+
         }
         else{
             qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
@@ -235,7 +296,7 @@ void ClientTask::task(){
     while(waitingTaskUser->indexOf(activeUser)!=(-1)){ //Looking for data the need to send to the client.
 
         //Slow thread to let client process data from server.
-        //emit slowDown();
+        emit slowDown();
 
         //Get message that need to send to the client.
         task=waitingTaskWork->at(waitingTaskUser->indexOf(activeUser));
