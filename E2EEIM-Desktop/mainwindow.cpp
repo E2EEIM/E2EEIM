@@ -1035,7 +1035,7 @@ void MainWindow::sendToPerson(QString recipientName, QString message){
         cipherFile.close();
     }
 
-    QCoreApplication::processEvents();
+     
     //Encrypt the message for recipient.
     encryption->encryptSign(userPriKey, recipientKey, inputFileName, outPutFileName);
 
@@ -1089,7 +1089,7 @@ void MainWindow::sendToPerson(QString recipientName, QString message){
     QByteArray qb3=Filename.toLatin1();
     outPutFileName=qb3.data();
 
-    QCoreApplication::processEvents();
+     
     //Encrypt the message for server.
     encryption->encryptSign(userPriKey, servKey, inputFileName, outPutFileName);
 
@@ -1316,7 +1316,7 @@ void MainWindow::receiveAddFriendRequest(QByteArray data){
     File_Result.flush();
     File_Result.close();
 
-    QCoreApplication::processEvents();
+     
     //Decrypt received data package from text file.
     QString decryptResult=encryption->decryptVerify("temp.cipher", "temp.txt");
 
@@ -1423,7 +1423,7 @@ void MainWindow::receiveNewPublicKey(QByteArray data){
     File_Result.flush();
     File_Result.close();
 
-    QCoreApplication::processEvents();
+     
     //Decrypt data package from text file.
     QString decryptResult=encryption->decryptVerify("temp.cipher", "temp.txt");
 
@@ -1621,7 +1621,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
     QByteArray qb3=Filename.toLatin1();
     const char *outPutFileName=qb3.data();
 
-    QCoreApplication::processEvents();
+     
     //Decrypt received message.
     QString decryptResult=encryption->decryptVerify(inputFileName, outPutFileName);
 
@@ -1670,7 +1670,7 @@ void MainWindow::receiveNewMessage(QByteArray data){
         const char *outPutFileName=qb3.data();
 
 
-        QCoreApplication::processEvents();
+         
         //Decrypt cipher from sender.
         QString decryptResult=encryption->decryptVerify(inputFileName, outPutFileName);
 
@@ -2255,7 +2255,7 @@ void MainWindow::on_pushButton_addFriend_accept_clicked()
 
         encryption->printKeys(userPriKey);
 
-        QCoreApplication::processEvents();
+         
         //Encrypt payload before send to server.
         encryption->encryptSign(userPriKey, servKey, "addFriendConfirm.keyword", "addFriendConfirm.cipher");
 
