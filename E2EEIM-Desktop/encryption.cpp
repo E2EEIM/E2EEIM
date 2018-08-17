@@ -450,7 +450,7 @@ QString Encryption::decryptVerify(const char *inputFileName,
     err=gpgme_data_new(&out);
     detectError(err);
 
-    gpgme_op_decrypt_verify(ctx, in, out);
+    err=gpgme_op_decrypt_verify(ctx, in, out);
     detectError(err);
 
     decryptResult = gpgme_op_decrypt_result(ctx);
