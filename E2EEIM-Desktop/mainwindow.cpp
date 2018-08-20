@@ -866,7 +866,7 @@ void MainWindow::on_pushButton_SEND_clicked()
     QString conversationWith = ui->label_ConversationWith->text(); //Get recipient username
     QString msg = ui->plainTextEdit->toPlainText(); //Get message
 
-
+    sendTo="unknown";
     //Checking, if recipent is a group.
     QStringList groupList=readTextLine("./userData/"+ACTIVE_USR+"/groupList.txt");
     foreach(QString item, groupList){
@@ -880,6 +880,10 @@ void MainWindow::on_pushButton_SEND_clicked()
     QStringList contactList=readTextLine("./userData/"+ACTIVE_USR+"/contactList.txt");
     foreach(QString item, contactList){
         if(conversationWith==item && item != ""){
+            sendTo="person";
+            break;
+        }
+        else if("@"+conversationWith==item && item != ""){
             sendTo="person";
             break;
         }

@@ -486,15 +486,23 @@ QString Encryption::decryptVerify(const char *inputFileName,
     gpgme_data_release (out);
 
     gpgme_signature_t sig=verifyResult->signatures;
-    QString result;
-    QString fpr=QString(sig->fpr);
+    QString result=0;
 
-    if ((sig->summary & GPGME_SIGSUM_RED)){
-       result="0"+fpr;
+    if(verifyResult){
+
+        QString fpr=QString(sig->fpr);
+
+        if ((sig->summary & GPGME_SIGSUM_RED)){
+           result="0"+fpr;
+        }
+        else{
+           result="1"+fpr;
+
+        }
+        qDebug() << "VERIFY SUCESS!";
     }
     else{
-       result="1"+fpr;
-
+        qDebug() << "!!! verifyResult is null a pointer !!!";
     }
 
     return result;
