@@ -16,7 +16,8 @@ public:
                         QList<QString> *usernameList, QList<QString> *userKeyList,
                         QList<QString> *loginUser, QList<QString> *loginRanNum,
                         QList<QString> *waitingTaskUser, QList<QString> *waitingTaskWork,
-                        QList<QString> *addFriendRequestList, QObject *parent = nullptr);
+                        QList<QString> *addFriendRequestList, QString keyFpr,
+                        QObject *parent = nullptr);
 
     QTimer *timer;
 
@@ -47,6 +48,7 @@ private:
 
     QByteArray serverPubKey;
     QString activeUser;
+    QString serverKeyFpr;
 
     bool splitPacket;
     QByteArray receiveBuffer;

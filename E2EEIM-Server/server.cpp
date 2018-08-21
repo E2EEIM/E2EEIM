@@ -5,7 +5,8 @@
 Server::Server(QQueue<QByteArray> &msg, QList<QString> &usernameList,
                QList<QString> &userKeyList, QList<QString> &loginUser,
                QList<QString> &loginRanNum, QList<QString> &waitingTaskUser,
-               QList<QString> &waitingTaskWork, QList<QString> &addFriendRequestList)
+               QList<QString> &waitingTaskWork, QList<QString> &addFriendRequestList,
+               QString keyFpr, int port)
 {
     queue=&msg;
     this->usernameList=&usernameList;
@@ -15,17 +16,19 @@ Server::Server(QQueue<QByteArray> &msg, QList<QString> &usernameList,
     this->waitingTaskUser=&waitingTaskUser;
     this->waitingTaskWork=&waitingTaskWork;
     this->addFriendRequestList=&addFriendRequestList;
+    this->port=port;
+    this->keyFpr=keyFpr;
 
 }
 
 void Server::startServer(){
 
     //Listen on port 2222.
-    if(!this->listen(QHostAddress::Any, 2222)){
+    if(!this->listen(QHostAddress::Any, this->port)){
         qDebug() << "Could not start server";
     }
     else{
-        qDebug() << "Listening... on port 2222";
+        qDebug() << "Listening... on port " << port;
     }
 }
 
@@ -39,8 +42,11 @@ void Server::incomingConnection(qintptr socketDescriptor){
     ClientThread *clientThread=new ClientThread();
 
     //Cleate client taskWork for the client.
-    ClientTask *clientTask=new ClientTask(socketDescriptor, queue, usernameList, userKeyList,
-                                          loginUser, loginRanNum, waitingTaskUser, waitingTaskWork, addFriendRequestList);
+    ClientTask *clientTask=new ClientTask(socketDescriptor, queue,
+                                          usernameList, userKeyList,
+                                          loginUser, loginRanNum,
+                                          waitingTaskUser, waitingTaskWork,
+                                          addFriendRequestList, keyFpr);
 
     //Stop thread when user disconnect.
     connect(clientThread, SIGNAL(finished()), clientThread, SLOT(deleteLater()));

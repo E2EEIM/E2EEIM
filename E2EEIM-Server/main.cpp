@@ -45,8 +45,9 @@ QString serverKey(int argc){
 
             qDebug() << "\n\n-------------------------";
             qDebug() << "Select option below:\n";
-            qDebug() << "G for generate new key pair for server";
-            qDebug() << "E for use existing key pair in key ring";
+            qDebug() << "   G for generate new key pair for server.";
+            qDebug() << "   E for use existing key pair in key ring.";
+            qDebug() << "   Q for quit server application.";
 
             QTextStream qtin(stdin);
             //QString line = qtin.readLine();
@@ -244,6 +245,9 @@ QString serverKey(int argc){
                 }
 
             }
+            if(word=="Q" || word=="q"){
+                exit(0);
+            }
         }
     }
 
@@ -271,6 +275,7 @@ int serverPort(){
 
 }
 
+
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
@@ -284,27 +289,19 @@ int main(int argc, char *argv[])
     QList<QString> waitingTaskWork;
     QList<QString> addFriendRequestList;
 
-
-    qDebug() << "---------------";
-
-    int port=serverPort();
-
-    qDebug() << port;
+    qDebug() << "-------------------------";
 
     QString keyFpr=serverKey(argc);
-
-    qDebug() << "\n\nkeyFpr:" << keyFpr;
-
-    /*
+    int port=serverPort();
 
     //Create server.
-    Server server(msg, usernameList, userKeyList, loginUser, loginRanNum, waitingTaskUser, waitingTaskWork, addFriendRequestList);
+    Server server(msg, usernameList, userKeyList,
+                  loginUser, loginRanNum,
+                  waitingTaskUser, waitingTaskWork,
+                  addFriendRequestList, keyFpr, port);
 
     //Start server.
     server.startServer();
-
-    */
-
 
     // https://forum.qt.io/topic/86025/qt-get-external-ip-address-using-qnetworkreply/2
 
