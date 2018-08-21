@@ -44,7 +44,7 @@ QString serverKey(int argc){
 
 
             qDebug() << "\n\n-------------------------";
-            qDebug() << "Please select option below:\n";
+            qDebug() << "Select option below:\n";
             qDebug() << "G for generate new key pair for server";
             qDebug() << "E for use existing key pair in key ring";
 
@@ -73,53 +73,100 @@ QString serverKey(int argc){
 
                     err=gpgme_get_key(ctx, patt, &key, 1);
 
-                    qDebug() << "\nGetting private key...";
-
                     if(key){
                         err=gpgme_get_key(ctx, patt, &key, 0);
 
                         if(key){
                             fpr=QString(key->fpr);
+
+                            qDebug() << "============================";
                             printf("Key ID: %s\n", key->subkeys->keyid);
                             if(key->uids && key->uids->name)
                                 printf("Name: %s\n", key->uids->name);
                             if(key->uids && key->uids->email)
-                                printf("E-Mail: %s\n\n", key->uids->email);
+                                printf("E-Mail: %s\n", key->uids->email);
+                            qDebug() << "============================";
 
                             validUse=true;
                             break;
                         }
                         else{
-                            qDebug() << "\n\nPublic key not found!!";
+                            qDebug() << "\n\nPublic key not found!!\n\n";
 
                         }
                     }
 
                     else{
-                        qDebug() << "\n\nPrivate key not found!!";
+                        qDebug() << "\n\nPrivate key not found!!\n\n";
                     }
                 }
 
             }
             if(word=="G" || word=="g"){
 
-                QTextStream qtin(stdin);
-                //QString line = qtin.readLine();
-
-                printf("\nChoose name of the new key pair:");
-                QString name;
-                qtin >> name;
-
-                bool isNameValid=true;
-
-                for(int i=0; i<name.length(); i++){
-                    int dec=name.mid(i,1).data()->unicode();
-                    char ch=(char)dec;
-
-                }
-
                 QString keyname;
                 QString passphrase;
+
+                bool isNameValid=false;
+
+                //User choose key name
+                while(isNameValid==false){
+
+                    QTextStream qtin(stdin);
+                    //QString line = qtin.readLine();
+
+                    printf("\nChoose name of the new key pair:");
+                    QString name;
+                    qtin >> name;
+
+                    for(int i=0; i<name.length(); i++){ //key name validation;
+                        int dec=name.mid(i,1).data()->unicode();
+
+                        if((dec>64 && dec<91) ||
+                                (dec>96 && dec<123)){
+                            isNameValid=true;
+                            continue;
+                        }
+                        else{
+                            qDebug() << "\nNew key name only letters(a-z, A-Z) are allowed!\n";
+                            isNameValid=false;
+                            break;
+                        }
+                    }
+
+                    if(isNameValid==true){
+                        keyname=name;
+                    }
+                }
+
+                //User enter passphrase
+                bool isPassphraseMatch=false;
+                while(isPassphraseMatch==false){
+
+                    QTextStream qtin(stdin);
+                    //QString line = qtin.readLine();
+
+                    printf("\nChoose key pair passphrase (password):");
+                    QString pass;
+                    qtin >> pass;
+
+                    QTextStream qtin2(stdin);
+                    //QString line = qtin.readLine();
+
+                    printf("\nConfirm key pair passphrase (password):");
+                    QString conf;
+                    qtin2 >> conf;
+
+                    if(conf==pass){
+                        passphrase=pass;
+                        isPassphraseMatch=true;
+                        break;
+                    }
+                    else{
+                        qDebug() << "\nPassphrase does not match the confirm passphrase!\n";
+                    }
+                }
+
 
                 QString keyParms="<GnupgKeyParms format=\"internal\">\n"
                                  "Key-Type: RSA\n"
@@ -133,10 +180,95 @@ QString serverKey(int argc){
                                  "Passphrase: "+passphrase+"\n"
                                  "</GnupgKeyParms>\n";
 
+
+                QByteArray byteParms = keyParms.toLatin1();
+                const char *parms = byteParms.data();
+
+                qDebug() << "\n\nKey pair generating...";
+
+                gpgme_genkey_result_t result;
+
+                err = gpgme_op_genkey (ctx, parms, NULL, NULL);
+                detectError(err);
+
+                result = gpgme_op_genkey_result (ctx);
+                if (!result){
+                    fprintf (stderr, "%s:%d: gpgme_op_genkey_result returns NULL\n",
+                           __FILE__, __LINE__);
+                    exit (1);
+                }
+                if (result->fpr && strlen (result->fpr) != 40){
+                    fprintf (stderr, "%s:%d: generated key has unexpected fingerprint\n",
+                           __FILE__, __LINE__);
+                    exit (1);
+                }
+                if (!result->primary){
+                    fprintf (stderr, "%s:%d: primary key was not generated\n",
+                           __FILE__, __LINE__);
+                    exit (1);
+                }
+                if (!result->sub)
+                    {
+                    fprintf (stderr, "%s:%d: sub key was not generated\n",
+                           __FILE__, __LINE__);
+                    exit (1);
+                }
+
+                err=gpgme_get_key(ctx, result->fpr, &key, 1);
+
+                if(key){
+                    err=gpgme_get_key(ctx, result->fpr, &key, 0);
+
+                    if(key){
+                        fpr=QString(key->fpr);
+
+                        qDebug() << "Key pair generation success!";
+                        qDebug() << "============================";
+                        printf("Key ID: %s\n", key->subkeys->keyid);
+                        if(key->uids && key->uids->name)
+                            printf("Name: %s\n", key->uids->name);
+                        if(key->uids && key->uids->email)
+                            printf("E-Mail: %s\n", key->uids->email);
+                        qDebug() << "============================";
+
+                        validUse=true;
+                    }
+                    else{
+                        qDebug() << "\n\nPublic key not found!!\n\n";
+
+                    }
+                }
+
+                else{
+                    qDebug() << "\n\nPrivate key not found!!\n\n";
+                }
+
             }
         }
     }
+
     return fpr;
+}
+
+int serverPort(){
+
+    int port;
+
+    //loop until user select valid port number.
+    while(true){
+
+        printf("\nSelect port number between 1024-65535 for the server:");
+
+        QTextStream qtin(stdin);
+        qtin >> port;
+
+        if(port>1023 && port<65535){
+            break;
+        }
+    }
+
+    return port;
+
 }
 
 int main(int argc, char *argv[])
@@ -151,6 +283,13 @@ int main(int argc, char *argv[])
     QList<QString> waitingTaskUser;
     QList<QString> waitingTaskWork;
     QList<QString> addFriendRequestList;
+
+
+    qDebug() << "---------------";
+
+    int port=serverPort();
+
+    qDebug() << port;
 
     QString keyFpr=serverKey(argc);
 
