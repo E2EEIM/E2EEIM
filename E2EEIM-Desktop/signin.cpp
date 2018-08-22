@@ -53,9 +53,15 @@ SignIn::SignIn(Connection &conn, Encryption &encryption, QWidget *parent) :
 
     //Connect generateKeyPair event.
     //Creat a [signal/slot] mechanism, when user
-    //filled sign-up form and click Sign Up.
+    //filled sign-up form and click Sign Up
     //to call generateKeyPair() function.
     connect(this, SIGNAL(generateKeyPairSig(QStringList)), this, SLOT(generateKeyPair(QStringList)), Qt::QueuedConnection);
+
+    //Connect select key pair to sign up event.
+    //Creat a [signal/slot] mechanism, when user
+    //select key pair to sign up
+    //to call selectKeyToSignUp() function.
+    connect(this->ui->comboBox_signUpByKey, SIGNAL(currentIndexChanged(int)), this, SLOT(selectKeyToSignUp(int)));
 
 
     //Set available tab when signIn window start to show.
@@ -572,6 +578,7 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
 
                     //Move to [Sign Up - Account] tab
                     ui->tabWidget_signUp->setCurrentIndex(1);
+                    on_tabWidget_signUp_currentChanged(1);
                 }
 
                 //In case server not return server's public key.
@@ -637,7 +644,41 @@ void SignIn::on_tabWidget_signUp_currentChanged(int index)
         ui->pushButton_signUpAccountSignUp->setDefault(false);
         ui->pushButton_SignUpServerConnect->setDefault(true);
     }
-    else if(index==1){//User select [Sign Up - Account] tab.
+    else if(index==1){//user select sign up new account tab.
+
+        ui->label_signUp_account_keyFpr->hide();
+
+        QString defaultSelect="*Generate new key pair...";
+        QString defaultKey="**********";
+
+        //Get useable key pair.
+        QStringList allAccounts=encryption->getE2eeimAccounts();
+
+        allAccounts.insert(0, defaultKey);
+        allAccounts.insert(0, defaultSelect);
+
+        if(!allAccounts.isEmpty()){
+
+            qDebug() << "NOT EMPTY!";
+            ui->comboBox_signUpByKey->clear();
+            accountNameList.clear();
+            accountKeyList.clear();
+
+            int i=0;
+            foreach (QString account, allAccounts) {
+
+                if(i%2==0){
+                    accountNameList.append(account);
+                    ui->comboBox_signUpByKey->addItem(account);
+                }
+                else{
+                    accountKeyList.append(account);
+                }
+
+                i++;
+            }
+
+        }
 
         //Set "Sign Up" button as defult button for Enter key.
         ui->tabWidget_signUp->setTabEnabled(1, true);
@@ -651,10 +692,188 @@ void SignIn::on_tabWidget_signUp_currentChanged(int index)
     }
 }
 
+void SignIn::selectKeyToSignUp(int index){
+    qDebug() << "idex:" << index;
+
+    if(index>0){
+        ui->frame_signUpForm->setEnabled(false);
+
+        QString name=accountNameList.at(index);
+        QString kfpr=accountKeyList.at(index);
+        qDebug() << "name:" << name;
+        qDebug() << "kfpr:" << kfpr;
+
+        ui->label_signUp_account_keyFpr->setText(kfpr);
+        ui->label_signUp_account_keyFpr->show();
+    }
+    else{
+        ui->frame_signUpForm->setEnabled(true);
+        ui->label_signUp_account_keyFpr->setText("");
+        ui->label_signUp_account_keyFpr->hide();
+    }
+}
+
 //When user click "Sign Up" button in [Sign Up - Account] tab.
 void SignIn::on_pushButton_signUpAccountSignUp_clicked()
 {
+    int selectedKeyIdx=ui->comboBox_signUpByKey->currentIndex();
 
+    if(selectedKeyIdx==0){
+        signUpFormValidation();
+    }
+    else if(selectedKeyIdx>0){
+        signUpByKey();
+    }
+
+
+}
+
+void SignIn::signUpByKey(){
+    ui->pushButton_signUpAccountSignUp->setEnabled(false);
+
+    //Set useable tab.
+    ui->tabWidget_signUp->setCurrentIndex(2);
+    ui->tabWidget_signUp->setTabEnabled(0, false);
+    ui->tabWidget_signUp->setTabEnabled(1, false);
+    ui->tabWidget_signUp->setTabEnabled(2, true);
+
+    //Inform sign up status.
+    ui->label_signUpFinishg->setText("Exporting public key...");
+    ui->label_signUpAccountErrMsg->setText("Gxporting public key, please wait...");
+    ui->label_signUpAccountErrMsg->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+    ui->label_signUpAccountErrMsg->show();
+
+
+    QCoreApplication::processEvents();
+
+
+    int selectedKeyIdx=ui->comboBox_signUpByKey->currentIndex();
+
+    QString username=accountNameList.at(selectedKeyIdx);
+    QString kfpr=accountKeyList.at(selectedKeyIdx);
+
+
+    QString accountKey=QString(kfpr);
+    QByteArray ba=accountKey.toLatin1();
+    const char *patt=ba.data();
+
+
+    //Get public key
+    newUsersPrivateKey=encryption->getKey(patt, 1);
+    newUsersPublicKey=encryption->getKey(patt, 0);
+
+    // Export new user's public key
+    encryption->exportKey(newUsersPublicKey, "userPublicKey.key");
+
+
+    QFile File("userPublicKey.key");
+    if(!File.open(QFile::ReadOnly | QFile::Text)){
+        qDebug() << "Cound not open file for Read";
+        abort();
+    }
+    QTextStream in(&File);
+    QString pubKey;
+    pubKey=in.readAll();
+    File.close();
+
+
+    // //////// Send Sign Up Request to Server.
+
+
+    // Create *2-> send sign up require.
+    QByteArray data;
+    data.clear();
+
+    // Create payload
+
+      //Add user public key to byte array.
+    data.append(pubKey);
+
+      //Insert unsername in front of byte array (data[0]).
+    data.insert(0, username);
+
+      //Insert user public key size in front of byte array (data[0]).
+    /*
+    int publicKeySize=pubKey.size();
+    QByteArray publicKeySizeByte;
+    QDataStream ds(&publicKeySizeByte, QIODevice::WriteOnly);
+    ds << publicKeySize;
+    data.insert(0, publicKeySizeByte);
+    */
+
+    int publicKeySize=pubKey.size();
+    QByteArray publicKeySizeHex;
+    publicKeySizeHex.setNum(publicKeySize, 16);
+
+    while(publicKeySizeHex.length() < 4){
+        publicKeySizeHex.insert(0,"0");
+    }
+
+    data.insert(0, publicKeySizeHex);
+
+      //Insert user username size in front of byte array (data[0]).
+    char usernameSize=char(username.size());
+    data.insert(0, usernameSize);
+
+    //Encrypt Payload
+    QFile File_Payload("2.payload");
+    if(!File_Payload.open(QFile::WriteOnly | QFile::Text)){
+        qDebug() << "Cound not open file for writing";
+        abort();
+    }
+    QTextStream out(&File_Payload);
+    out << data;
+
+    File_Payload.flush();
+    File_Payload.close();
+
+
+    gpgme_key_t servPubKey=encryption->getServerPubKey();
+
+    encryption->encryptSign(newUsersPrivateKey, servPubKey, "2.payload", "2payload.encrypted");
+
+    QFile File_EncryptedPayload("2payload.encrypted");
+    if(!File_EncryptedPayload.open(QFile::ReadOnly | QFile::Text)){
+        qDebug() << "Cound not open file for Read";
+        abort();
+    }
+    QTextStream in2(&File_EncryptedPayload);
+    QString payload;
+    payload=in2.readAll();
+    File_EncryptedPayload.close();
+
+    data.clear();
+    data.append(payload);
+
+    // Insert operation in front of byte array (data[0]).
+    data.insert(0, (char)3);
+
+    //Insert size of(operation + payload) in front of byte array (data[0]).
+    int dataSize=data.size();
+    QByteArray dataSizeByte;
+    QDataStream ds2(&dataSizeByte, QIODevice::WriteOnly);
+    ds2 << dataSize;
+    data.insert(0, dataSizeByte);
+
+    //ui->label_signUpFinishg->setText("Sending sign up request...");
+
+    if(conn->getConnectionStatus()==1){
+        conn->send(data);
+
+        ui->label_signUpAccountErrMsg->setText("Sending sign up request, please wait...");
+        ui->label_signUpAccountErrMsg->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+        ui->label_signUpFinishg->setText("Sending sign up request, please wait...");
+
+    }
+
+    QCoreApplication::processEvents();
+
+    data.clear();
+
+}
+
+void SignIn::signUpFormValidation(){
     //Get information from sign up form.
     QString errMsg;
     QString username=ui->lineEdit_signUpAccountUsername->text();
@@ -758,7 +977,7 @@ void SignIn::generateKeyPair(QStringList account){
                      "Name-Real: "+username+"\n"
                      "Name-Comment: Generated by E2EEIM Chat, Passphrase:"+passphrase+"\n"
                      "Name-Email: client@e2eeim.chat\n"
-                     "Expire-Date: 1d\n"
+                     "Expire-Date: 1y\n"
                      "Passphrase: "+passphrase+"\n"
                      "</GnupgKeyParms>\n";
 

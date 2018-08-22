@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>501</width>
-    <height>495</height>
+    <height>515</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -57,7 +57,7 @@
          </sizepolicy>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="tab_signIn">
          <property name="sizePolicy">
@@ -550,41 +550,78 @@
              </attribute>
              <layout class="QVBoxLayout" name="verticalLayout_6">
               <item>
-               <widget class="QLabel" name="label_signUpAccountUsername">
-                <property name="text">
-                 <string>Username</string>
+               <widget class="QFrame" name="frame_selectKeyForSignUp">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
                 </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_11">
+                 <item>
+                  <widget class="QComboBox" name="comboBox_signUpByKey"/>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_signUp_account_keyFpr">
+                   <property name="styleSheet">
+                    <string notr="true">color: #999999;</string>
+                   </property>
+                   <property name="text">
+                    <string>Key fingerprint</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_signUpAccountUsername"/>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_signUpAccountPassphrase">
-                <property name="text">
-                 <string>Passphrase</string>
+               <widget class="QFrame" name="frame_signUpForm">
+                <property name="frameShape">
+                 <enum>QFrame::NoFrame</enum>
                 </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="lineEdit_signUpAccountPassphrase">
-                <property name="echoMode">
-                 <enum>QLineEdit::Password</enum>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
                 </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_signUpAccountConfirmPassPhrase">
-                <property name="text">
-                 <string>Confirm Passphrase</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="lineEdit_signUpAccountConfirmPassphrase">
-                <property name="echoMode">
-                 <enum>QLineEdit::Password</enum>
-                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_10">
+                 <item>
+                  <widget class="QLabel" name="label_signUpAccountUsername">
+                   <property name="text">
+                    <string>Username</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_signUpAccountUsername"/>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_signUpAccountPassphrase">
+                   <property name="text">
+                    <string>Passphrase</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_signUpAccountPassphrase">
+                   <property name="echoMode">
+                    <enum>QLineEdit::Password</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="label_signUpAccountConfirmPassPhrase">
+                   <property name="text">
+                    <string>Confirm Passphrase</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineEdit_signUpAccountConfirmPassphrase">
+                   <property name="echoMode">
+                    <enum>QLineEdit::Password</enum>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
                </widget>
               </item>
               <item>

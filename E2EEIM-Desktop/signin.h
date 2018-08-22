@@ -75,10 +75,13 @@ private slots:
 
     void on_pushButton_signIn_AccountSignIn_clicked();
 
-
     void on_comboBox_signUp_selectServer_currentTextChanged(const QString &arg1);
 
     void on_tabWidget_signIn_currentChanged(int index);
+
+    void selectKeyToSignUp(int index);
+    void signUpFormValidation();
+    void signUpByKey();
 
 private:
     Ui::SignIn *ui;
