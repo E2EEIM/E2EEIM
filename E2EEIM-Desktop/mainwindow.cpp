@@ -54,6 +54,33 @@ MainWindow::MainWindow(Connection &conn, Encryption &encryption, QWidget *parent
     //to call disconnectFromServer() function.
     connect(this->conn, SIGNAL(disconnectFromServer()), this, SLOT(disconnectFromServer()), Qt::QueuedConnection);
 
+    /*
+     Connect WidgetListItem on click event.
+     Creat a [signal/slot] mechanism, when active-user click
+     an item on listWidget_Contat. the listWidget emit itemClick() signal
+     to call listWidget_Contact_ItemClicked() function.
+     This part are for identify what item active-user clicked to
+     let listWidget_Contact_itemClicked() know and control what to do
+     when the item selected. listWidget_Contact is for show list
+     of items that depend on what recent menu user clicked, it can be
+     list of conversation, list of contact(friend) or list of group.
+     */
+    connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
+                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)), Qt::QueuedConnection);
+
+    /*Connect combobox on click event.
+     * Create a [signal/slot] mechanism, when active-user select
+     * an item in textMenu(three line icon) to call
+     * textMenuChange() function.
+     */
+    connect(ui->comboBox, SIGNAL(currentTextChanged(QString)),
+                this, SLOT(textMenuChange()));
+
+    /*Filter Enter/Return key press when user typing*/
+    // Filter enter key is for send message that user typed
+    // in plainTextEdit by enter key.
+    ui->plainTextEdit->installEventFilter(this);
+
     // call signOut() to display signIn window before user can use mainWindow.
     signOut();
 
@@ -155,33 +182,6 @@ void MainWindow::initUserDataPath(){
         ui->listWidget_Contact->addItem(item);
     }
 
-
-    /*
-     Connect WidgetListItem on click event.
-     Creat a [signal/slot] mechanism, when active-user click
-     an item on listWidget_Contat the listWidget emit itemClick() signal
-     to call listWidget_Contact_ItemClicked() function.
-     This part are for identify what item active-user clicked to
-     let listWidget_Contact_itemClicked() know and control what to do
-     when the item have clicked. listWidget_Contact is for show list
-     of items that depend on what recent menu user clicked, it can be
-     list of conversation, list of contact(friend) or list of group.
-     */
-    connect(ui->listWidget_Contact, SIGNAL(itemClicked(QListWidgetItem*)),
-                this, SLOT(listWidget_Contact_ItemClicked(QListWidgetItem*)), Qt::QueuedConnection);
-
-    /*Connect combobox on click event.
-     * Create a [signal/slot] mechanism, when active-user select
-     * an item in textMenu(three line icon) to call
-     * textMenuChange() function.
-     */
-    connect(ui->comboBox, SIGNAL(currentTextChanged(QString)),
-                this, SLOT(textMenuChange()));
-
-    /*Filter Enter/Return key press when user typing*/
-    // Filter enter key is for send message that user typed
-    // in plainTextEdit by enter key.
-    ui->plainTextEdit->installEventFilter(this);
 
     /*Set icon size in listWidget*/
     ui->listWidget_Contact->setIconSize(QSize(50, 50));
