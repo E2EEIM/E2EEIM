@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+	<head>
+		<meta http-equiv"Content-Type" content="text/html; charset=utf-8" />
+		<title> E2EEIM Manual </Title>
+		<style type="text/css">
+		 tab1 { padding-left: 2em; }
+		 tab2 { padding-left: 5em; }
+		 tab3 { padding-left: 7em; }
+		 tab6 { padding-left: 24em; }
+		 tab7 { padding-left: 28em; }
+		 tab8 { padding-left: 32em; }
+		 tab9 { padding-left: 36em; }
+		 tab10 { padding-left: 40em; }
+		 tab11 { padding-left: 44em; }
+		 tab12 { padding-left: 48em; }
+		 tab13 { padding-left: 52em; }
+		 tab14 { padding-left: 56em; }
+		 tab15 { padding-left: 60em; }
+		 tab16 { padding-left: 64em; }
+		</style>
+	</head>
+	<body>
+		<h1>E2EEIM Manual<br></h1>
+			<a href="#intro"><tab1>Introduction<br></tab1></a>
+			<a href="#Server"><tab1>Server Application<br></tab1></a>
+				<a href="#RunServer"><tab2>Run Server<br></tab2></a>
+				<a href="#GenerateKeyPair"><tab2>Generate key pair<br></tab2></a>
+				<a href="#SpecifyPortNumber"><tab2>Specify Port Number<br></tab2></a>
+				<a href="#CloseServerApplication"><tab2>Close Server Application<br></tab2></a>
+				<a href="#DeleteKeyServer"><tab2>Delete Key<br></tab2></a>
+			<a href="#Client"><tab1>Client Application<br></tab1></a>
+				<a href="#ConnectToAServer"><tab2>Connect To A Server<br></tab2></a>
+				<a href="#SignUp"><tab2>Sign Up<br></tab2></a>
+				<a href="#SignIn"><tab2>Sign In<br></tab2></a>
+				<a href="#AddFriend"><tab2>Add Friend<br></tab2></a>
+				<a href="#SendMessage"><tab2>Send Message<br></tab2></a>
+				<a href="#DeleteData"><tab2>Delete Friend<br></tab2></a>
+				<a href="#DeleteData"><tab2>Delete Group<br></tab2></a>
+				<a href="#DeleteData"><tab2>Delete Converation<br></tab2></a>
+				<a href="#DeleteKeyClient"><tab2>Delete Key<br></tab2></a>
+				<a href="#CreateGroup"><tab2>Create Group<br></tab2></a>
+				<a href="#SignOut"><tab2>Sign Out<br></tab2></a>
+				<a href="#Disconnect"><tab2>Disconnect<br></tab2></a>
+				<a href="#CloseClientApplication"><tab2>Close Client Application<br></tab2></a>
+
+				<br>
+				<br>
+				<h2 id=intro><tab1>Introduction</tab1></h2>
+					<p><tab2>The E2EEIM project are provide server and client applications to ensure message sent by the client are encrypted. This means messages cannot be read with understanding between the end points. Both client and server applications use RSA keys to encrypt and decrypt messages with GnuPG. The client and server applicsations are implemented in C++ using Qt as cross-platform applications. Both applications can run on Linux, macOS and Windows operating systems. All conversations and each user's data are saved in the client machines. User can run their own server to have full control of the server and make conversation more private.</p></tab2><br>
+				<h2 id=Server><tab1>Server Application</tab1></h2>
+					<p><tab2>The server is the central point to which every client will connect. Users need to sign up to a server by sending their username and public key to server. The server needs to save every user's username and public key to identify users and to decrypt messages that users will send to the server and encrypt replies the server will send back.</p></tab2>
+					<h3 id=RunServer><tab2>Run Server</tab2></h3>
+						<p><tab3>To run the server application, users are required to specify key pair to be server's key and port number for the server application to listen and waiting for connecrtion request from client.</tab3></p>
+						<p><tab3>After users run server application by excute the excutatble file, users can choose option to use sepecific key pair to be server's key or generate new key pair to be server's key.</tab3></p>
+						<br>
+						<p><tab3><b>Example: </tab3></b>Generate new key pair and set port number as 2222</tab3></p>
+						<center> <img src=img/RunServer_Gen.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<p><tab3><b>Example: </tab3></b>Use existing key pair and set port number as 2222</tab3></p>
+						<center> <img src=img/RunServer_Exi.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<p><tab3>You can get keyfingerprint or key ID using GPG list key command to list all secret keys in you machine.
+						<center> <img src=img/GPG_listSecret.png height=50% width=50%> </center>
+					<hr>
+					<h3 id=GenerateKeyPair><tab2>Generate Key Pair</tab2></h3>
+					<hr>
+					<h3 id=SpecifyPortNumber><tab2>Port Number</tab2></h3>
+					<hr>
+					<h3 id=CloseServerApplication><tab2>Close Server Application</tab2></h3>
+					<hr>
+					<h3 id=DeleteKeyServer><tab2>Delete Key</tab2></h3>
+						<p><tab3>The server application not provides any function to delete generated key pairs. You can use GPG delete key command to delete a key pair form keyring in your machine.</tab3></p>
+						<br>
+						<center> <img src=img/GPG_Delete.png height=50% width=50%> </center>
+
+					<hr>
+				<h2 id=Client><tab1>Client Application</tab1></h2>
+					<h3 id=ConnectToAServer><tab2>Connect To A Server</tab2></h3>
+						<p><tab3>The client application is a GUI instant messenger application. The client application provides a connection from for users to specify the server IP address and port number to use to connect.</tab3></p>
+						<br>
+						<p><tab3><b>Example: </b>Specify server IP address and port number then click connect button</tab3></p>
+						<center> <img src=img/ConnectToServer.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<p><tab3>Connection status shown in Server Tab.</tab3></p>
+						<center> <img src=img/ConnectionStatus1.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<br>
+					<hr>
+					<h3 id=SignUp><tab2>Sign Up</tab2></h3>
+						<p><tab3>The client provides a sign-up form for users to sign up or register. The client does not send that information from the sign-up form to the server. Instead, the client application uses the information for key pair generation. The client application also provides list of existing key pair that generated by the client application for users to sign up or register to a server. After user have a key pair to sign up to a server, the client application sends the username and the public key to the server to sign up. If the server returns a packet indicating success, the client application will inform the user that the new account is ready for sign in. If server returns a packet indicating sign up was not successful, the username is not available. In that case, the user needs to use other key or generate a new key pair.</tab3></p>
+						<br>
+						<br>
+						<p><tab3>Fill sign up form to generate new key pair</tab3></p>
+						<center> <img src=img/FillSignUpForm.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<br>
+						<p><tab3><b>Note: </b> While generating new key pair pair the client application will not respond, you need to wait for a moment. When key pair generation finished, the pinentry will appear then you need to enter key passphrase to access private key of the key pair.</tab3></p>
+						<center> <img src=img/PinentryPopUp.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<br>
+
+					<hr>
+					<h3 id=SignIn><tab2>Sign In</tab2></h3>
+						<p><tab3>The client application lists all of the private keys that have been generated by the client application with the sign-up process from the user’s machine and shows all of the user’s private keys for the user to select as the account in <b> Sign In -> Account </b> tab to sign in. The client application sends the username and public key of the selected account to the server as required by the sign in request protocol. The server will return a packet with the sign in result. If the sign in result indicates success, then the client application will let the user access the main window of the client application. If the server returns a result that it cannot identify the username of the account, the client application will show a sign in result message informing the user that the account was not found in the server.</tab3></p>
+						<br>
+						<br>
+						<p><tab3> Select account to sign in</tab3></p>
+						<center> <img src=img/SelectAccountToSignIn.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<br>
+						<p><tab3>In case sign in success, You'll see main window. </tab3></p>
+						<center> <img src=img/SendMessage1.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<br>
+
+					<hr>
+					<h3 id=AddFriend><tab2>Add Friend</tab2></h3>
+						<p><tab3>Users can search for other users by go to contact menu then click add new friend. The add contact window will appear for user to search for other user.</tab3></p>
+						<center> <img src=img/AddFriend1.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<br>
+						<p><tab3>You can enter you friend username and click search</tab3></p>
+						<center> <img src=img/AddFriend3.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<br>
+						<p><tab3>Click <b>Add Friend</b> to send add friend request.</tab3></p>
+						<center> <img src=img/AddFriend4.png height=50% width=50%> </center>
+						<br>
+						<p><tab3>If send add friend request success, The <b>Add Friend</b> button will change to be <b>Add friend request sended</b>.</tab3></p>
+						<br>
+						<br>
+						<br>
+					<hr>
+					<h3 id=SendMessage><tab2>Send Message</tab2></h3>
+						<p><tab3>Click Contact menu</tab3></p>
+						<center> <img src=img/SendMessage2.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<p><tab3>Select friend username.</tab3></p>
+						<center> <img src=img/SendMessage3.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<p><tab3>Type message in <b>Type your message...</b> box then click send or press Enter/Return key</tab3></p>
+						<center> <img src=img/SendMessage4.png height=50% width=50%> </center>
+						<br>
+					<hr>
+					<h3 id=DeleteData><tab2>Delete Friend, Group or Conversation</tab2></h3>
+						<p><tab3>Click three line menu and select <b>Setting</b>.</tab3></p>
+						<center> <img src=img/SelectSetting.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<br>
+						<p><tab3>Select tab</tab3></p>
+						<center> <img src=img/SettingContactTab.png height=50% width=50%> </center>
+						<br>
+						<br>
+						<br>
+						<p><tab3>Select item then click <b>Delete</b> button</tab3></p>
+						<center> <img src=img/SelectItemToDelete.png height=50% width=50%> </center>
+					<hr>
+					<h3 id=DeleteKeyClient><tab2>Delete Key</tab2></h3>
+						<p><tab3>The Client application not provides any function to delete generated key pairs. You can use GPG delete key command to delete a key pair form keyring in your machine.</tab3></p>
+						<br>
+						<center> <img src=img/GPG_Delete.png height=50% width=50%> </center>
+					<hr>
+					<h3 id=CreateGroup><tab2>Create Group</tab2></h3>
+					<hr>
+					<h3 id=SignOut><tab2>Sign Out</tab2></h3>
+					<hr>
+					<h3 id=Disconnect><tab2>Disconnect</tab2></h3>
+					<hr>
+					<h3 id=CloseClientApplication><tab2>Close Client Application</tab2></h3>
+
+	</body>
+</html>
+
+
