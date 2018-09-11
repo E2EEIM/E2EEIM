@@ -45,6 +45,6 @@ The executable file will be in current directory.
 
 HOW TO RUN
 1. Set firewall to allow port for E2EEIM-Server.
-1. Set gpg-agent to remember passphrase as long as passible.
-2. Find executable file.
-3. Execute excecutable file.
+2. Set gpg-agent to remember passphrase as long as passible.
+3. Find executable file.
+4. Execute excecutable file.
