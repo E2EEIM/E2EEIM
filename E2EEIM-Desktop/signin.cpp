@@ -685,7 +685,6 @@ void SignIn::on_tabWidget_signUp_currentChanged(int index)
 
                 i++;
             }
-
         }
 
         //Set "Sign Up" button as defult button for Enter key.
@@ -702,6 +701,17 @@ void SignIn::on_tabWidget_signUp_currentChanged(int index)
 
 void SignIn::selectKeyToSignUp(int index){
     qDebug() << "idex:" << index;
+
+    if(!accountNameList.isEmpty() && !accountKeyList.isEmpty()){
+
+        QString firstName=accountNameList.at(0);
+        QString firstKey=accountKeyList.at(0);
+
+        if(firstName.mid(0,1)!="*" || firstKey.mid(0,1)!="*"){
+            accountNameList.insert(0, "*Generate new key pair...");
+            accountKeyList.insert(0, "**********");
+        }
+    }
 
     if(index>0){
         ui->frame_signUpForm->setEnabled(false);
