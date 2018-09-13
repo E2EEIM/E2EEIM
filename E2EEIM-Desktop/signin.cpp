@@ -102,9 +102,17 @@ SignIn::SignIn(Connection &conn, Encryption &encryption, QWidget *parent) :
 
         ui->tabWidget_signIn->setCurrentIndex(0);
         on_tabWidget_mainTab_currentChanged(0);
-
-
     }
+
+    //Disable edit list.
+    ui->pushButton_sigIn_serverEdit->hide();
+    ui->comboBox_signIn_selectServer->hide();
+
+    ui->pushButton_SignInEditServer->hide();
+    ui->comboBox_signUp_selectServer->hide();
+
+    ui->comboBox_signIn_selectServer->setCurrentIndex(1);
+    ui->comboBox_signUp_selectServer->setCurrentIndex(1);
 
 }
 
