@@ -46,6 +46,7 @@ signals:
     void receiveAddFriendrequest(QByteArray data);
     void receiveNewPublicKey(QByteArray data);
     void receiveNewMessage(QByteArray data);
+    void receiveServerRespond();
     void receiveSignInVerify(QByteArray data);
     void receiveSignInResult(QByteArray data);
     void receiveSignUpResult(QByteArray data);

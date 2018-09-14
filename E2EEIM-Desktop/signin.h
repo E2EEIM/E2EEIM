@@ -43,6 +43,7 @@ signals:
 
 public slots:
     void disconnectFromServer();
+    void receiveServerRespond();
     void receiveSignInVerify(QByteArray data);
     void receiveSignInResult(QByteArray data);
     void receiveSignUpResult(QByteArray data);

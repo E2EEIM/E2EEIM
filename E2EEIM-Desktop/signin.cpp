@@ -63,6 +63,8 @@ SignIn::SignIn(Connection &conn, Encryption &encryption, QWidget *parent) :
     //to call selectKeyToSignUp() function.
     connect(this->ui->comboBox_signUpByKey, SIGNAL(currentIndexChanged(int)), this, SLOT(selectKeyToSignUp(int)));
 
+    connect(this->conn, SIGNAL(receiveServerRespond()), this, SLOT(receiveServerRespond()));
+
 
     //Set available tab when signIn window start to show.
     ui->tabWidget_signIn->setTabEnabled(1, false);
@@ -120,7 +122,19 @@ SignIn::~SignIn()
 {
     delete ui;
 }
+void SignIn::receiveServerRespond(){
+    ui->label_signIn_serverErr->setText("Receive Server Responds");
+    ui->label_signUpConnectError->setText("Receive server responds");
+    qDebug() << "\n\n\n\n\n***********************Receive server responds";
+    QByteArray rcMsg=conn->getRecentReceivedMsg();
+    qDebug() << "Recent Message:" << rcMsg;
 
+    if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
+        ui->label_signIn_serverErr->setText(rcMsg);
+        ui->label_signUpConnectError->setText(rcMsg);
+    }
+
+}
 //User click Sign In button in (Sign In-account) tab
 void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
 {
@@ -593,7 +607,8 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
                 if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
                     ui->label_signUpConnectError->show();
                     ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
-                    ui->label_signUpConnectError->setText("This server or this port not for E2EEIM");
+                    QString cs=QString::number(conn->getConnectionStatus());
+                    ui->label_signUpConnectError->setText("This server or this port not for E2EEIM:"+cs);
                 }
 
             }
@@ -1590,7 +1605,8 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
                 if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
                     ui->label_signIn_serverErr->show();
                     ui->label_signIn_serverErr->setStyleSheet("color:#AA6666");
-                    ui->label_signIn_serverErr->setText("This server or this port not for E2EEIM");
+                    QString cs=QString::number(conn->getConnectionStatus());
+                    ui->label_signUpConnectError->setText("This server or this port not for E2EEIM:"+cs);
                 }
 
             }

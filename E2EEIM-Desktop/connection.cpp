@@ -338,8 +338,11 @@ void Connection::processReceivedData(){
             return;
         }
 
-        connectStatus=4;
-
+        if(connectStatus==0 || connectStatus==2){
+            recentReceivedMsg="Recent Message is Empty";
+            recentReceivedMsg=receivedData.first();
+            emit receiveServerRespond();
+        }
 
         while(!receivedData.isEmpty()){
             QByteArray data=receivedData.dequeue();
@@ -354,8 +357,6 @@ void Connection::processReceivedData(){
                 }
                 else{
                     int operation=QString(data.mid(4,1)).data()->unicode();
-
-                    connectStatus=3;
 
                     if(operation==2){
                         //import server public key
