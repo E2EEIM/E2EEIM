@@ -132,7 +132,11 @@ void SignIn::receiveServerRespond(){
     if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
         ui->label_signIn_serverErr->setText(rcMsg);
         ui->label_signUpConnectError->setText(rcMsg);
+        if(rcMsg==""){
+            ui->label_signUpConnectError->setText("recentMessage is Empty!");
+        }
     }
+
 
 }
 //User click Sign In button in (Sign In-account) tab

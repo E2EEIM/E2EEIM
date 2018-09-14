@@ -340,12 +340,17 @@ void Connection::processReceivedData(){
 
         if(connectStatus==0 || connectStatus==2){
             recentReceivedMsg="Recent Message is Empty";
-            recentReceivedMsg=receivedData.first();
-            emit receiveServerRespond();
+            if(!receivedData.isEmpty()){
+                recentReceivedMsg=receivedData.first();
+                emit receiveServerRespond();
+            }
         }
 
         while(!receivedData.isEmpty()){
             QByteArray data=receivedData.dequeue();
+            if(data==""){
+                continue;
+            }
             int op=QString(data.mid(4,1)).data()->unicode();
 
             //qDebug() << "intOp:" << op;
