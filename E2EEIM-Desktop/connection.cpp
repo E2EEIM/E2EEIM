@@ -74,6 +74,7 @@ void Connection::connected(QString host, QString port){
     else{
         qDebug() << "Not Connected!";
         connectStatus=-1; //not connect
+        emit receiveServerRespond();
     }
 }
 
@@ -153,6 +154,14 @@ void Connection::readyRead(){
     //Only data with no loss will process.
     if(sizeOfPayloadAndOp!=dataSize){
 
+        if(connectStatus==0 || connectStatus==-2){
+            if(op!=2){
+                data.clear();
+                letDisconnect();
+                connectStatus=2;
+                emit receiveServerRespond();
+            }
+        }
         qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
         splitPacket=true;
         receiveBuffer.append(data);
@@ -338,14 +347,6 @@ void Connection::processReceivedData(){
             return;
         }
 
-        if(connectStatus==0 || connectStatus==2){
-            recentReceivedMsg="Recent Message is Empty";
-            if(!receivedData.isEmpty()){
-                recentReceivedMsg=receivedData.first();
-                emit receiveServerRespond();
-            }
-        }
-
         while(!receivedData.isEmpty()){
             QByteArray data=receivedData.dequeue();
             if(data==""){
@@ -385,6 +386,7 @@ void Connection::processReceivedData(){
                         connectStatus=2; //2 This server or this port not for E2EEIM.
                     }
                 }
+                emit receiveServerRespond();
             }
             else if(op==4){
                 emit receiveSignUpResult(data);

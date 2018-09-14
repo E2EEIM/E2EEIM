@@ -123,22 +123,86 @@ SignIn::~SignIn()
     delete ui;
 }
 void SignIn::receiveServerRespond(){
+    qDebug() <<"ConnectionStatus:" << conn->getConnectionStatus();
     ui->label_signIn_serverErr->setText("Receive Server Responds");
     ui->label_signUpConnectError->setText("Receive server responds");
     qDebug() << "\n\n\n\n\n***********************Receive server responds";
-    QByteArray rcMsg=conn->getRecentReceivedMsg();
+    QByteArray rcMsgx=conn->getRecentReceivedMsg();
+    QString rcMsg(rcMsgx);
     qDebug() << "Recent Message:" << rcMsg;
 
-    if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
-        ui->label_signIn_serverErr->setText(rcMsg);
-        ui->label_signUpConnectError->setText(rcMsg);
-        if(rcMsg==""){
-            ui->label_signUpConnectError->setText("recentMessage is Empty!");
-        }
+    //In case client applcation can't connect to server.
+    if(conn->getConnectionStatus()==-1){
+        ui->label_signUpConnectError->show();
+        ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
+        ui->label_signUpConnectError->setText("ERROR: Can not connect to server!");
+
+        ui->label_signIn_serverErr->show();
+        ui->label_signIn_serverErr->setStyleSheet("color:#AA6666");
+        ui->label_signIn_serverErr->setText("ERROR: Can not connect to server!");
     }
 
+    //In case client application can connect to server.
+    if(conn->getConnectionStatus()==1){
 
+        //Get server ip and port from Connection class
+        QString servAddr=conn->getServerAddr();
+        QString servPort=conn->getServerPort();
+
+        qDebug() << conn->getConnectionStatus();
+
+        //Enable [sign in - account] and [sign up - account] tab
+        //display connection status.
+        ui->tabWidget_signIn->setTabEnabled(1, true);
+        ui->tabWidget_signIn->setCurrentIndex(1);
+        ui->label_signIn_serverErr->show();
+        ui->label_signIn_serverErr->setText("Server:" +servAddr+":"+servPort+" connected");
+        ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+        ui->tabWidget_signUp->setTabEnabled(1, true);
+        ui->tabWidget_signUp->setCurrentIndex(1);
+        ui->label_signUpConnectError->show();
+        ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
+        ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
+
+        //Hide *new server from
+        ui->frame_signIn_serverForm->hide();
+        ui->frame_SignUpServerEnterNew->hide();
+
+        //Change "Connect" button to be "Disconnect" button
+        ui->pushButton_signIn_serverConnect->setText("Disconnect");
+        ui->pushButton_SignUpServerConnect->setText("Disconnect");
+
+        //Enable "Disconnect" button
+        ui->pushButton_signIn_serverConnect->setEnabled(true);
+        ui->pushButton_SignUpServerConnect->setEnabled(true);
+
+        //Disable drop down select server combobox
+        ui->comboBox_signIn_selectServer->setEnabled(false);
+        ui->comboBox_signUp_selectServer->setEnabled(false);
+
+        //Move to [Sign Up - Account] tab
+        ui->tabWidget_signUp->setCurrentIndex(1);
+        on_tabWidget_signUp_currentChanged(1);
+    }
+
+    //In case server not return server's public key.
+    if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
+        ui->label_signUpConnectError->show();
+        ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
+        ui->label_signUpConnectError->setText("This server or this port not for E2EEIM!");
+
+        ui->label_signIn_serverErr->show();
+        ui->label_signIn_serverErr->setStyleSheet("color:#AA6666");
+        ui->label_signIn_serverErr->setText("This server or this port not for E2EEIM!");
+
+        if(conn->getConnectionStatus()==2){
+            //conn->letDisconnect();
+            ui->label_signIn_serverErr->setText("This server or this port not for E2EEIM!");
+        }
+    }
 }
+
 //User click Sign In button in (Sign In-account) tab
 void SignIn::on_pushButton_signIn_AccountSignIn_clicked()
 {
@@ -540,7 +604,7 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
 
                 //Show connect status.
                 qDebug()<<newIP<<", Port "<<newPort;
-                ui->label_signUpConnectError->setText("Waiting for connection");
+                ui->label_signUpConnectError->setText("Waiting for respond from server");
                 ui->label_signUpConnectError->setStyleSheet("color:#333333");
                 ui->label_signUpConnectError->show();
 
@@ -552,68 +616,10 @@ void SignIn::on_pushButton_SignUpServerConnect_clicked()
                     ui->label_signUpConnectError->setText(loading[i]);
                 }
 
+                QCoreApplication::processEvents();
                 //Connect to new server.
                 conn->connected(newIP, newPort);
-
-                //In case client applcation can't connect to server.
-                if(conn->getConnectionStatus()==-1){
-                    ui->label_signUpConnectError->show();
-                    ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
-                    ui->label_signUpConnectError->setText("ERROR: Can not connect to server!");
-                }
-
-                //In case client application can connect to server.
-                if(conn->getConnectionStatus()==1){
-
-                    //Get server ip and port from Connection class
-                    QString servAddr=conn->getServerAddr();
-                    QString servPort=conn->getServerPort();
-
-                    qDebug() << conn->getConnectionStatus();
-
-                    //Enable [sign in - account] and [sign up - account] tab
-                    //display connection status.
-                    ui->tabWidget_signIn->setTabEnabled(1, true);
-                    ui->tabWidget_signIn->setCurrentIndex(1);
-                    ui->label_signIn_serverErr->show();
-                    ui->label_signIn_serverErr->setText("Server:" +servAddr+":"+servPort+" connected");
-                    ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
-
-
-                    ui->tabWidget_signUp->setTabEnabled(1, true);
-                    ui->tabWidget_signUp->setCurrentIndex(1);
-                    ui->label_signUpConnectError->show();
-                    ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
-                    ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
-
-                    //Hide *new server from
-                    ui->frame_signIn_serverForm->hide();
-                    ui->frame_SignUpServerEnterNew->hide();
-
-                    //Change "Connect" button to be "Disconnect" button
-                    ui->pushButton_signIn_serverConnect->setText("Disconnect");
-                    ui->pushButton_SignUpServerConnect->setText("Disconnect");
-
-                    //Enable "Disconnect" button
-                    ui->pushButton_signIn_serverConnect->setEnabled(true);
-                    ui->pushButton_SignUpServerConnect->setEnabled(true);
-
-                    //Disable drop down select server combobox
-                    ui->comboBox_signIn_selectServer->setEnabled(false);
-                    ui->comboBox_signUp_selectServer->setEnabled(false);
-
-                    //Move to [Sign Up - Account] tab
-                    ui->tabWidget_signUp->setCurrentIndex(1);
-                    on_tabWidget_signUp_currentChanged(1);
-                }
-
-                //In case server not return server's public key.
-                if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
-                    ui->label_signUpConnectError->show();
-                    ui->label_signUpConnectError->setStyleSheet("color:#AA6666");
-                    QString cs=QString::number(conn->getConnectionStatus());
-                    ui->label_signUpConnectError->setText("This server or this port not for E2EEIM:"+cs);
-                }
+                QCoreApplication::processEvents();
 
             }
         }
@@ -1548,7 +1554,7 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
             if(selectedServer=="*New Server"){
                 //Display connection satatus.
                 qDebug()<<newIP<<", Port "<<newPort;
-                ui->label_signIn_serverErr->setText("Waiting for connection...");
+                ui->label_signIn_serverErr->setText("Waiting for respond from server...");
                 ui->label_signIn_serverErr->setStyleSheet("color:#333333");
                 ui->label_signIn_serverErr->show();
 
@@ -1558,61 +1564,6 @@ void SignIn::on_pushButton_signIn_serverConnect_clicked()
                 conn->connected(newIP, newPort);
 
                 QCoreApplication::processEvents();
-
-                //In case cannot connect to new server.
-                if(conn->getConnectionStatus()==-1){
-                    ui->label_signIn_serverErr->show();
-                    ui->label_signIn_serverErr->setStyleSheet("color:#AA6666");
-                    ui->label_signIn_serverErr->setText("ERROR: Can not connect to server!");
-                }
-
-                //In caes can connect to New Server.
-                if(conn->getConnectionStatus()==1){
-
-                    //Get server information.
-                    QString servAddr=conn->getServerAddr();
-                    QString servPort=conn->getServerPort();
-
-                    qDebug() << conn->getConnectionStatus();
-
-                    //Display connection status and enable tab after connected to a server.
-                    ui->tabWidget_signIn->setTabEnabled(1, true);
-                    ui->tabWidget_signIn->setCurrentIndex(1);
-                    ui->label_signIn_serverErr->show();
-                    ui->label_signIn_serverErr->setText("Server:" +servAddr+":"+servPort+" connected");
-                    ui->label_signIn_serverErr->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
-
-
-                    ui->tabWidget_signUp->setTabEnabled(1, true);
-                    ui->tabWidget_signUp->setCurrentIndex(1);
-                    ui->label_signUpConnectError->show();
-                    ui->label_signUpConnectError->setText("Server:" +servAddr+":"+servPort+" connected");
-                    ui->label_signUpConnectError->setStyleSheet("QLabel { qproperty-alignment: AlignCenter; color:#66AA66;}");
-
-                    //Hide *New Server form.
-                    ui->frame_signIn_serverForm->hide();
-                    ui->frame_SignUpServerEnterNew->hide();
-
-                    //Change "Connect" button to be "Disconnect" button.
-                    ui->pushButton_signIn_serverConnect->setText("Disconnect");
-                    ui->pushButton_SignUpServerConnect->setText("Disconnect");
-
-                    //Enable "Disconnect" button.
-                    ui->pushButton_signIn_serverConnect->setEnabled(true);
-                    ui->pushButton_SignUpServerConnect->setEnabled(true);
-
-                    //Disale select server combobox.
-                    ui->comboBox_signIn_selectServer->setEnabled(false);
-                    ui->comboBox_signUp_selectServer->setEnabled(false);
-
-                }
-                if(conn->getConnectionStatus()==0 || conn->getConnectionStatus()==2){
-                    ui->label_signIn_serverErr->show();
-                    ui->label_signIn_serverErr->setStyleSheet("color:#AA6666");
-                    QString cs=QString::number(conn->getConnectionStatus());
-                    ui->label_signUpConnectError->setText("This server or this port not for E2EEIM:"+cs);
-                }
-
             }
         }
 
