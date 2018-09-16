@@ -161,6 +161,7 @@ void Connection::readyRead(){
                 connectStatus=2;
                 emit receiveServerRespond();
             }
+						qDebug() << "before emit, int op:" << op;
         }
         qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
         splitPacket=true;
