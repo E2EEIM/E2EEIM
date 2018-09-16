@@ -154,18 +154,26 @@ void Connection::readyRead(){
     //Only data with no loss will process.
     if(sizeOfPayloadAndOp!=dataSize){
 
+        qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
+
+        qDebug() << "before emit, int op1:" << op;
+
+        splitPacket=true;
+        receiveBuffer.append(data);
+
+        int op=QString(receiveBuffer.mid(4,1)).data()->unicode();
+
         if(connectStatus==0 || connectStatus==-2){
             if(op!=2){
-                data.clear();
+                receiveBuffer.clear();
                 letDisconnect();
                 connectStatus=2;
                 emit receiveServerRespond();
             }
-						qDebug() << "before emit, int op:" << op;
+            qDebug() << "before emit, int op2:" << op;
         }
-        qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
-        splitPacket=true;
-        receiveBuffer.append(data);
+
+
 
         unsigned int dataSize;
         QDataStream ds(receiveBuffer.mid(0,4));
