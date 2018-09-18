@@ -6,6 +6,8 @@
 		 tab1 { padding-left: 2em; }
 		 tab2 { padding-left: 5em; }
 		 tab3 { padding-left: 7em; }
+		 tab4 { padding-left: 9em; }
+		 tab5 { padding-left: 11em; }
 		 tab6 { padding-left: 24em; }
 		 tab7 { padding-left: 28em; }
 		 tab8 { padding-left: 32em; }
@@ -22,13 +24,13 @@
 	<body width=1024px>
 		<h1>E2EEIM Manual<br></h1>
 			<a href="#intro"><tab1>Introduction<br></tab1></a>
+			<a href="#Download"><tab1>Download E2EEIM<br></tab1></a>
 			<a href="#Server"><tab1>Server Application<br></tab1></a>
 				<a href="#RunServer"><tab2>Run Server<br></tab2></a>
-				<a href="#GenerateKeyPair"><tab2>Generate key pair<br></tab2></a>
-				<a href="#SpecifyPortNumber"><tab2>Specify Port Number<br></tab2></a>
 				<a href="#CloseServerApplication"><tab2>Close Server Application<br></tab2></a>
 				<a href="#DeleteKeyServer"><tab2>Delete Key<br></tab2></a>
 			<a href="#Client"><tab1>Client Application<br></tab1></a>
+				<a href="#RunClientApplication"><tab2>Run Client Application<br></tab2></a>
 				<a href="#ConnectToAServer"><tab2>Connect To A Server<br></tab2></a>
 				<a href="#SignUp"><tab2>Sign Up<br></tab2></a>
 				<a href="#SignIn"><tab2>Sign In<br></tab2></a>
@@ -47,11 +49,43 @@
 				<br>
 				<h2 id=intro><tab1>Introduction</tab1></h2>
 					<p><tab2>The E2EEIM project are provide server and client applications to ensure message sent by the client are encrypted. This means messages cannot be read with understanding between the end points. Both client and server applications use RSA keys to encrypt and decrypt messages with GnuPG. The client and server applicsations are implemented in C++ using Qt as cross-platform applications. Both applications can run on Linux, macOS and Windows operating systems. All conversations and each user's data are saved in the client machines. User can run their own server to have full control of the server and make conversation more private.</p></tab2><br>
+					<br>
+					<br>
+					<br>
+					<hr width=95%>
+
+				<h2 id=Download><tab1>Download E2EEIM</tab1></h2>
+					<p><tab2> You can download E2EEIM project by go to <a href="https://www.github.com/E2EEIM/E2EEIM"><b>https://github.com/E2EEIM/E2EEIM/</b></a> click <b>Clone or download</b> then click <b> Download ZIP</b> after extract zip you will find README.txt in E2EEIM-Desktop and E2EEIM-Server folder which its guide you to build and run application.</tab2><p>
+					<br>
+					<br>
+					<br>
+					<hr width=95%>
 				<h2 id=Server><tab1>Server Application</tab1></h2>
 					<p><tab2>The server is the central point to which every client will connect. Users need to sign up to a server by sending their username and public key to server. The server needs to save every user's username and public key to identify users and to decrypt messages that users will send to the server and encrypt replies the server will send back.</p></tab2>
 					<h3 id=RunServer><tab2>Run Server</tab2></h3>
-						<p><tab3>To run the server application, users are required to specify key pair to be server's key and port number for the server application to listen and waiting for connecrtion request from client.</tab3></p>
-						<p><tab3>After users run server application by excute the excutatble file, users can choose option to use sepecific key pair to be server's key or generate new key pair to be server's key.</tab3></p>
+							<h4><tab3>Requirement:</tab3></h4>
+							<p><tab4>1. Install GnuPG</tab4><p>
+								<a href="https://www.gpg4win.org/doc/en/gpg4win-compendium_11.html"><p><tab5>-Install GPG4Win(for Windows)</tab5><p></a>
+								<a href="https://www.dewinter.com/gnupg_howto/english/GPGMiniHowto-2.html"><p><tab5>-Install GnuPG(for Linux)</tab5><p></a>
+								<a href="https://gpgtools.tenderapp.com/kb/how-to/first-steps-where-do-i-start-where-do-i-begin-setup-gpgtools-create-a-new-key-your-first-encrypted-mail"><p><tab5>-Install GPGTools(for macOS)</tab5><p></a>
+							<p><tab4>2. Set GnuPG to remember passphrase</tab4><p>
+
+								<p><tab5>Edit <b>gpg-agent.conf</b> to set GnuPG to remember passphrase, for Linux and macOS you can find gpg-agent.conf file in <b>~/.gnupg</b>, for Windows you can find gpg-agent.conf file at <b>%appdata%\gnupg </b>(or C:\Users\%username%\AppData\Roaming). If the gpg-agent.conf file not found in the directory you can create gpg-agent.conf file in this directory.</tab5></5>
+									<p><tab6>1. open gpg-agent.conf</tab6></p>
+									<p><tab6>2. Add these two line to gpg-agent.conf, then save</tab6></p>
+									<center><b>default-cache-ttl 34560000<br>
+									max-cache-ttl 34560000</b></center>
+
+									<p><tab6>3. Restart gpg-agent by Log Out and Log back in to you machine</tab6></p>
+									<br>
+									<br>
+									<br>
+
+					<p><tab3><B>Executable file</b></tab3></p>
+						<p><tab4>For Windows, the executable file named as E2EEIM-Server.exe, for Linux and macOS, the executable file named as E2EEIM-Server.
+
+					<p><tab4>To run the server application, users are required to specify key pair to be server's key and port number for the server application to listen and waiting for connecrtion request from client.</tab3></p>
+						<p><tab3>After users run server application by excute the excutatble file, users can choose option to use sepecific key pair to be server's key or generate new key pair to be server's key.</tab4></p>
 						<br>
 						<p><tab3><b>Example: </tab3></b>Generate new key pair and set port number as 2222</tab3></p>
 						<center> <img src=img/RunServer_Gen.png height=50% width=50%> </center>
@@ -66,7 +100,13 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
+					<h3 id=CloseServerApplication><tab2>Close Server Application</tab2></h3>
+						<p><tab3>You can close application by press ctrl+C</tab3></p>
+						<br>
+						<br>
+						<br>
+						<hr width=95%>
 					<h3 id=DeleteKeyServer><tab2>Delete Key</tab2></h3>
 						<p><tab3>The server application not provides any function to delete generated key pairs. You can use GPG delete key command to delete a key pair form keyring in your machine.</tab3></p>
 						<br>
@@ -77,8 +117,54 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 				<h2 id=Client><tab1>Client Application</tab1></h2>
+					<h3 id=RunClientApplication><tab2>Run Client Application</tab2></h3>
+						<h4><tab3>Requirement:</tab3></h4>
+							<p><tab4>1. Install GnuPG</tab4><p>
+								<a href="https://www.gpg4win.org/doc/en/gpg4win-compendium_11.html"><p><tab5>-Install GPG4Win(for Windows)</tab5><p></a>
+								<a href="https://www.dewinter.com/gnupg_howto/english/GPGMiniHowto-2.html"><p><tab5>-Install GnuPG(for Linux)</tab5><p></a>
+								<a href="https://gpgtools.tenderapp.com/kb/how-to/first-steps-where-do-i-start-where-do-i-begin-setup-gpgtools-create-a-new-key-your-first-encrypted-mail"><p><tab5>-Install GPGTools(for macOS)</tab5><p></a>
+							<a href="#SetGUIPin"><p><tab4>2. Set GnuPG to use GUI pinentry</tab4><p></a>
+							<a href="#SetRememberPass"><p><tab4>3. Set GnuPG to remember passphrase</tab4><p></a>
+							<br>
+							<br>
+							<br>
+
+							<p id=SetGUIPin><tab4><b>Set GnuPG to use GUI pinentry</b></tab4><p>
+								<p><tab5>For Windows, GPG4Win use qt-pinentry which it GUI pinentry as default you don't need to set GnuPG to use GUI pinentry. For macOS, GPGTools us pinentry-mac which it GUI as default pinentry you don't need to set up pinentry.</tab5></p>
+
+								<p><tab5>For Linux, you can use pinentry-gtk2 as GUI pinentry.</tab5><p>
+								<br>
+								<p><tab6>1. Install pinentry-gtk2</tab5><p>
+								<p><tab6>2. Set GnuPG to use pinentry-gtk2 as pinentry</tab5><p>
+									<p><tab7>Go to <b>~/.gnupg</b> then edit <b>gpg-agent.conf </b>file, set path to pinentry-gtk2 as pinentry-program.
+
+									<br>
+									<p><tab7><b>Example:</b> Add this line to gpg-agent.conf, then save</tab7></p>
+									<p><center><b>pinentry-program /usr/bin/pinentry-gtk2</b></center></p>
+								<p><tab6>3. Restart gpg-agent by Log Out and Log back in to you machine</p></tab6>
+								<br>
+								<br>
+							<p id=SetRememberPass><tab4><b>Set GnuPG to use GUI pinentry</b></tab4><p>
+								<p><tab5>Edit <b>gpg-agent.conf</b> to set GnuPG to remember passphrase, for Linux and macOS you can find gpg-agent.conf file in <b>~/.gnupg</b>, for Windows you can find gpg-agent.conf file at <b>%appdata%\gnupg </b>(or C:\Users\%username%\AppData\Roaming). If the gpg-agent.conf file not found in the directory you can create gpg-agent.conf file in this directory.</tab5></5>
+									<p><tab6>1. open gpg-agent.conf</tab6></p>
+									<p><tab6>2. Add these two line to gpg-agent.conf, then save</tab6></p>
+									<center><b>default-cache-ttl 34560000<br>
+									max-cache-ttl 34560000</b></center>
+
+									<p><tab6>3. Restart gpg-agent by Log Out and Log back in to you machine</tab6></p>
+									<br>
+									<br>
+									<br>
+
+
+					<p><tab3><B>Executable file</b></tab3></p>
+						<p><tab4>For Windows, the executable file named as E2EEIM-Desktop.exe, for Linux and macOS, the executable file named as E2EEIM-Desktop.
+					<br>
+					<br>
+					<br>
+					<hr width=95%>
 					<h3 id=ConnectToAServer><tab2>Connect To A Server</tab2></h3>
 						<p><tab3>The client application is a GUI instant messenger application. The client application provides a connection from for users to specify the server IP address and port number to use to connect.</tab3></p>
 						<br>
@@ -94,7 +180,7 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 					<h3 id=SignUp><tab2>Sign Up</tab2></h3>
 						<p><tab3>The client provides a sign-up form for users to sign up or register. The client does not send that information from the sign-up form to the server. Instead, the client application uses the information for key pair generation. The client application also provides list of existing key pair that generated by the client application for users to sign up or register to a server. After user have a key pair to sign up to a server, the client application sends the username and the public key to the server to sign up. If the server returns a packet indicating success, the client application will inform the user that the new account is ready for sign in. If server returns a packet indicating sign up was not successful, the username is not available. In that case, the user needs to use other key or generate a new key pair.</tab3></p>
 						<br>
@@ -113,7 +199,7 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 					<h3 id=SignIn><tab2>Sign In</tab2></h3>
 						<p><tab3>The client application lists all of the private keys that have been generated by the client application with the sign-up process from the user’s machine and shows all of the user’s private keys for the user to select as the account in <b> Sign In -> Account </b> tab to sign in. The client application sends the username and public key of the selected account to the server as required by the sign in request protocol. The server will return a packet with the sign in result. If the sign in result indicates success, then the client application will let the user access the main window of the client application. If the server returns a result that it cannot identify the username of the account, the client application will show a sign in result message informing the user that the account was not found in the server.</tab3></p>
 						<br>
@@ -132,7 +218,7 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 					<h3 id=AddFriend><tab2>Add Friend</tab2></h3>
 						<p><tab3>Users can search for other users by go to contact menu then click add new friend. The add contact window will appear for user to search for other user.</tab3></p>
 						<center> <img src=img/AddFriend1.png height=50% width=50%> </center>
@@ -154,7 +240,7 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 					<h3 id=SendMessage><tab2>Send Message</tab2></h3>
 						<p><tab3>Click Contact menu</tab3></p>
 						<center> <img src=img/SendMessage2.png height=50% width=50%> </center>
@@ -170,7 +256,7 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 					<h3 id=DeleteData><tab2>Delete Friend, Group or Conversation</tab2></h3>
 						<p><tab3>Click three line menu and select <b>Setting</b>.</tab3></p>
 						<center> <img src=img/SelectSetting.png height=50% width=50%> </center>
@@ -187,7 +273,7 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 					<h3 id=DeleteKeyClient><tab2>Delete Key</tab2></h3>
 						<p><tab3>The Client application not provides any function to delete generated key pairs. You can use GPG delete key command to delete a key pair form keyring in your machine.</tab3></p>
 						<br>
@@ -200,7 +286,7 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 					<h3 id=CreateGroup><tab2>Create Group</tab2></h3>
 						<p><tab3>Go to group menu and click add new group</tab3></p>
 						<br>
@@ -223,7 +309,7 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 					<h3 id=SignOut><tab2>Sign Out, Disconnect</tab2></h3>
 						<p><tab3>When users sign out the client will disconnect from server.</tab3></p>
 						<br>
@@ -239,7 +325,7 @@
 					<br>
 					<br>
 					<br>
-					<hr>
+					<hr width=95%>
 					<h3 id=CloseClientApplication><tab2>Close Client Application</tab2></h3>
 						<p><tab3>Click Three Line menu and select <b>Quit</b></tab3></p>
 						<br>
