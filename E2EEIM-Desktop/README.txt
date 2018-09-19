@@ -35,18 +35,30 @@ The executable file will be in E2EEIM-Desktop.app/Contents/MacOS folder.
 1. Install Qt5
 2. Install GnuPG
 3. Install GPGME library
-5. Open your terminal command prompt and change current directory to E2EEIM/E2EEIM-Desktop, the Qt project folder that contains E2EEIM-Desktop.pro file.
-4. Set gpgme.h INCLUDEPATH and libgpgme LIBS path in E2EEIM-Desktop.pro file.
-6. Run qmake command. qmake will generate Makefile (You need to set PATH to qmake from [QT_INSTALLED_DIRECTORY]/bin/ before run qmake command). If qmake show any error occur, please check your Qt version first (qmake --version).
-7. Run make command.
+4. Open your terminal command prompt and change current directory to
+   E2EEIM/E2EEIM-Desktop, the Qt project folder that contains the
+   E2EEIM-Desktop.pro file.
+5. Set gpgme.h INCLUDEPATH and libgpgme LIBS path in E2EEIM-Desktop.pro file in
+   the section for 'unix:!osx'.  Note, however, that if your system headers
+   are installed under /usr/include, then you should just remove the
+   line in that section for INCLUDEPATH altogether.
+6. Run the 'qmake' command.  The qmake tool will generate a Makefile for
+   you.  You may need to set your PATH to find qmake if it is installed in a 
+   non-standard location before you attempt to run the qmake command.
+   If qmake shows any error messages, please verify you have installed
+   Qt correctly.
+7. Run the 'make' command to generate the executable, which will be
+   named 'E2EEIM-Desktop'.
 
 The executable file will be in current directory.
 
 
 HOW TO RUN
-1. Set GUI pinentry for gpg-agent
+1. Configure GUI pinentry for gpg-agent
     For macOS(GPGTools Pinentry mac)
     For Linux(pinentry-gtk2)
-2. Set gpg-agent to remember passphrase as long as passible.
-3. Find executable file.
-4. Execute excecutable file.
+2. Configure gpg-agent to remember passphrases for as long as passible.
+3. Find the name of the executable file.
+4. Execute that excecutable file.
+   On Linux, you would type:
+./E2EEIM-Desktop
