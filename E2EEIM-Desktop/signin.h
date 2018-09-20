@@ -84,6 +84,8 @@ private slots:
     void signUpFormValidation();
     void signUpByKey();
 
+    void on_pushButton_Quit_clicked();
+
 private:
     Ui::SignIn *ui;
     Connection *conn;

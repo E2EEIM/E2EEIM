@@ -1683,3 +1683,8 @@ void SignIn::on_tabWidget_signIn_currentChanged(int index)
         }
     }
 }
+
+void SignIn::on_pushButton_Quit_clicked()
+{
+    this->close();
+}
