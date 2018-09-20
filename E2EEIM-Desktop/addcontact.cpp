@@ -363,3 +363,8 @@ void AddContact::on_pushButton_sendAddFriendRequest_clicked()
         }
     }
 }
+
+void AddContact::on_pushButton_Done_clicked()
+{
+    this->close();
+}

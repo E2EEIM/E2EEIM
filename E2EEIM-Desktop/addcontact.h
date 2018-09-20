@@ -43,6 +43,8 @@ private slots:
 
     void on_pushButton_sendAddFriendRequest_clicked();
 
+    void on_pushButton_Done_clicked();
+
 private:
     Ui::AddContact *ui;
 
