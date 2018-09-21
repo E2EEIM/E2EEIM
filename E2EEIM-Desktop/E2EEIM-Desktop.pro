@@ -26,7 +26,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 #CONFIG+=debug
 #CONFIG+=sanitizer sanitize_address
-
+CONFIG(release, debug|release):DEFINES += QT_NO_DEBUG_OUTPUT
 
 SOURCES += \
         main.cpp \
