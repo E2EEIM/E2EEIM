@@ -25,6 +25,12 @@ ClientTask::ClientTask(qintptr socketDescriptor, QQueue<QByteArray> *queue, QLis
                        QList<QString> *loginRanNum, QList<QString> *waitingTaskUser,
                        QList<QString> *waitingTaskWork, QList<QString> *addFriendRequestList, QString keyFpr, QObject *parent) : QObject(parent)
 {
+    TRACE=false;
+
+#ifdef QT_DEBUG
+    TRACE=true;
+#endif
+
     //Init pointer to share data with every thread.
     this->socketDescriptor=socketDescriptor;
     queuePtr=queue;
@@ -64,14 +70,14 @@ ClientTask::ClientTask(qintptr socketDescriptor, QQueue<QByteArray> *queue, QLis
 
     if(ServerKey){ //Found server key;
 
-        qDebug() << "SERVER KEY IS...";
-        printKeys(ServerKey);
+        if(TRACE) qDebug() << "SERVER KEY IS...";
+        if(TRACE) printKeys(ServerKey);
 
         const char *serverPubKeyFile="serverPubKey.key";
 
         //Export server's public key.
         exportKey(ctx, ServerKey, err, serverPubKeyFile);
-        qDebug() << "'serverPubKey.key' Saved in current directory\n\n";
+        if(TRACE) qDebug() << "'serverPubKey.key' Saved in current directory\n\n";
     }
 
     //Read exported server's key from text file.
@@ -130,7 +136,7 @@ void ClientTask::timerStart(){
 //Send data to the client.
 void ClientTask::send(QByteArray data){
 
-    qDebug() << "---------------------Send data to: " << activeUser;
+    if(TRACE) qDebug() << "---------------------Send data to: " << activeUser;
 
     //Write data to socket.
     socket->write(data);
@@ -145,12 +151,12 @@ void ClientTask::send(QByteArray data){
 //Read data when reaceive from the client.
 void ClientTask::readyRead(){
 
-    qDebug() << "---------Receive data from: " << activeUser;
+    if(TRACE) qDebug() << "---------Receive data from: " << activeUser;
 
     //Read data from socket.
     QByteArray data(socket->readAll());
 
-    qDebug() << "readyRead()" << data;
+    if(TRACE) qDebug() << "readyRead()" << data;
 
     //Get data size from data.
     unsigned int dataSize;
@@ -163,7 +169,7 @@ void ClientTask::readyRead(){
     //Only data with no loss will process.
     if(sizeOfPayloadAndOp!=dataSize){
 
-        qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
+        if(TRACE) qDebug() << "LOSS!!!!!!!!!!!!!!!!!!!!!!!";
         splitPacket=true;
         receiveBuffer.append(data);
 
@@ -175,7 +181,7 @@ void ClientTask::readyRead(){
 
         if(sizeOfPayloadAndOp==dataSize){
 
-            qDebug() << "+++++++++++BUFFER HAVE IT ALL, START TO PROCESS DATA+++++++++++++";
+            if(TRACE) qDebug() << "+++++++++++BUFFER HAVE IT ALL, START TO PROCESS DATA+++++++++++++";
 
             QByteArray allData=receiveBuffer;
 
@@ -193,7 +199,7 @@ void ClientTask::readyRead(){
                     QString item=msg.split("END PGP MESSAGE-----\n").at(i);
                     if(item.right(5)=="-----"){
 
-                        qDebug() << "=============== Read multiple packet from socket case !!";
+                        if(TRACE) qDebug() << "=============== Read multiple packet from socket case !!";
 
                         item=item+"END PGP MESSAGE-----\n";
 
@@ -205,12 +211,12 @@ void ClientTask::readyRead(){
                         dataFilter(data);
                     }
                     else if(item.right(5)==""){
-                        qDebug() << "RIGHT 5 :" << item.right(5);
-                        qDebug() << "+++++++++++BUFFER HAVE IT ALL, THIS PART ARE NOTHING+++++++++++++";
+                        if(TRACE) qDebug() << "RIGHT 5 :" << item.right(5);
+                        if(TRACE) qDebug() << "+++++++++++BUFFER HAVE IT ALL, THIS PART ARE NOTHING+++++++++++++";
                     }
                     else{
-                        qDebug() << "RIGHT 5 :" << item.right(5);
-                        qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------x";
+                        if(TRACE) qDebug() << "RIGHT 5 :" << item.right(5);
+                        if(TRACE) qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------x";
                         splitPacket=true;
                         receiveBuffer.clear();
                         receiveBuffer.append(item);
@@ -225,7 +231,7 @@ void ClientTask::readyRead(){
 
                         if(sizeOfPayloadAndOp==dataSize){
 
-                            qDebug() << "+++++++++++BUFFER HAVE IT ALL, START TO PROCESS DATA+++++++++++++";
+                            if(TRACE) qDebug() << "+++++++++++BUFFER HAVE IT ALL, START TO PROCESS DATA+++++++++++++";
 
                             QByteArray allData=receiveBuffer;
 
@@ -238,13 +244,13 @@ void ClientTask::readyRead(){
                 }
             }
             else{
-                qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
+                if(TRACE) qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
 
             }
 
         }
         else{
-            qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
+            if(TRACE) qDebug() << "-----------------BUFFER STILL NOT GET ALL DTATA-----------------";
         }
 
     }
@@ -273,7 +279,7 @@ void ClientTask::task(){
         taskProtocol=task.mid(0,2);
 
         if(taskProtocol=="13"){ //In case the message for the client is add friend request.
-            qDebug() << "*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13";
+            if(TRACE) qDebug() << "*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13*13";
 
             //Get sender data.
             QString sender=task.mid(2);
@@ -389,7 +395,7 @@ void ClientTask::dataFilter(QByteArray data){
 
     //Get process protocol of the data package.
     int intOp=QString(data.mid(4,1)).data()->unicode();
-    qDebug() << "intOp:" << intOp;
+    if(TRACE) qDebug() << "intOp:" << intOp;
 
     if(intOp==1){ //In case protocol is connection request.
 
@@ -479,7 +485,7 @@ void ClientTask::dataFilter(QByteArray data){
         ds2 << payloadAndOpSize;
         data.insert(0, dataSize);
 
-        qDebug() << "====payloadAndOpSize:" << payloadAndOpSize;
+        if(TRACE) qDebug() << "====payloadAndOpSize:" << payloadAndOpSize;
 
         if(true){
             //Get data size from data.
@@ -491,9 +497,9 @@ void ClientTask::dataFilter(QByteArray data){
                 unsigned int sizeOfPayloadAndOp=data.mid(4).size();
 
 
-                qDebug() << "readyRead:" << data;
+                if(TRACE) qDebug() << "readyRead:" << data;
 
-                qDebug() << sizeOfPayloadAndOp << "-" << dataSize;
+                if(TRACE) qDebug() << sizeOfPayloadAndOp << "-" << dataSize;
         }
 
         //Send sign up result.
@@ -522,7 +528,7 @@ void ClientTask::dataFilter(QByteArray data){
         if(usernameList->indexOf(username)!=(-1)){
             gpgme_key_t userKey=getKey(userKeyList->at(usernameList->indexOf(username)));
 
-            printKeys(userKey);
+            if(TRACE) printKeys(userKey);
 
             //random number.
             qsrand(QTime::currentTime().msec());
@@ -819,7 +825,7 @@ void ClientTask::dataFilter(QByteArray data){
            //Read request sender public eky form text file.
            QFile outFile("temp.key");
            if(!outFile.open(QFile::ReadOnly | QFile::Text)){
-               qDebug() << "cound not open file for writing";
+               if(TRACE) qDebug() << "cound not open file for writing";
                abort();
            }
            QTextStream in(&outFile);
@@ -848,7 +854,7 @@ void ClientTask::dataFilter(QByteArray data){
            //Read encrypted data package for text file.
            QFile outFile3("key.cipher");
            if(!outFile3.open(QFile::ReadOnly | QFile::Text)){
-               qDebug() << "cound not open file for writing";
+               if(TRACE) qDebug() << "cound not open file for writing";
                abort();
            }
            QTextStream in3(&outFile3);
@@ -873,7 +879,7 @@ void ClientTask::dataFilter(QByteArray data){
            //Read confirm sender public key from text file.
            QFile outFile2("temp.key");
            if(!outFile2.open(QFile::ReadOnly | QFile::Text)){
-               qDebug() << "cound not open file for writing";
+               if(TRACE) qDebug() << "cound not open file for writing";
                abort();
            }
            QTextStream in2(&outFile2);
@@ -900,7 +906,7 @@ void ClientTask::dataFilter(QByteArray data){
            encryptToClient(userConKey, keyword, "key.cipher");
            QFile outFile4("key.cipher");
            if(!outFile4.open(QFile::ReadOnly | QFile::Text)){
-               qDebug() << "cound not open file for writing";
+               if(TRACE) qDebug() << "cound not open file for writing";
                abort();
            }
            QTextStream in4(&outFile4);
@@ -928,10 +934,10 @@ void ClientTask::dataFilter(QByteArray data){
         }
         else{
 
-            qDebug() << "LOOKING FOR:" << addFriendRequestID;
+            if(TRACE) qDebug() << "LOOKING FOR:" << addFriendRequestID;
 
             for(int i=0; i < addFriendRequestList->length(); i++){
-                qDebug() <<"addFriendRequestList" << addFriendRequestList->at(i);
+                if(TRACE) qDebug() <<"addFriendRequestList" << addFriendRequestList->at(i);
             }
 
         }
@@ -971,7 +977,7 @@ QByteArray ClientTask::decryptData(QByteArray data, const char* outputFileName){
     //Write cipher to a text file.
     QFile File("temp.cipher");
     if(!File.open(QFile::WriteOnly | QFile::Text)){
-        qDebug() << "cound not open file for writing";
+        if(TRACE) qDebug() << "cound not open file for writing";
         abort();
     }
     QTextStream out(&File);
@@ -999,7 +1005,7 @@ QByteArray ClientTask::decryptData(QByteArray data, const char* outputFileName){
     QFile outFile(outputFileName);
 
     if(!outFile.open(QFile::ReadOnly | QFile::Text)){
-        qDebug() << "cound not open file for writing";
+        if(TRACE) qDebug() << "cound not open file for writing";
         abort();
     }
     QTextStream in(&outFile);
@@ -1046,7 +1052,7 @@ void ClientTask::addNewUser(QByteArray payload){
     //Save user public key to a file.
     QFile File("temp.data");
     if(!File.open(QFile::WriteOnly | QFile::Text)){
-        qDebug() << "cound not open file for writing";
+        if(TRACE) qDebug() << "cound not open file for writing";
         abort();
     }
     QTextStream out(&File);
@@ -1097,7 +1103,7 @@ QByteArray ClientTask::encryptToClient(QByteArray data, QString recipient, const
     //Read encrypted message from encrypt output file.
     QFile outFile(outFileName);
     if(!outFile.open(QFile::ReadOnly | QFile::Text)){
-        qDebug() << "cound not open file for writing";
+        if(TRACE) qDebug() << "cound not open file for writing";
         abort();
     }
     QTextStream in(&outFile);

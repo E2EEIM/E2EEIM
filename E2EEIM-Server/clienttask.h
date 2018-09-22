@@ -86,6 +86,8 @@ private:
     gpgme_key_t recipientKey;
     gpgme_key_t ServerKey = nullptr;
     gpgme_key_t activeUserKey;
+
+    bool TRACE;
 };
 
 #endif // CLIENTTASK_H

@@ -26,6 +26,12 @@
 #include <errno.h>
 #include <stdio.h>
 
+#ifdef QT_DEBUG
+#define LOG true
+#else
+#define LOG false
+#endif
+
 #define detectError(err)                                    \
     if (err) {                                              \
         fprintf (stderr, "%s:%d: %s: %s\n",                 \
@@ -53,7 +59,7 @@ int listKeys(gpgme_ctx_t ctx, gpgme_error_t err, gpgme_key_t key, int onlyPrivat
     int nKeysFound=0;
 
     while (!(err = gpgme_op_keylist_next (ctx, &key))) { // loop through the keys in the keyring
-        printKeys(key);
+        //printKeys(key);
         gpgme_key_unref (key); // release the key reference
         nKeysFound++;
     }
@@ -64,7 +70,7 @@ int listKeys(gpgme_ctx_t ctx, gpgme_error_t err, gpgme_key_t key, int onlyPrivat
 
 gpgme_genkey_result_t genKey(gpgme_ctx_t ctx, gpgme_error_t err, const char *parms){
 
-    qDebug() << "Key pair generating...";
+    if(LOG) qDebug() << "Key pair generating...";
 
     gpgme_genkey_result_t result;
 
@@ -142,7 +148,7 @@ void exportKey(gpgme_ctx_t ctx, gpgme_key_t key, gpgme_error_t err, const char *
 
 gpgme_import_result_t importKey(gpgme_ctx_t ctx, gpgme_error_t err, const char *inFileName){
 
-    printf("Import key from %s\n", inFileName);
+    if(LOG) printf("Import key from %s\n", inFileName);
 
     gpgme_data_t in;    //Data
     gpgme_import_result_t importResult; //Result
@@ -166,7 +172,7 @@ gpgme_import_result_t importKey(gpgme_ctx_t ctx, gpgme_error_t err, const char *
 void encrypt(gpgme_ctx_t ctx, gpgme_error_t err, gpgme_key_t recv,
              const char *inputFileName, const char *outputFileName){
 
-    qDebug() << "Encrypt "<<inputFileName<<"and placing the result into "<<outputFileName<<endl;
+    if(LOG) qDebug() << "Encrypt "<<inputFileName<<"and placing the result into "<<outputFileName<<endl;
 
     gpgme_encrypt_result_t encryptResult;
     gpgme_data_t in, out;
@@ -426,7 +432,7 @@ int main(int argc, char *argv[])
     // Error handling
     detectError(err);
 
-    qDebug() << "Create the GPGME Context SUCCESS";
+    if(LOG) qDebug() << "Create the GPGME Context SUCCESS";
 
     // Set the context to textmode
     gpgme_set_textmode (ctx, 1);
@@ -434,17 +440,17 @@ int main(int argc, char *argv[])
     gpgme_set_armor (ctx, 1);
 
 
-    qDebug() << "1---------Listing Private Keys----------1";
+    if(LOG) qDebug() << "1---------Listing Private Keys----------1";
     int nPrivateKeys = listKeys(ctx, err, key, 1);
-    qDebug() << "\n---------FOUND "<< nPrivateKeys << " Private Keys----------\n";
+    if(LOG) qDebug() << "\n---------FOUND "<< nPrivateKeys << " Private Keys----------\n";
 
-    qDebug() << "2---------Listing Public Keys-----------2";
+    if(LOG) qDebug() << "2---------Listing Public Keys-----------2";
     int nPublicKeys = listKeys(ctx, err, key, 0);
-    qDebug() << "\n---------FOUND "<< nPublicKeys << " Public Keys----------\n";
+    if(LOG) qDebug() << "\n---------FOUND "<< nPublicKeys << " Public Keys----------\n";
 
 
 
-    qDebug() << "3---------A New Key Generation----------3";
+    if(LOG) qDebug() << "3---------A New Key Generation----------3";
     const char *parms = "<GnupgKeyParms format=\"internal\">\n"
         "Key-Type: RSA\n"
         "Key-Length: 4096\n"
@@ -459,39 +465,39 @@ int main(int argc, char *argv[])
 
     gpgme_genkey_result_t GenKeyresult;
     GenKeyresult = genKey(ctx, err, parms);
-    qDebug() << "--------Finished Key Generation----------";
+    if(LOG) qDebug() << "--------Finished Key Generation----------";
     err = gpgme_get_key (ctx,GenKeyresult->fpr,&key,1);
     detectError(err);
     printKeys(key);
 
 
 
-    qDebug() << "4----------Export Public Keys-----------4";
+    if(LOG) qDebug() << "4----------Export Public Keys-----------4";
     const char *outFile="E2EEIM_Public_Key.key";
     exportKey(ctx, key, err, outFile);
-    qDebug() << "'E2EEIM_Public_Key.key' Saved in current directory\n\n";
+    if(LOG) qDebug() << "'E2EEIM_Public_Key.key' Saved in current directory\n\n";
 
-    qDebug() << "5----------Import Public Keys-----------5";
+    if(LOG) qDebug() << "5----------Import Public Keys-----------5";
     const char *inFile="E2EEIM_Public_Key.key";
     gpgme_import_result_t importResult;
     importResult = importKey(ctx, err, inFile);
 
-    qDebug() <<"considered: " << importResult->considered;
-    qDebug() <<"imported: " << importResult->imported;
-    qDebug() <<"secret_imported: " << importResult->secret_imported;
-    qDebug() <<"new_signatures: " << importResult->new_signatures;
-    qDebug() <<"new_revocation: " << importResult->new_revocations;
-    qDebug() << "new_sub_keys: " << importResult->new_sub_keys;
-    qDebug() << "unchanged: " << importResult->unchanged;
-    qDebug() << "imported_rsa: " << importResult->imported_rsa;
+    if(LOG) qDebug() <<"considered: " << importResult->considered;
+    if(LOG) qDebug() <<"imported: " << importResult->imported;
+    if(LOG) qDebug() <<"secret_imported: " << importResult->secret_imported;
+    if(LOG) qDebug() <<"new_signatures: " << importResult->new_signatures;
+    if(LOG) qDebug() <<"new_revocation: " << importResult->new_revocations;
+    if(LOG) qDebug() << "new_sub_keys: " << importResult->new_sub_keys;
+    if(LOG) qDebug() << "unchanged: " << importResult->unchanged;
+    if(LOG) qDebug() << "imported_rsa: " << importResult->imported_rsa;
 
-    qDebug() << "\n\n";
+    if(LOG) qDebug() << "\n\n";
 
 
     senderKey = key;
 
 
-    qDebug() << "6---------A New Key Generation----------6";
+    if(LOG) qDebug() << "6---------A New Key Generation----------6";
     parms = "<GnupgKeyParms format=\"internal\">\n"
         "Key-Type: RSA\n"
         "Key-Length: 4096\n"
@@ -505,68 +511,68 @@ int main(int argc, char *argv[])
         "</GnupgKeyParms>\n";
 
     GenKeyresult = genKey(ctx, err, parms);
-    qDebug() << "--------Finished Key Generation----------";
+    if(LOG) qDebug() << "--------Finished Key Generation----------";
     err = gpgme_get_key (ctx,GenKeyresult->fpr,&key,1);
     detectError(err);
     printKeys(key);
 
     recipientKey = key;
 
-    qDebug() << "7---------Symmetric Encryption----------7";
+    if(LOG) qDebug() << "7---------Symmetric Encryption----------7";
     const char *inputEncrypt="Makefile";
     const char *outputEncrypt="Makefile.SymEncrypted";
     encrypt(ctx, err, recipientKey, inputEncrypt, outputEncrypt);
 
-    qDebug() << "Finished encryption, output saved into" << outputEncrypt << endl;
+    if(LOG) qDebug() << "Finished encryption, output saved into" << outputEncrypt << endl;
 
 
-    qDebug() << "8-------- Symmetric Decryption-----------8";
+    if(LOG) qDebug() << "8-------- Symmetric Decryption-----------8";
     const char *inputDecrypt="Makefile.SymEncrypted";
     const char *outputDecrypt="Makefile.SymDecrypted";
     decrypt(ctx, err, inputDecrypt, outputDecrypt);
-    qDebug() << "Finished decryption, output saved into" << outputDecrypt << endl;
+    if(LOG) qDebug() << "Finished decryption, output saved into" << outputDecrypt << endl;
 
     // //////////////////////////////////////////////////////
 
-    qDebug() << "9--------Asymmetric Encryption-----------9";
+    if(LOG) qDebug() << "9--------Asymmetric Encryption-----------9";
     const char *outputEncrypt2="Makefile.AsymEncrypted";
 
     gpgme_signers_add(ctx, senderKey);
 
     encryptSign(ctx, err, recipientKey, inputEncrypt, outputEncrypt2);
-    qDebug() << "Finished encryption, output saved into" << outputEncrypt2 << endl;
+    if(LOG) qDebug() << "Finished encryption, output saved into" << outputEncrypt2 << endl;
 
 
-    qDebug() << "10--------Asymmetric Decryption----------10";
+    if(LOG) qDebug() << "10--------Asymmetric Decryption----------10";
     const char *inputDecrypt2="Makefile.AsymEncrypted";
     const char *outputDecrypt2="Makefile.AsymDecrypted";
     gpgme_verify_result_t verifyResult;
     verifyResult = decryptVerify(ctx, err, inputDecrypt2, outputDecrypt2);
-    qDebug() << "Finished decryption, output saved into" << outputDecrypt2 << endl;
+    if(LOG) qDebug() << "Finished decryption, output saved into" << outputDecrypt2 << endl;
 
 
-    qDebug() << "11--------------Delete Keys--------------11";
+    if(LOG) qDebug() << "11--------------Delete Keys--------------11";
 
     printKeys(senderKey);
     err = gpgme_op_delete (ctx,senderKey,1);
     //detectError(err);
-    //qDebug() << "DELETED!!\n";
+    //if(LOG) qDebug() << "DELETED!!\n";
 
     printKeys(recipientKey);
     err = gpgme_op_delete (ctx,recipientKey,1);
     //detectError(err);
-    //qDebug() << "DELETED!!\n";
+    //if(LOG) qDebug() << "DELETED!!\n";
 
-    qDebug() << "\n\nALL DONE\n\n";
+    if(LOG) qDebug() << "\n\nALL DONE\n\n";
 
-    qDebug() << "At runtime, the program generated 5 files as follow";
-    qDebug() << "E2EEIM_Public_Key.key";
-    qDebug() << "Makefile.SymEncrypted";
-    qDebug() << "Makefile.SymDncrypted";
-    qDebug() << "Makefile.AsymEncrypted";
-    qDebug() << "Makefile.AsymDncrypted";
-    qDebug() << "\nYou can delete it all by 'make distclean'";
-    qDebug() << "(If 'Makefile' generated by 'qmake')";
+    if(LOG) qDebug() << "At runtime, the program generated 5 files as follow";
+    if(LOG) qDebug() << "E2EEIM_Public_Key.key";
+    if(LOG) qDebug() << "Makefile.SymEncrypted";
+    if(LOG) qDebug() << "Makefile.SymDncrypted";
+    if(LOG) qDebug() << "Makefile.AsymEncrypted";
+    if(LOG) qDebug() << "Makefile.AsymDncrypted";
+    if(LOG) qDebug() << "\nYou can delete it all by 'make distclean'";
+    if(LOG) qDebug() << "(If 'Makefile' generated by 'qmake')";
 
 
     gpgme_release(ctx); // release the context, all done
